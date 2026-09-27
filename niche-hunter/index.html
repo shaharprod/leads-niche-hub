@@ -488,9 +488,9 @@ async function callAI(system, user, maxTokens){
   }
   if(provider==="gemini"){
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"content-type":"application/json"},
-      body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:user}]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:maxTokens,temperature:0.7}})});
+      body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:user}]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:Math.max(maxTokens,16000)+(/2\.5/.test(model)?4096:0),...(/2\.5-flash/.test(model)?{thinkingConfig:{thinkingBudget:2048}}:{}),temperature:0.7}})});
     if(!r.ok) throw new Error(await errText(r));
-    const j = await r.json(); return (j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("");
+    const j = await r.json(); const c0=j.candidates?.[0]; if(c0?.finishReason==="MAX_TOKENS") console.warn("Gemini: answer hit MAX_TOKENS"); return (c0?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
   }
   throw new Error("לא הוגדר ספק AI");
 }
@@ -498,7 +498,17 @@ function parseJSON(txt){
   let s = String(txt||"").trim().replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
   const a = s.indexOf("{"), b = s.lastIndexOf("}");
   if(a<0||b<0) throw new Error("לא נמצא JSON בתשובה");
-  return JSON.parse(s.slice(a,b+1));
+  const raw = s.slice(a,b+1);
+  try{ return JSON.parse(raw); }catch(e1){
+    // HUB fix 1: Hebrew acronyms with a plain double quote (מע"מ, ארה"ב, ש"ח) break JSON -> use gershayim ״
+    const heb = s.slice(a).replace(/([\u0590-\u05FF])"(?=[\u0590-\u05FF])/g, "$1\u05F4");
+    try{ return JSON.parse(heb.slice(0, heb.lastIndexOf("}")+1)); }catch(e2){}
+    // HUB fix 2: answer cut off in the middle -> keep every opportunity that arrived complete
+    for(let i=heb.lastIndexOf("}"); i>0; i=heb.lastIndexOf("}", i-1)){
+      try{ const j = JSON.parse(heb.slice(0,i+1)+"]}"); if(j && Array.isArray(j.opportunities) && j.opportunities.length) { console.warn("parseJSON: repaired truncated answer"); return j; } }catch(e3){}
+    }
+    throw e1;
+  }
 }
 
 /* ---------------- live data: autocomplete (JSONP) ---------------- */
@@ -611,7 +621,7 @@ Hard rules:
 - "est_monthly_searches": conservative integer estimate of monthly searches for top_query in the target market (it is an estimate; be realistic, smaller markets = smaller numbers).
 - "competition": 0-100 estimate of how saturated good existing solutions are (lower = bigger gap).
 - "lead_keywords": 2-3 short Google Maps search terms for LOCAL BUSINESSES that serve this audience and could buy, resell or recommend the product (e.g. "יועץ משכנתאות", "גן ילדים"). Hebrew for Israel, English for US.
-- Output ONLY valid JSON, no markdown, no commentary.`;
+- Output ONLY valid JSON, no markdown, no commentary. Inside Hebrew strings write acronyms with the Hebrew gershayim ״ (e.g. מע״מ, ארה״ב), never a plain double quote.`;
 }
 function aiUser(seed, market, ev, trend){
   const lang = market==="il";
