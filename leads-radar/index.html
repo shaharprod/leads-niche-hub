@@ -145,8 +145,8 @@ table.cmp tr.me{background:rgba(79,124,255,.12)}table.cmp th{color:var(--mut);fo
     <button id="tabLeads">📋 הלידים שלי <span id="leadsCount"></span> <span id="newBadge" class="chip ok hidden" style="padding:1px 7px"></span></button>
   </div>
   <div class="spacer"></div>
-  <a class="ghost hubnav" href="../">🏠 מרכז</a>
-  <a class="ghost hubnav" href="../niche-hunter/">💡 צייד הנישות</a>
+  <a class="ghost hubnav" href="https://shaharprod.github.io/leads-niche-hub/">🏠 מרכז</a>
+  <a class="ghost hubnav" href="https://shaharprod.github.io/leads-niche-hub/niche-hunter/">💡 צייד הנישות</a>
   <button class="ghost" id="btnSettings">⚙️ הגדרות</button>
   <button class="ghost" id="btnHelp">❓ עזרה</button>
 </header>
@@ -1833,7 +1833,7 @@ function hubNicheSeed(){
 $('btnNiche').onclick=()=>{
   const seed=hubNicheSeed();
   if(!seed){ alertBox('כתבו קודם מילת חיפוש (למשל «מספרה») או בחרו קטגוריה, ואז לחצו שוב.'); return; }
-  location.href='../niche-hunter/?seed='+encodeURIComponent(seed)+'&market=il&auto=1';
+  location.href='https://shaharprod.github.io/leads-niche-hub/niche-hunter/?seed='+encodeURIComponent(seed)+'&market=il&auto=1';
 };
 (function hubFromNiche(){
   const q=new URLSearchParams(location.search), kw=(q.get('kw')||'').trim(); if(!kw) return;
