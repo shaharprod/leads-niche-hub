@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leads Radar — מדריך הפעלה מלא</title>
+<style>
+:root{--bg:#0b1020;--card:#161f3d;--line:#2a3563;--txt:#eef2ff;--mut:#9aa7cf;--acc:#7aa2ff;--gold:#ffd166;--good:#2fd48f;--bad:#ff6b6b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:"Segoe UI",Rubik,Arial,sans-serif;line-height:1.8}
+.page{max-width:900px;margin:0 auto;padding:28px 20px 80px}
+h1{font-size:30px;margin:0 0 6px}
+h1 span{color:var(--acc)}
+.sub{color:var(--mut);margin-bottom:26px}
+a{color:var(--acc)}
+.step{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;position:relative}
+.step h2{font-size:19px;margin:0 0 12px;display:flex;align-items:center;gap:10px}
+.n{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#4f7cff,#7a4dff);
+  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex:0 0 32px}
+ol,ul{margin:8px 0;padding-inline-start:22px}
+li{margin-bottom:7px}
+code{background:#0a0f22;border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-size:13.5px;
+  font-family:Consolas,monospace;direction:ltr;display:inline-block}
+.box{background:#0a0f22;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0;font-size:14px}
+.warn{background:rgba(255,194,77,.09);border-color:rgba(255,194,77,.5)}
+.good{background:rgba(47,212,143,.08);border-color:rgba(47,212,143,.45)}
+.bad{background:rgba(255,107,107,.08);border-color:rgba(255,107,107,.45)}
+.big{display:block;text-align:center;background:linear-gradient(135deg,#4f7cff,#7a4dff);color:#fff;
+  padding:16px;border-radius:14px;font-weight:700;font-size:18px;text-decoration:none;margin:18px 0}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+th,td{border:1px solid var(--line);padding:9px 11px;text-align:right}
+th{background:#0e1530;color:var(--mut);font-weight:600}
+.kbd{border:1px solid var(--line);background:#0e1530;border-radius:6px;padding:1px 7px;font-size:13px}
+.path{direction:ltr;text-align:left;display:block;background:#0a0f22;border:1px solid var(--line);
+  border-radius:8px;padding:8px 10px;font-family:Consolas,monospace;font-size:13px;margin:6px 0}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+.foot{color:var(--mut);font-size:13px;text-align:center}
+</style></head><body><div class="page">
+
+<h1>Leads<span>Radar</span> — מדריך הפעלה מלא</h1>
+<div class="sub">סורק עסקים ברדיוס גיאוגרפי, כרטיס עסק מלא, ציון הזדמנות וייצוא לידים · תחליף ל-Leads Gorilla, בבעלותך</div>
+
+<a class="big" href="https://shaharprod.github.io/leads-radar/" target="_blank">🚀 פתח את התוכנה — shaharprod.github.io/leads-radar</a>
+
+<div class="box good">
+<b>מה כבר מוכן:</b> התוכנה באוויר, קוד המקור במאגר
+<a href="https://github.com/shaharprod/leads-radar" target="_blank">github.com/shaharprod/leads-radar</a>,
+עותק מקומי ב-<span class="path">C:\Users\User\WebDev\leads-radar\index.html</span>
+<b>מה נשאר לך:</b> רק שלב 1–5 כאן — יצירת מפתח Google API. זה הדבר היחיד שאני לא יכול לעשות במקומך,
+כי הוא קשור לחשבון ולחיוב שלך.
+</div>
+
+<div class="step">
+<h2><span class="n">1</span> יצירת פרויקט ב-Google Cloud</h2>
+<ol>
+<li>פותחים ב-<b>Google Chrome</b> את דף יצירת הפרויקט:
+    <a href="https://console.cloud.google.com/projectcreate" target="_blank">console.cloud.google.com/projectcreate</a></li>
+<li>בשדה <b>Project name</b> כותבים: <code>leads-radar</code></li>
+<li>לוחצים על הכפתור הכחול <b>CREATE</b> (למטה משמאל).</li>
+<li>ממתינים ~15 שניות עד שההתראה בפינה הימנית העליונה מראה שהפרויקט נוצר, ואז לוחצים
+    <b>SELECT PROJECT</b> כדי לעבור אליו.</li>
+</ol>
+<div class="box warn">חשוב: בכל הדפים הבאים ודא שבראש המסך, ליד הלוגו של Google Cloud,
+כתוב <b>leads-radar</b> — זה בורר הפרויקט. אם כתוב שם פרויקט אחר, לחץ עליו ובחר את leads-radar.</div>
+</div>
+
+<div class="step">
+<h2><span class="n">2</span> הפעלת חיוב (Billing)</h2>
+<p>גוגל דורשת כרטיס אשראי מחובר כדי ש-Maps/Places יעבדו בכלל — גם בתוך המכסה החינמית.</p>
+<ol>
+<li>פותחים <a href="https://console.cloud.google.com/billing" target="_blank">console.cloud.google.com/billing</a></li>
+<li>אם אין חשבון חיוב — <b>Create account</b>, ממלאים פרטים וכרטיס אשראי.</li>
+<li>אם יש — נכנסים ל-<b>My Projects</b>, מוצאים את <b>leads-radar</b>, בתפריט שלוש-הנקודות בוחרים
+    <b>Change billing</b> ומצמידים את חשבון החיוב.</li>
+</ol>
+<div class="box warn">
+<b>עלויות — לא אמרתי לך מספר מדויק כי המחירון של גוגל השתנה ואני לא רוצה להטעות אותך.</b>
+לפני הסריקה הראשונה תבדוק את המספרים העדכניים כאן:
+<a href="https://mapsplatform.google.com/pricing/" target="_blank">mapsplatform.google.com/pricing</a>.
+בשלב 5 למטה אני מסביר איך לשים <b>תקרת שימוש קשיחה</b> כך שלא תוכל לחרוג בטעות.
+</div>
+</div>
+
+<div class="step">
+<h2><span class="n">3</span> הפעלת שלושת ה-APIs</h2>
+<p>בכל קישור לוחצים על הכפתור הכחול <b>ENABLE</b> ומחכים שהכפתור יהפוך ל-<b>MANAGE</b>:</p>
+<table>
+<tr><th>#</th><th>מה מפעילים</th><th>בשביל מה</th><th>קישור ישיר</th></tr>
+<tr><td>1</td><td><b>Maps JavaScript API</b></td><td>המפה עצמה</td>
+  <td><a href="https://console.cloud.google.com/apis/library/maps-backend.googleapis.com" target="_blank">הפעל</a></td></tr>
+<tr><td>2</td><td><b>Places API (New)</b></td><td>חיפוש העסקים ופרטיהם</td>
+  <td><a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank">הפעל</a></td></tr>
+<tr><td>3</td><td><b>Geocoding API</b></td><td>הפיכת כתובת לנקודה על המפה</td>
+  <td><a href="https://console.cloud.google.com/apis/library/geocoding-backend.googleapis.com" target="_blank">הפעל</a></td></tr>
+<tr><td>4</td><td><b>PageSpeed Insights API</b><br><small>(אופציונלי)</small></td><td>ציוני מהירות ו-SEO לאתר של כל עסק</td>
+  <td><a href="https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com" target="_blank">הפעל</a></td></tr>
+</table>
+<div class="box bad"><b>הטעות הכי נפוצה:</b> להפעיל את <i>Places API</i> הישן במקום
+<b>Places API (New)</b>. התוכנה עובדת רק עם החדש. בדף הספרייה ודא שכתוב במפורש
+<b>Places API (New)</b>.</div>
+</div>
+
+<div class="step">
+<h2><span class="n">4</span> יצירת המפתח והגבלתו</h2>
+<ol>
+<li>פותחים <a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank">console.cloud.google.com/google/maps-apis/credentials</a></li>
+<li>לוחצים למעלה <b>+ CREATE CREDENTIALS</b> → <b>API key</b>.</li>
+<li>נפתח חלון עם המפתח (מתחיל ב-<code>AIza...</code>). לוחצים <b>Copy</b> — ושומרים אותו רגע בצד.</li>
+<li>לוחצים <b>Edit API key</b> (או על שם המפתח ברשימה) כדי להגביל אותו:
+  <ul>
+  <li>בחלק <b>Application restrictions</b> → בוחרים <b>Websites</b> → <b>ADD</b> → מדביקים:
+      <code>https://shaharprod.github.io/*</code> → <b>DONE</b></li>
+  <li>בחלק <b>API restrictions</b> → בוחרים <b>Restrict key</b> → מסמנים בדיוק את:
+      Maps JavaScript API, Places API (New), Geocoding API, PageSpeed Insights API → <b>OK</b></li>
+  </ul></li>
+<li>לוחצים <b>SAVE</b> למטה. ההגבלה נכנסת לתוקף תוך דקה-חמש.</li>
+</ol>
+<div class="box good">ההגבלה הזו אומרת שגם אם מישהו יראה את המפתח בקוד הדף — הוא לא יוכל להשתמש בו
+מאף אתר אחר חוץ מ-<b>shaharprod.github.io</b>. זו ההגנה הנכונה לאפליקציה שרצה בדפדפן.</div>
+</div>
+
+<div class="step">
+<h2><span class="n">5</span> תקרת הוצאה — שלא תופתע בסוף החודש</h2>
+<ol>
+<li>פותחים <a href="https://console.cloud.google.com/apis/api/places.googleapis.com/quotas" target="_blank">מכסות של Places API (New)</a></li>
+<li>מוצאים את השורה של <b>Requests per day</b>, לוחצים על עיפרון העריכה ומגדירים מספר שאתה שלם איתו —
+    למשל <b>500</b> ליום. זו תקרה קשיחה: כשנגמרת, הקריאות נחסמות ואין חיוב נוסף.</li>
+<li>אותו דבר עבור <a href="https://console.cloud.google.com/apis/api/geocoding-backend.googleapis.com/quotas" target="_blank">Geocoding API</a>.</li>
+<li>בנוסף, מומלץ להגדיר התראת תקציב:
+    <a href="https://console.cloud.google.com/billing/budgets" target="_blank">console.cloud.google.com/billing/budgets</a> →
+    <b>CREATE BUDGET</b> → סכום חודשי → התראה במייל ב-50%/90%/100%.</li>
+</ol>
+</div>
+
+<div class="step">
+<h2><span class="n">6</span> הכנסת המפתח לתוכנה</h2>
+<ol>
+<li>פותחים את <a href="https://shaharprod.github.io/leads-radar/" target="_blank">shaharprod.github.io/leads-radar</a> ב-Chrome.</li>
+<li>בפינה השמאלית-עליונה לוחצים על <b>⚙️ הגדרות</b>.</li>
+<li>מדביקים את המפתח בשדה <b>Google Maps API Key</b>, ממלאים את פרטי המיתוג שלך (לדוחות ולפניות) ולוחצים <b>שמור</b>.</li>
+<li>אם הכול תקין — המפה נטענת והשורה האדומה נעלמת. אם לא, ההודעה האדומה תגיד בדיוק מה חסר.</li>
+</ol>
+<div class="box">המפתח נשמר ב-<b>localStorage של הדפדפן שלך בלבד</b>. הוא לא נשלח לשום שרת חוץ מגוגל,
+ולא נמצא בקוד שב-GitHub. אם תפתח את האתר במחשב אחר — תצטרך להדביק אותו שם שוב.</div>
+</div>
+
+<hr>
+
+<h2 style="font-size:22px">איך עובדים עם זה ביום-יום</h2>
+
+<div class="step">
+<h2><span class="n">א</span> בוחרים אזור</h2>
+<ol>
+<li>כותבים כתובת/עיר בשדה העליון ולוחצים <b>📍 מצא על המפה</b>.</li>
+<li>אפשר לגרור את הסיכה או ללחוץ על המפה כדי להזיז את מרכז הסריקה.</li>
+<li>גוררים את המחוון <b>רדיוס סריקה</b> — מ-500 מ׳ ועד 30 ק״מ. העיגול הכחול מראה בדיוק מה ייסרק.</li>
+</ol>
+</div>
+
+<div class="step">
+<h2><span class="n">ב</span> בוחרים מה מחפשים</h2>
+<ul>
+<li><b>מילת חיפוש חופשית</b> (מומלץ) — למשל <code>מספרה</code>, <code>מוסך</code>, <code>רואה חשבון</code>.
+    בעברית זה מדויק יותר מהקטגוריות של גוגל.</li>
+<li><b>או קטגוריה</b> מהרשימה המוכנה — אם משאירים את שדה החיפוש ריק.</li>
+<li><b>עומק סריקה</b> — כמה תת-עיגולים לחלק את האזור:
+  <table>
+    <tr><th>עומק</th><th>נקודות</th><th>כמה עסקים בערך</th><th>קריאות API</th></tr>
+    <tr><td>מהיר</td><td>1</td><td>עד 20</td><td>1</td></tr>
+    <tr><td>בינוני</td><td>7</td><td>עד 140</td><td>7</td></tr>
+    <tr><td>עמוק</td><td>19</td><td>עד 380</td><td>19</td></tr>
+  </table>
+  גוגל מחזירה מקסימום 20 תוצאות לכל חיפוש — זו הסיבה לחלוקה לתת-עיגולים.
+  התוכנה מסננת כפילויות ומוחקת עסקים שנפלו מחוץ לרדיוס האמיתי.</li>
+</ul>
+</div>
+
+<div class="step">
+<h2><span class="n">ג</span> ציון ההזדמנות — מה הוא אומר</h2>
+<p>לכל עסק שני מספרים:</p>
+<table>
+<tr><th>מדד</th><th>משמעות</th></tr>
+<tr><td><b>נוכחות דיגיטלית</b> (0–100)</td><td>כמה העסק כבר מסודר: אתר, HTTPS, טלפון, דירוג, ביקורות, שעות, תמונות</td></tr>
+<tr><td><b>ציון הזדמנות</b> (0–100)</td><td>ההשלמה ל-100. <b>גבוה = ליד טוב יותר</b> — יש לך יותר מה למכור לו</td></tr>
+</table>
+<p>בכרטיס המלא (כפתור <b>📋 כרטיס מלא</b>) מופיעה רשימת השיפורים המוצעים, כל אחד עם
+<b>אחוז פוטנציאל השיפור</b> — בדיוק החומר שממנו בונים שיחת מכירה.</p>
+<div class="box">האחוזים הם <b>הערכה משוקללת שלי</b> לפי חשיבות כל מרכיב, לא מדידה של גוגל.
+הם נועדו לתעדוף לידים ולשיחת מכירה — לא להצגה ללקוח כנתון מדעי.</div>
+</div>
+
+<div class="step">
+<h2><span class="n">ד</span> ביקורת מעמיקה</h2>
+<p>«🔬 נתח» בכרטיס, או «🔬 נתח את כל העסקים» בפאנל הימני. כל אתר נבדק ב<b>שרת ביקורת פרטי שלך</b> ב-Google Cloud
+(<a href="https://console.cloud.google.com/functions/details/europe-west1/leads-radar-audit?project=aiproject-484911" target="_blank">leads-radar-audit בפרויקט AIPROJECT</a>),
+עם מגבלת זמן של 30 שניות לאתר, ו-4 עסקים במקביל. כפתור <b>⏹ עצור</b> מפסיק בכל רגע. נבדק:</p>
+<ul>
+<li><b>אתר:</b> HTTPS והפניה אליו, מובייל, זמן טעינה, כותרת/תיאור/H1, Schema, sitemap, robots, favicon, תמונות בלי alt, שנת © (אתר לא מתוחזק)</li>
+<li><b>נגישות וחוק:</b> הצהרת נגישות / רכיב נגישות, מדיניות פרטיות, באנר עוגיות</li>
+<li><b>שיווק ומדידה:</b> Google Analytics 4, Tag Manager, Meta Pixel, TikTok Pixel, Google Ads, LinkedIn Insight, Hotjar/Clarity</li>
+<li><b>המרה:</b> טופס, כפתור וואטסאפ, צ׳אט (Tawk, Intercom, Messenger ועוד), מערכת תורים (Calendly, Booksy ועוד), ניוזלטר</li>
+<li><b>פרטי קשר:</b> מיילים, טלפונים, וואטסאפ — גם מדף «צור קשר»</li>
+<li><b>ביקורות גוגל:</b> 5 האחרונות — כמה שליליות ומתי נכתבה האחרונה</li>
+<li><b>PageSpeed (אופציונלי):</b> מהירות, SEO, נגישות, LCP/CLS/TBT</li>
+</ul></div>
+
+<div class="step"><h2><span class="n">ה</span> נוכחות דיגיטלית ורשתות חברתיות</h2>
+<p>בכרטיס המלא יש טבלה של 9 ערוצים: פרופיל גוגל, אתר, וואטסאפ, פייסבוק, אינסטגרם, טיקטוק, יוטיוב, לינקדאין, X.
+רשתות שמקושרות מהאתר מזוהות אוטומטית. לרשת שלא נמצאה: <b>🔎</b> פותח חיפוש גוגל ממוקד, <b>✏️</b> שומר את הקישור שמצאת — והציון מתעדכן.
+בכל כרטיס בגריד מופיע <b>📡 X/9 ערוצים</b>, ויש סינון «בלי רשתות חברתיות».</p></div>
+
+<div class="step"><h2><span class="n">ו</span> דוח ביקורת ממותג (White-Label)</h2>
+<p>«📄 דוח» בכרטיס → נפתח דוח בעברית עם הלוגו, הצבע ופרטי הקשר שלך מ-⚙️ הגדרות, וגם יורד כקובץ HTML.
+<b>🖨️ שמור כ-PDF</b> בדוח = הדפסה ← «שמירה כ-PDF». את קובץ ה-HTML אפשר לשלוח ללקוח או להעלות לאתר כדף ביקורת חי.</p></div>
+
+<div class="step"><h2><span class="n">ז</span> פנייה מותאמת</h2>
+<p>«✉️ פנייה» → הודעת וואטסאפ, מייל, תסריט שיחה והודעה ברשתות — בנויים מהליקויים הספציפיים של העסק.
+<b>🚀 פתח לשליחה</b> פותח וואטסאפ / מייל עם הטקסט מוכן (השליחה עצמה ממך). עם מפתח Gemini ב-⚙️ הגדרות — <b>✨ נסח מחדש עם AI</b>.</p></div>
+
+<div class="step">
+<h2><span class="n">ח</span> משפך לידים, ייצוא ו-Webhook</h2>
+<ul>
+<li>בכל כרטיס בוחרים שלב: 🔥 חם · 📞 נוצר קשר · 📅 פגישה · 💼 הצעת מחיר · ✅ לקוח · ✕ לא רלוונטי. הליד נשמר בלשונית <b>📋 הלידים שלי</b> (לוח קנבן) גם אחרי סריקות חדשות.</li><li>בכרטיס המלא: תאריך מעקב (באדום כשעבר) והערות.</li><li><b>🔗 Webhook</b> (⚙️ הגדרות) שולח לידים ל-Make / Zapier / n8n.</li>
+<li>בכרטיס המלא יש שדה <b>הערות לליד</b> שנשמר גם הוא.</li>
+<li><b>⬇️ ייצוא CSV לאקסל</b> — כולל כל הנתונים, הציונים, השיפור המוביל, הסטטוס וההערות.
+    הקובץ נשמר עם BOM כך שהעברית נפתחת תקין באקסל.</li>
+</ul>
+</div>
+
+<h2 style="font-size:22px">יכולות מתקדמות (גרסה 3)</h2>
+<div class="step"><h2><span class="n">1</span> ⚔️ מתחרים ו📍 דירוג מקומי</h2>
+<p>בכרטיס המלא של עסק (📋 כרטיס מלא):</p><ul>
+<li><b>מול המתחרים</b> — 3 העסקים החזקים באותה קטגוריה עד 3 ק״מ, עם דירוג, ביקורות, תמונות, אתר ושעות. «🔎 מצא מתחרים באזור» מביא מתחרים גם אם לא היו בסריקה.</li>
+<li><b>דירוג מקומי (מפת חום)</b> — בוחרים מילת חיפוש, רדיוס וגודל רשת (3×3 = 9 קריאות, 5×5 = 25 קריאות) → «📍 בדוק דירוג מקומי». כל משבצת = המקום של העסק בגוגל מפות למי שמחפש מאותה נקודה. 🟩 1–3 · 🟨 4–10 · 🟧 11–20 · 🟥 לא בטופ 20.</li></ul></div>
+<div class="step"><h2><span class="n">2</span> 📄 דוח חכם, 🔗 קישור חי ו💰 הצעת מחיר</h2><ul>
+<li>הדוח כולל עכשיו: צילום מסך של האתר בטלפון, השוואה למתחרים, מפת הדירוג, סיכום ביקורות (AI), דומיין ו-SSL, ו«כמה זה יכול להיות שווה» — לפי ההנחות ב-⚙️ הגדרות → הצעות מחיר.</li>
+<li><b>🔗 קישור חי</b> — מעלה את הדוח לשרת שלך ומעתיק קישור. הקישור נכנס אוטומטית להודעות הפנייה. בכרטיס רואים <b>👁️ כמה פעמים ומתי</b> הלקוח פתח אותו (תצוגות מקדימות של וואטסאפ לא נספרות).</li>
+<li><b>💰 הצעת מחיר</b> — נבנית מהחבילות שב-⚙️ הגדרות לפי הליקויים של העסק, כולל מע״מ 18%. אפשר לערוך כל טקסט בעמוד לפני «שמור כ-PDF». <b>עדכן את המחירים בהגדרות — אלה שם דוגמה.</b></li>
+<li><b>🏢 רשם החברות</b> — ח.פ., סטטוס, תאריך הקמה ודוח שנתי אחרון (מהמאגר הרשמי ב-data.gov.il). עוסקים מורשים לא מופיעים שם.</li>
+<li><b>✨ סכם ביקורות</b> — דורש מפתח Gemini ב-⚙️ הגדרות.</li></ul></div>
+<div class="step"><h2><span class="n">3</span> 📲 תור וואטסאפ ו🛰️ מעקב אזורים</h2><ul>
+<li><b>📲 תור וואטסאפ</b> (מעל רשימת העסקים) — עובר על הלידים בשלב «🔥 חם» אחד-אחד: ההודעה מוכנה, לחיצה פותחת וואטסאפ ומעבירה ל«📞 נוצר קשר».</li>
+<li><b>⭐ מעקב שבועי</b> (בפאנל הסריקה, מתחת ל«התחל סריקה») — שומר את האזור ומילת החיפוש. כל יום ראשון ב-07:47 השרת שלך סורק ומזהה עסקים <b>שנפתחו</b> מאז. הם מופיעים בלשונית 📋 הלידים שלי תחת «🛰️ מעקב אזורים» (וגם נשלחים ל-Webhook אם הגדרת).</li></ul></div>
+
+<hr>
+<h2 style="font-size:22px">פתרון תקלות</h2>
+<table>
+<tr><th>מה רואים</th><th>הסיבה והפתרון</th></tr>
+<tr><td>"טעינת Google Maps נכשלה"</td><td>המפתח שגוי, או <b>Maps JavaScript API</b> לא מופעל, או שהחיוב לא פעיל,
+  או שהגבלת ה-Referrer לא כוללת <code>https://shaharprod.github.io/*</code></td></tr>
+<tr><td>המפה נטענת אבל הסריקה מחזירה 0</td><td>כמעט תמיד <b>Places API (New)</b> לא מופעל — חזור לשלב 3</td></tr>
+<tr><td>המפה מוצגת עם פס "For development purposes only"</td><td>החיוב לא מחובר לפרויקט — שלב 2</td></tr>
+<tr><td>"נמצא עסק אחד בלבד"</td><td>עומק סריקה «מהיר». העלה ל«בינוני» או «עמוק»</td></tr>
+<tr><td>ניתוח האתר מחזיר שגיאה</td><td>האתר עצמו לא עונה או חוסם — מסומן «⚠️ האתר לא נבדק» והתהליך ממשיך. ניתוח חוזר: «🔬 נתח שוב»</td></tr>
+<tr><td>ציוני PageSpeed לא מופיעים</td><td>PageSpeed Insights API לא מופעל, או שהמפתח מוגבל ולא כולל אותו</td></tr>
+</table>
+
+<hr>
+<h2 style="font-size:22px">איפה הכול נמצא</h2>
+<table>
+<tr><th>מה</th><th>איפה</th></tr>
+<tr><td>התוכנה החיה</td><td><a href="https://shaharprod.github.io/leads-radar/" target="_blank">https://shaharprod.github.io/leads-radar/</a></td></tr>
+<tr><td>קוד המקור</td><td><a href="https://github.com/shaharprod/leads-radar" target="_blank">https://github.com/shaharprod/leads-radar</a></td></tr>
+<tr><td>עותק מקומי</td><td><span class="path">C:\Users\User\WebDev\leads-radar\index.html</span></td></tr>
+<tr><td>קונסולת Google Cloud</td><td><a href="https://console.cloud.google.com/google/maps-apis/overview" target="_blank">console.cloud.google.com/google/maps-apis/overview</a></td></tr>
+<tr><td>דוח שימוש וחיוב</td><td><a href="https://console.cloud.google.com/google/maps-apis/metrics" target="_blank">console.cloud.google.com/google/maps-apis/metrics</a></td></tr>
+</table>
+
+<div class="box good" style="margin-top:24px">
+<b>לשנות משהו בתוכנה?</b> תגיד לי מה — אני עורך את
+<span class="path">C:\Users\User\WebDev\leads-radar\index.html</span>
+ודוחף ל-GitHub, והאתר החי מתעדכן תוך כדקה. אין מנוי, אין חידוש, אין מי שיבטל לך את זה.
+</div>
+
+<div class="foot" style="margin-top:30px">Leads Radar · נבנה עבור שמוליק שחר · 25.09.2026</div>
+</div></body></html>

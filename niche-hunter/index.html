@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>צייד הנישות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f5fb; --surface:#ffffff; --surface-2:#f0eef8; --line:#e2dff0;
+  --ink:#1b1830; --ink-2:#55506e; --ink-3:#8a84a6;
+  --accent:#6d4aff; --accent-ink:#ffffff; --accent-soft:#ece7ff;
+  --hot:#ff6a3d; --hot-soft:#ffe9e1;
+  --good:#12a26b; --good-soft:#dcf5ea; --warn:#c98a00;
+  --shadow:0 1px 2px rgba(27,24,48,.06),0 6px 24px rgba(27,24,48,.06);
+  --radius:16px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f0d1a; --surface:#181527; --surface-2:#211d35; --line:#2e2946;
+    --ink:#f1eefc; --ink-2:#b7b0d4; --ink-3:#7f7899;
+    --accent:#8f74ff; --accent-ink:#0f0d1a; --accent-soft:#2a2350;
+    --hot:#ff8a63; --hot-soft:#3a2219;
+    --good:#34d399; --good-soft:#15352a; --warn:#f2b632;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f0d1a; --surface:#181527; --surface-2:#211d35; --line:#2e2946;
+  --ink:#f1eefc; --ink-2:#b7b0d4; --ink-3:#7f7899;
+  --accent:#8f74ff; --accent-ink:#0f0d1a; --accent-soft:#2a2350;
+  --hot:#ff8a63; --hot-soft:#3a2219;
+  --good:#34d399; --good-soft:#15352a; --warn:#f2b632;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.mono{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:.86em}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:12px;height:60px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.2px}
+.brand svg{flex:none}
+.nav{margin-inline-start:auto;display:flex;gap:6px}
+.nav button{border:1px solid transparent;background:transparent;color:var(--ink-2);padding:7px 12px;border-radius:10px;font-weight:500;display:flex;align-items:center;gap:6px}
+.nav button[aria-current="true"]{background:var(--accent-soft);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 25%,transparent)}
+.nav button:hover{color:var(--ink)}
+.nav a.hublink{border:1px solid var(--line);color:var(--ink-2);padding:7px 12px;border-radius:10px;font-weight:500;display:flex;align-items:center;gap:6px;text-decoration:none}
+.nav a.hublink:hover{color:var(--accent);border-color:var(--accent)}
+.leadchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.leadchips a{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:99px;padding:4px 11px;font-size:13px;text-decoration:none}
+.leadchips a:hover{border-color:var(--accent);color:var(--accent)}
+.badge-count{background:var(--hot);color:#fff;border-radius:99px;font-size:11px;padding:0 6px;min-width:18px;text-align:center}
+
+/* hero */
+.hero{padding:44px 0 22px;text-align:center}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 12px;font-size:13px;color:var(--ink-2)}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px var(--good-soft)}
+h1{font-size:clamp(34px,6vw,56px);line-height:1.05;margin:16px 0 10px;font-weight:800;letter-spacing:-1px}
+h1 .grad{background:linear-gradient(90deg,var(--accent),var(--hot));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--ink-2);font-size:18px;max-width:640px;margin:0 auto}
+
+.search{max-width:760px;margin:26px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.search .field{flex:1 1 260px;display:flex;align-items:center;gap:8px;padding:0 10px}
+.search input{flex:1;border:0;outline:0;background:transparent;color:var(--ink);font:inherit;font-size:17px;padding:12px 0;min-width:0}
+.search select{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:12px;padding:10px 10px;font:inherit;font-size:14px}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .08s ease,filter .15s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-primary[disabled]{opacity:.55;cursor:progress}
+.btn-ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+.btn-sm{padding:6px 10px;font-size:13px;border-radius:9px;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px auto 0;max-width:760px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:99px;padding:5px 12px;font-size:13px}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.mode-note{margin-top:10px;font-size:13px;color:var(--ink-3)}
+.mode-note button{background:none;border:0;color:var(--accent);text-decoration:underline;padding:0}
+
+/* how it works */
+.how{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:34px 0 8px}
+.how .step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.how .n{width:26px;height:26px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:800;font-size:14px}
+.how b{display:block;margin:8px 0 2px}
+.how p{margin:0;color:var(--ink-2);font-size:14px}
+
+/* progress */
+.progress{max-width:760px;margin:22px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:none}
+.progress.on{display:block}
+.progress ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.progress li{display:flex;align-items:center;gap:10px;color:var(--ink-3);font-size:15px}
+.progress li .ic{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:12px}
+.progress li.run{color:var(--ink)}
+.progress li.run .ic{border-color:var(--accent);border-top-color:transparent;animation:spin .8s linear infinite}
+.progress li.ok{color:var(--ink-2)}
+.progress li.ok .ic{background:var(--good);border-color:var(--good);color:#fff}
+.progress li.err{color:var(--hot)}
+.progress li.err .ic{background:var(--hot);border-color:var(--hot);color:#fff}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* sections */
+section.block{margin:26px 0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.panel h2{margin:0 0 6px;font-size:14px;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:8px}
+.panel .lead{margin:0;color:var(--ink-2)}
+.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.kpis{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 4px}
+.kpi b{display:block;font-size:24px;font-weight:800}
+.kpi span{font-size:13px;color:var(--ink-3)}
+.up{color:var(--good)} .down{color:var(--hot)}
+.chart{width:100%;height:170px;display:block;margin-top:8px}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--ink-3);margin-top:4px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-inline-end:5px}
+.qlist{display:flex;flex-wrap:wrap;gap:6px;max-height:260px;overflow:auto;padding:2px}
+.q{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:3px 8px;font-size:13px;color:var(--ink-2)}
+.q .s{font-weight:700;color:var(--accent);font-size:11px}
+.q .src{font-size:10px;border-radius:4px;padding:0 4px;background:var(--hot-soft);color:var(--hot);font-weight:700}
+
+/* manual mode */
+.manual textarea{width:100%;min-height:140px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:12px;padding:12px;font:inherit;font-size:14px;direction:ltr}
+.manual ol{margin:8px 0 12px;padding-inline-start:20px;color:var(--ink-2)}
+.manual .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+
+/* cards */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:14px}
+.card-h{display:flex;gap:10px;align-items:flex-start}
+.card-h h3{margin:0;font-size:19px;line-height:1.3;flex:1}
+.rank{color:var(--hot);font-weight:800;margin-inline-end:4px}
+.opp{flex:none;border-radius:99px;padding:3px 10px;font-weight:800;font-size:13px;background:var(--hot-soft);color:var(--hot);white-space:nowrap}
+.card .prob{margin:0;color:var(--ink-2);font-size:15px}
+.vol{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.vol small{display:block;font-size:11px;letter-spacing:.5px;color:var(--ink-3);text-transform:uppercase}
+.vol .qq{font-size:13px;color:var(--ink-2)}
+.vol b{font-size:24px;color:var(--good);font-weight:800;white-space:nowrap}
+.bars{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bar .lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-3)}
+.bar .lbl b{color:var(--ink)}
+.bar .track{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:4px}
+.bar .fill{height:100%;border-radius:99px}
+.box{border:1px solid var(--line);border-radius:12px;padding:12px}
+.box-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.box-h span{font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--good);text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.box p{margin:0 0 8px;font-size:15px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.tag{font-size:12px;font-weight:700;border-radius:7px;padding:2px 8px;background:var(--accent-soft);color:var(--accent)}
+.aud{font-size:13px;color:var(--ink-2);background:var(--surface-2);border-radius:8px;padding:6px 8px}
+.kv{margin:4px 0;font-size:14px}
+.kv b{color:var(--ink)}
+.kv span{color:var(--ink-2)}
+details.prompt{border-top:1px dashed var(--line);margin-top:8px;padding-top:8px}
+details.prompt summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--ink-2);display:flex;align-items:center;justify-content:space-between;gap:8px;list-style:none}
+details.prompt summary::-webkit-details-marker{display:none}
+details.prompt pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;color:var(--ink-2);background:var(--surface-2);border-radius:10px;padding:10px;margin:8px 0 0;max-height:280px;overflow:auto}
+.evid{border-inline-start:3px solid var(--line);padding-inline-start:10px}
+.evid small{font-size:11px;letter-spacing:.5px;color:var(--ink-3);text-transform:uppercase}
+.evid div{font-style:italic;color:var(--ink-2);font-size:14px}
+.card-f{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.card-f .btn{flex:1}
+.saved-on{background:var(--good-soft)!important;color:var(--good)!important;border-color:var(--good)!important}
+.hooks{margin:4px 0 0;padding-inline-start:18px;font-size:14px;color:var(--ink-2)}
+
+/* settings */
+.settings .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.settings label{display:block;font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.settings input,.settings select{width:100%;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:10px;padding:10px;font:inherit}
+.radio{display:grid;gap:8px}
+.radio label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-weight:500;color:var(--ink);cursor:pointer;margin:0}
+.radio label small{display:block;color:var(--ink-3);font-weight:400}
+.radio input{width:auto;margin-top:5px}
+.note{font-size:13px;color:var(--ink-3)}
+.status{font-size:14px;margin-top:8px}
+.empty{text-align:center;color:var(--ink-3);padding:40px 10px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:12px}
+.toolbar h2{margin:0;font-size:22px}
+.err-box{background:var(--hot-soft);color:var(--hot);border-radius:12px;padding:12px 14px;margin-top:14px;display:none;white-space:pre-wrap}
+.err-box.on{display:block}
+footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 30px;color:var(--ink-3);font-size:13px;text-align:center}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.2s;pointer-events:none;z-index:50}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.hidden{display:none!important}
+.spin{width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin .8s linear infinite}
+
+@media (max-width:900px){
+  .grid2,.cards,.settings .grid{grid-template-columns:1fr}
+  .how{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:520px){
+  .how{grid-template-columns:1fr}
+  .nav button .t,.nav a.hublink .t{display:none}
+  .bars{grid-template-columns:1fr}
+  .search .btn{width:100%}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="11" fill="none" stroke="var(--accent)" stroke-width="2.5"/><circle cx="14" cy="14" r="5" fill="none" stroke="var(--hot)" stroke-width="2.5"/><path d="M14 1v5M14 22v5M1 14h5M22 14h5" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/></svg>
+      צייד הנישות
+    </div>
+    <nav class="nav" aria-label="ניווט">
+      <button data-view="home" aria-current="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="t">חיפוש</span></button>
+      <button data-view="saved"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span class="t">שמורים</span><span class="badge-count" id="savedCount">0</span></button>
+      <button data-view="settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="t">הגדרות</span></button>
+      <a class="hublink" href="../" title="מרכז"><span>🏠</span><span class="t">מרכז</span></a>
+      <a class="hublink" href="../leads-radar/" title="Leads Radar"><span>📍</span><span class="t">Leads Radar</span></a>
+      <button id="themeBtn" title="מצב תצוגה" aria-label="החלפת מצב בהיר/כהה"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ================= HOME ================= -->
+<div id="view-home">
+  <div class="hero">
+    <span class="pill"><span class="dot"></span>נתוני חיפוש אמיתיים מגוגל, מיוטיוב ומוויקיפדיה</span>
+    <h1>איפה אנשים <span class="grad">תקועים</span> עכשיו?</h1>
+    <p class="sub">כותבים נישה, והכלי מוצא בעיות אמיתיות שאנשים מחפשים להן פתרון, ומחזיר רעיון למוצר דיגיטלי או לאפליקציה עם פרומפט מוכן לבנייה.</p>
+
+    <form class="search" id="searchForm" autocomplete="off">
+      <div class="field">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="seed" type="text" placeholder="לדוגמה: משכנתא, שינה של פעוטות, fitness" aria-label="נישה לחיפוש" required>
+      </div>
+      <select id="market" aria-label="שוק">
+        <option value="il">🇮🇱 ישראל · עברית</option>
+        <option value="us">🇺🇸 ארה״ב · אנגלית</option>
+      </select>
+      <button class="btn btn-primary" id="goBtn" type="submit">גלה טרנדים</button>
+    </form>
+    <div class="chips" id="chips"></div>
+    <div class="mode-note" id="modeNote"></div>
+
+    <div class="progress" id="progress"><ol id="steps"></ol></div>
+    <div class="err-box" id="errBox"></div>
+  </div>
+
+  <div id="howBox">
+    <div class="how">
+      <div class="step"><div class="n">1</div><b>כותבים נישה</b><p>נושא רחב או בעיה. בוחרים שוק: ישראל או ארה״ב.</p></div>
+      <div class="step"><div class="n">2</div><b>אוספים ראיות חיות</b><p>עשרות השלמות אוטומטיות מגוגל ומ-YouTube, ומגמת עניין מוויקיפדיה.</p></div>
+      <div class="step"><div class="n">3</div><b>AI מזהה פערים</b><p>בעיות ספציפיות עם ביקוש גבוה ופתרונות חלשים.</p></div>
+      <div class="step"><div class="n">4</div><b>מעתיקים ובונים</b><p>פרומפטים למוצר, לדף המכירה ולמודעות, להדבקה ב-Claude, ב-Lovable או ב-Base44.</p></div>
+    </div>
+  </div>
+
+  <!-- manual mode panel -->
+  <section class="block hidden" id="manualBox">
+    <div class="panel manual">
+      <h2>שלב ה-AI · ידני דרך Claude.ai (בלי מפתח)</h2>
+      <ol>
+        <li>לחצו <b>"העתק פרומפט"</b>. כל הראיות שנאספו כבר בפנים.</li>
+        <li>פתחו <a href="https://claude.ai/new" target="_blank" rel="noopener">שיחה חדשה ב-Claude.ai</a>, הדביקו (Ctrl+V) ושלחו.</li>
+        <li>העתיקו את כל התשובה של Claude, הדביקו בתיבה למטה ולחצו <b>"הצג תוצאות"</b>.</li>
+      </ol>
+      <div class="row">
+        <button class="btn btn-primary" id="copyPromptBtn" type="button">העתק פרומפט</button>
+        <a class="btn btn-ghost" href="https://claude.ai/new" target="_blank" rel="noopener">פתח את Claude.ai ↗</a>
+      </div>
+      <textarea id="pasteBox" placeholder="הדביקו כאן את תשובת Claude (JSON)…"></textarea>
+      <div class="row"><button class="btn btn-primary" id="renderPasteBtn" type="button">הצג תוצאות</button></div>
+      <p class="note">רוצים שזה יקרה אוטומטית? מכניסים מפתח API של Claude או של Gemini ב<a href="#" data-goto="settings">הגדרות</a>.</p>
+    </div>
+  </section>
+
+  <!-- evidence + trend -->
+  <section class="block hidden" id="evidenceBox">
+    <div class="grid2">
+      <div class="panel">
+        <h2>ראיות מהשטח · השלמות אוטומטיות</h2>
+        <p class="lead" id="evLead"></p>
+        <div class="qlist" id="qlist" style="margin-top:10px"></div>
+      </div>
+      <div class="panel">
+        <h2>מגמת עניין · ויקיפדיה</h2>
+        <p class="lead" id="trLead"></p>
+        <div class="kpis" id="trKpis"></div>
+        <svg class="chart" id="trChart" viewBox="0 0 600 170" preserveAspectRatio="none" role="img" aria-label="גרף צפיות יומי ותחזית"></svg>
+        <div class="legend"><span><i style="background:var(--accent)"></i>צפיות (ממוצע 7 ימים)</span><span><i style="background:var(--hot)"></i>תחזית ל-30 יום</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- signal -->
+  <section class="block hidden" id="signalBox">
+    <div class="panel">
+      <h2>✦ האות בנישה "<span id="sigSeed"></span>"</h2>
+      <p class="lead" id="sigText" style="font-size:16px"></p>
+    </div>
+  </section>
+
+  <!-- results -->
+  <section class="block hidden" id="resultsBox">
+    <div class="cards" id="cards"></div>
+  </section>
+</div>
+
+<!-- ================= SAVED ================= -->
+<div id="view-saved" class="hidden">
+  <section class="block">
+    <div class="toolbar">
+      <h2>הזדמנויות שמורות</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" id="expJson">ייצוא JSON</button>
+        <button class="btn btn-ghost btn-sm" id="expCsv">ייצוא CSV (אקסל)</button>
+        <label class="btn btn-ghost btn-sm" style="margin:0">ייבוא JSON<input type="file" id="impJson" accept=".json,application/json" class="hidden"></label>
+      </div>
+    </div>
+    <div class="cards" id="savedCards"></div>
+    <div class="empty hidden" id="savedEmpty">עדיין לא שמרתם הזדמנויות. בכל כרטיס תוצאה יש כפתור "שמור".</div>
+  </section>
+</div>
+
+<!-- ================= SETTINGS ================= -->
+<div id="view-settings" class="hidden">
+  <section class="block settings">
+    <div class="panel">
+      <h2>מנוע ה-AI</h2>
+      <p class="lead">כאן בוחרים מי מנתח את הראיות. המפתח נשמר רק בדפדפן הזה, במחשב הזה, ונשלח רק לספק שבחרתם.</p>
+      <div class="radio" style="margin:14px 0">
+        <label><input type="radio" name="prov" value="manual"><span><b>ידני דרך Claude.ai</b> (ללא מפתח)<small>הכלי מכין פרומפט, אתם מדביקים ב-Claude.ai ומחזירים את התשובה. עובד עם המנוי הרגיל.</small></span></label>
+        <label><input type="radio" name="prov" value="claude"><span><b>Claude API</b> (אוטומטי)<small>מפתח מ-<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Anthropic Console › API Keys</a>. בתשלום לפי שימוש.</small></span></label>
+        <label><input type="radio" name="prov" value="gemini"><span><b>Gemini API</b> (אוטומטי)<small>מפתח מ-<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio › Get API key</a>. יש מסלול חינמי.</small></span></label>
+      </div>
+      <div class="grid" id="keyGrid">
+        <div>
+          <label for="apiKey">מפתח API</label>
+          <input id="apiKey" type="password" placeholder="הדביקו כאן את המפתח" dir="ltr" autocomplete="off">
+        </div>
+        <div>
+          <label for="model">מודל</label>
+          <select id="model" dir="ltr"><option value="">— קודם בדקו חיבור —</option></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+        <button class="btn btn-primary" id="testBtn" type="button">בדוק חיבור וטען מודלים</button>
+        <button class="btn btn-ghost" id="saveSetBtn" type="button">שמור הגדרות</button>
+        <button class="btn btn-ghost" id="clearKeyBtn" type="button">מחק מפתח מהדפדפן</button>
+      </div>
+      <div class="status" id="setStatus"></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h2>על הנתונים (בשקיפות)</h2>
+      <ul class="note" style="margin:6px 0 0;padding-inline-start:18px;line-height:1.8">
+        <li><b>השלמות אוטומטיות</b>: אמיתיות, נאספות ברגע החיפוש מגוגל ומ-YouTube. "אות" = כמה פעמים וכמה גבוה השאילתה הופיעה.</li>
+        <li><b>ביקוש</b> בכרטיס: מחושב מהאותות האמיתיים האלה, יחסית לשאר ההזדמנויות באותו חיפוש.</li>
+        <li><b>חיפושים חודשיים</b> ו<b>תחרות</b>: הערכה של ה-AI, לא נתון מדוד. לנפח מדויק צריך כלי בתשלום (vidIQ, Ahrefs, Google Keyword Planner).</li>
+        <li><b>מגמה</b>: צפיות אמיתיות בערך ויקיפדיה הקרוב לנישה ב-120 הימים האחרונים. התחזית היא קו מגמה ליניארי.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+</main>
+
+<footer>
+  <div class="wrap">צייד הנישות · שמוליק שחר · ייעוץ והטמעת בינה מלאכותית לעסקים ולבעלי מקצוע · SHAHAR AI PRODUCTIONS</div>
+</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ---------------- utilities ---------------- */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("on"),1800); }
+async function copyText(txt){
+  try{ await navigator.clipboard.writeText(txt); }
+  catch(e){ const ta=document.createElement("textarea"); ta.value=txt; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+  toast("הועתק ✓");
+}
+function fmtNum(n){ n=Number(n)||0; if(n>=1e6) return (n/1e6).toFixed(1).replace(/\.0$/,"")+"M"; if(n>=1e3) return (n/1e3).toFixed(1).replace(/\.0$/,"")+"K"; return String(Math.round(n)); }
+function clamp(n,a,b){ return Math.max(a,Math.min(b,n)); }
+function download(name, text, type){ const b=new Blob([text],{type}); const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500); }
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+/* ---------------- theme ---------------- */
+(function(){ const t=LS.get("hub_nh_theme",null); if(t) document.documentElement.setAttribute("data-theme",t); })();
+$("#themeBtn").addEventListener("click",()=>{
+  const cur=document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+  const nx=cur==="dark"?"light":"dark"; document.documentElement.setAttribute("data-theme",nx); LS.set("hub_nh_theme",nx);
+});
+
+/* ---------------- views ---------------- */
+function show(view){
+  ["home","saved","settings"].forEach(v=>$("#view-"+v).classList.toggle("hidden",v!==view));
+  $$(".nav button[data-view]").forEach(b=>b.setAttribute("aria-current", String(b.dataset.view===view)));
+  if(view==="saved") renderSaved();
+  if(view==="settings") loadSettingsUI();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+$$(".nav button[data-view]").forEach(b=>b.addEventListener("click",()=>show(b.dataset.view)));
+document.addEventListener("click",e=>{ const g=e.target.closest("[data-goto]"); if(g){ e.preventDefault(); show(g.dataset.goto); }});
+
+/* ---------------- settings ---------------- */
+const settings = Object.assign({provider:"manual", key:"", model:""}, LS.get("hub_nh_settings",{}));
+function saveSettings(){ LS.set("hub_nh_settings",settings); updateModeNote(); }
+// HUB: first run only - reuse the Gemini key already saved in Leads Radar (read-only)
+(function(){ if(LS.get("hub_nh_settings",null)) return; const lr=LS.get("hub_lr_settings",null)||LS.get("lr_settings",null);
+  if(lr && lr.gemini){ settings.provider="gemini"; settings.key=lr.gemini; settings.model=lr.model||"gemini-2.5-flash"; LS.set("hub_nh_settings",settings); } })();
+function updateModeNote(){
+  const p=settings.provider;
+  const txt = p==="manual" ? 'מצב עבודה: <b>ידני דרך Claude.ai</b> (בלי מפתח). <button data-goto="settings">לשנות ל-API אוטומטי</button>'
+    : `מצב עבודה: <b>${p==="claude"?"Claude API":"Gemini API"}</b> · ${esc(settings.model||"לא נבחר מודל")} · <button data-goto="settings">הגדרות</button>`;
+  $("#modeNote").innerHTML = txt;
+}
+function loadSettingsUI(){
+  $$('input[name="prov"]').forEach(r=>r.checked = r.value===settings.provider);
+  $("#apiKey").value = settings.key || "";
+  const sel=$("#model");
+  if(settings.model && ![...sel.options].some(o=>o.value===settings.model)){
+    sel.innerHTML = `<option value="${esc(settings.model)}">${esc(settings.model)}</option>`;
+  }
+  sel.value = settings.model || "";
+  $("#keyGrid").style.opacity = settings.provider==="manual" ? .45 : 1;
+}
+$$('input[name="prov"]').forEach(r=>r.addEventListener("change",()=>{
+  if(r.value!==settings.provider){ settings.model=""; $("#model").innerHTML='<option value="">— קודם בדקו חיבור —</option>'; }
+  settings.provider=r.value; settings.key = r.value==="manual" ? settings.key : $("#apiKey").value.trim();
+  $("#keyGrid").style.opacity = r.value==="manual" ? .45 : 1;
+}));
+$("#saveSetBtn").addEventListener("click",()=>{
+  settings.key=$("#apiKey").value.trim(); settings.model=$("#model").value;
+  if(settings.provider!=="manual" && !settings.key){ $("#setStatus").innerHTML='<span class="down">חסר מפתח API.</span>'; return; }
+  if(settings.provider!=="manual" && !settings.model){ $("#setStatus").innerHTML='<span class="down">לחצו קודם "בדוק חיבור וטען מודלים" ובחרו מודל.</span>'; return; }
+  saveSettings(); $("#setStatus").innerHTML='<span class="up">נשמר ✓</span>';
+});
+$("#clearKeyBtn").addEventListener("click",()=>{ settings.key=""; settings.model=""; $("#apiKey").value=""; saveSettings(); $("#setStatus").innerHTML='<span class="up">המפתח נמחק מהדפדפן.</span>'; });
+$("#testBtn").addEventListener("click",async()=>{
+  settings.key=$("#apiKey").value.trim();
+  const st=$("#setStatus");
+  if(settings.provider==="manual"){ st.innerHTML='במצב ידני אין צורך בחיבור. בחרו Claude API או Gemini API כדי לבדוק מפתח.'; return; }
+  if(!settings.key){ st.innerHTML='<span class="down">הדביקו מפתח API קודם.</span>'; return; }
+  st.innerHTML='<span class="spin"></span> בודק…';
+  try{
+    const models = await listModels(settings.provider, settings.key);
+    if(!models.length) throw new Error("לא הוחזרו מודלים");
+    const sel=$("#model"); sel.innerHTML = models.map(m=>`<option value="${esc(m.id)}">${esc(m.label)}</option>`).join("");
+    const pick = settings.provider==="claude"
+      ? (models.find(m=>/sonnet/i.test(m.id)) || models[0]).id
+      : (models.find(m=>/flash/i.test(m.id) && !/lite|image|tts|audio|live|thinking|exp/i.test(m.id)) || models[0]).id;
+    sel.value = settings.model && models.some(m=>m.id===settings.model) ? settings.model : pick;
+    settings.model = sel.value; saveSettings();
+    st.innerHTML = `<span class="up">החיבור תקין ✓ נטענו ${models.length} מודלים. נבחר: ${esc(settings.model)}. ההגדרות נשמרו.</span>`;
+  }catch(e){ st.innerHTML = `<span class="down">החיבור נכשל: ${esc(e.message)}</span>`; }
+});
+
+/* ---------------- AI providers ---------------- */
+async function errText(r){ let t=""; try{ const j=await r.json(); t = j.error?.message || JSON.stringify(j); }catch(e){ t = r.statusText; } return `HTTP ${r.status}: ${t}`; }
+async function listModels(provider, key){
+  if(provider==="claude"){
+    const r = await fetch("https://api.anthropic.com/v1/models?limit=100",{headers:{"x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"}});
+    if(!r.ok) throw new Error(await errText(r));
+    const j = await r.json(); return (j.data||[]).map(m=>({id:m.id,label:(m.display_name||m.id)+" · "+m.id}));
+  }
+  const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key="+encodeURIComponent(key));
+  if(!r.ok) throw new Error(await errText(r));
+  const j = await r.json();
+  return (j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent"))
+    .map(m=>({id:m.name.replace(/^models\//,""),label:(m.displayName||m.name)+" · "+m.name.replace(/^models\//,"")}))
+    .sort((a,b)=>b.id.localeCompare(a.id,undefined,{numeric:true}));
+}
+async function callAI(system, user, maxTokens){
+  const {provider,key,model} = settings;
+  if(provider==="claude"){
+    const r = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model,max_tokens:maxTokens,system,messages:[{role:"user",content:user}]})});
+    if(!r.ok) throw new Error(await errText(r));
+    const j = await r.json(); return (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+  }
+  if(provider==="gemini"){
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:user}]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:maxTokens,temperature:0.7}})});
+    if(!r.ok) throw new Error(await errText(r));
+    const j = await r.json(); return (j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("");
+  }
+  throw new Error("לא הוגדר ספק AI");
+}
+function parseJSON(txt){
+  let s = String(txt||"").trim().replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
+  const a = s.indexOf("{"), b = s.lastIndexOf("}");
+  if(a<0||b<0) throw new Error("לא נמצא JSON בתשובה");
+  return JSON.parse(s.slice(a,b+1));
+}
+
+/* ---------------- live data: autocomplete (JSONP) ---------------- */
+function jsonp(url, ms=7000){
+  return new Promise((res,rej)=>{
+    const cb="nhcb_"+Math.random().toString(36).slice(2);
+    const s=document.createElement("script");
+    const done=()=>{ try{ delete window[cb]; }catch(e){ window[cb]=undefined; } s.remove(); };
+    const t=setTimeout(()=>{ done(); rej(new Error("timeout")); },ms);
+    window[cb]=d=>{ clearTimeout(t); done(); res(d); };
+    s.onerror=()=>{ clearTimeout(t); done(); rej(new Error("network")); };
+    s.src=url+(url.includes("?")?"&":"?")+"callback="+cb;
+    document.head.appendChild(s);
+  });
+}
+const MODS = {
+  us:{ pre:["how to ","best ","why ","can i ","is ","what is ","how much ","where to "," "], post:[" for beginners"," app"," template"," checklist"," tracker"," without"," vs"," tips"," problems"," cost"," calculator"," plan"," guide"," for"," help"] , hl:"en", gl:"us" },
+  il:{ pre:["איך ","הכי טוב ","למה ","האם ","מה זה ","כמה עולה ","איפה ","מה עושים ","טיפים "], post:[" למתחילים"," אפליקציה"," טבלה"," רשימה"," בלי"," או"," מחיר"," מחשבון"," תוכנית"," מדריך"," עם"," ל"," ב"," זה"," לא"], hl:"he", gl:"il" }
+};
+async function pool(items, n, fn){
+  const out=new Array(items.length); let i=0;
+  const workers=Array.from({length:n},async()=>{ while(i<items.length){ const k=i++; try{ out[k]=await fn(items[k],k); }catch(e){ out[k]=null; } } });
+  await Promise.all(workers); return out;
+}
+async function collectSuggestions(seed, market, onTick){
+  const m=MODS[market];
+  const variants=[seed, ...m.pre.map(p=>p+seed), ...m.post.map(p=>seed+p)];
+  const jobs=[];
+  variants.forEach(v=>jobs.push({src:"G",q:v,url:`https://suggestqueries.google.com/complete/search?client=firefox&hl=${m.hl}&gl=${m.gl}&q=${encodeURIComponent(v)}`}));
+  [seed, ...m.pre.slice(0,4).map(p=>p+seed), ...m.post.slice(0,4).map(p=>seed+p)].forEach(v=>jobs.push({src:"YT",q:v,url:`https://suggestqueries.google.com/complete/search?client=youtube&ds=yt&hl=${m.hl}&gl=${m.gl}&q=${encodeURIComponent(v)}`}));
+  const map=new Map(); let done=0, okCount=0;
+  await pool(jobs,6,async job=>{
+    const d = await jsonp(job.url);
+    done++; onTick && onTick(done, jobs.length);
+    const arr = Array.isArray(d?.[1]) ? d[1] : [];
+    if(arr.length) okCount++;
+    arr.forEach((it,idx)=>{
+      const q = String(Array.isArray(it)?it[0]:it).trim().toLowerCase();
+      if(!q || q.length<3) return;
+      const w = Math.max(1, 10-idx) * (job.src==="YT"?0.8:1);
+      const cur = map.get(q) || {q, score:0, hits:0, src:new Set()};
+      cur.score+=w; cur.hits++; cur.src.add(job.src); map.set(q,cur);
+    });
+  });
+  const list=[...map.values()].map(x=>({q:x.q,score:Math.round(x.score*10)/10,hits:x.hits,src:[...x.src]}))
+    .sort((a,b)=>b.score-a.score);
+  return {list, requests:jobs.length, okRequests:okCount};
+}
+
+/* ---------------- live data: Wikipedia trend ---------------- */
+function ymd(d){ return d.toISOString().slice(0,10).replace(/-/g,""); }
+async function wikiTrend(seed, market){
+  const langs = market==="il" ? ["he","en"] : ["en"];
+  for(const lang of langs){
+    try{
+      const r = await fetch(`https://${lang}.wikipedia.org/w/api.php?action=opensearch&limit=1&namespace=0&format=json&origin=*&search=${encodeURIComponent(seed)}`);
+      const j = await r.json();
+      const title = j?.[1]?.[0]; if(!title) continue;
+      const end=new Date(); end.setUTCDate(end.getUTCDate()-1);
+      const start=new Date(end); start.setUTCDate(start.getUTCDate()-119);
+      const art = encodeURIComponent(title.replace(/ /g,"_"));
+      const r2 = await fetch(`https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/${lang}.wikipedia/all-access/user/${art}/daily/${ymd(start)}/${ymd(end)}`);
+      if(!r2.ok) continue;
+      const j2 = await r2.json();
+      const byDay = new Map((j2.items||[]).map(it=>[it.timestamp.slice(0,8), it.views]));
+      const series=[]; const d=new Date(start);
+      while(d<=end){ series.push(byDay.get(ymd(d))||0); d.setUTCDate(d.getUTCDate()+1); }
+      if(series.reduce((a,b)=>a+b,0) < 30) continue;
+      return {lang, title, url:`https://${lang}.wikipedia.org/wiki/${art}`, series};
+    }catch(e){ /* try next */ }
+  }
+  return null;
+}
+function analyzeTrend(series){
+  const ma = series.map((_,i)=>{ const s=series.slice(Math.max(0,i-6),i+1); return s.reduce((a,b)=>a+b,0)/s.length; });
+  const last30 = series.slice(-30).reduce((a,b)=>a+b,0)/30;
+  const prev30 = series.slice(-60,-30).reduce((a,b)=>a+b,0)/30;
+  const change = prev30 ? (last30-prev30)/prev30*100 : 0;
+  const tail = ma.slice(-90); const n=tail.length;
+  const xm=(n-1)/2, ym=tail.reduce((a,b)=>a+b,0)/n;
+  let num=0, den=0; tail.forEach((y,x)=>{ num+=(x-xm)*(y-ym); den+=(x-xm)**2; });
+  const slope = den? num/den : 0, icpt = ym - slope*xm;
+  const forecast = Array.from({length:30},(_,k)=>Math.max(0, icpt + slope*(n+k)));
+  const next30 = forecast.reduce((a,b)=>a+b,0)/30;
+  const fChange = last30 ? (next30-last30)/last30*100 : 0;
+  return {ma, forecast, last30, change, fChange, daily:Math.round(last30)};
+}
+function drawChart(ma, forecast){
+  const W=600,H=170,P=8; const all=[...ma,...forecast]; const max=Math.max(...all,1);
+  const x=i=> P + i*(W-2*P)/(all.length-1); const y=v=> H-P - v/max*(H-2*P);
+  const path=(arr,off)=>arr.map((v,i)=>`${i?"L":"M"}${x(i+off).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const area = path(ma,0)+` L${x(ma.length-1).toFixed(1)},${H-P} L${x(0).toFixed(1)},${H-P} Z`;
+  const fc = [ma[ma.length-1],...forecast];
+  $("#trChart").innerHTML = `
+    <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".28"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+    <line x1="${P}" x2="${W-P}" y1="${H-P}" y2="${H-P}" stroke="var(--line)"/>
+    <path d="${area}" fill="url(#g1)"/>
+    <path d="${path(ma,0)}" fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+    <path d="${path(fc,ma.length-1)}" fill="none" stroke="var(--hot)" stroke-width="2.5" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/>
+    <line x1="${x(ma.length-1)}" x2="${x(ma.length-1)}" y1="${P}" y2="${H-P}" stroke="var(--line)" stroke-dasharray="3 4"/>`;
+}
+
+/* ---------------- prompts ---------------- */
+function aiSystem(){
+  return `You are a sharp niche-research analyst for digital products and micro-apps. You receive REAL autocomplete queries (Google + YouTube) collected seconds ago for a seed niche, each with a local "signal" score (higher = appeared more often and higher in the suggestion lists), plus an optional Wikipedia attention trend.
+Your job: find the 6 best specific, painful, recurring problems people are stuck on that a small sellable digital product can solve (web app / micro-tool, calculator, tracker, template, checklist, PDF guide, planner). Prefer problems with buying intent and weak existing solutions. Avoid anything requiring a license (medical diagnosis, legal/financial advice) — reframe into organizers, trackers, preparation tools, checklists.
+Hard rules:
+- Every opportunity MUST cite 2-5 queries copied VERBATIM from the provided list in "evidence".
+- "top_query" must be one of the evidence queries (the strongest one).
+- "est_monthly_searches": conservative integer estimate of monthly searches for top_query in the target market (it is an estimate; be realistic, smaller markets = smaller numbers).
+- "competition": 0-100 estimate of how saturated good existing solutions are (lower = bigger gap).
+- "lead_keywords": 2-3 short Google Maps search terms for LOCAL BUSINESSES that serve this audience and could buy, resell or recommend the product (e.g. "יועץ משכנתאות", "גן ילדים"). Hebrew for Israel, English for US.
+- Output ONLY valid JSON, no markdown, no commentary.`;
+}
+function aiUser(seed, market, ev, trend){
+  const lang = market==="il";
+  const rows = ev.slice(0,90).map(x=>`${x.score}\t${x.src.join("+")}\t${x.q}`).join("\n");
+  const tr = trend ? `Wikipedia article "${trend.title}" (${trend.lang}): avg ${trend.a.daily}/day last 30 days, ${trend.a.change.toFixed(0)}% vs previous 30 days, linear forecast next 30 days ${trend.a.fChange.toFixed(0)}%.` : "No Wikipedia trend available.";
+  const langRule = lang
+    ? `TARGET MARKET: Israel. Write EVERYTHING (all text fields) in natural, modern Hebrew. Prices in ILS (number only). Product/tool names may be Hebrew.`
+    : `TARGET MARKET: United States. Write "signal" and "problem" in Hebrew (for the Israeli operator). Write ALL product, sales and ad fields in natural US English. Prices in USD (number only).`;
+  return `SEED NICHE: "${seed}"
+${langRule}
+TREND: ${tr}
+
+AUTOCOMPLETE EVIDENCE (signal<TAB>source<TAB>query), ${ev.length} unique queries, top 90 shown:
+${rows}
+
+Return JSON exactly in this shape:
+{
+ "signal": "3-4 sentences: where the demand concentrates, what people are stuck on, where the gaps are",
+ "opportunities": [
+  {
+   "title": "specific product idea title",
+   "problem": "1-2 sentences: the exact pain",
+   "top_query": "verbatim query",
+   "evidence": ["verbatim query", "verbatim query", "verbatim query"],
+   "est_monthly_searches": 1200,
+   "competition": 30,
+   "lead_keywords": ["local business type", "local business type"],
+   "product": {
+     "name": "short product name",
+     "type": "Web app | Calculator | Tracker | Template | Checklist | PDF guide | Planner",
+     "description": "1-2 sentences: what it does",
+     "price": 19,
+     "audience": "who buys it",
+     "features": ["feature", "feature", "feature", "feature"]
+   },
+   "sales": {
+     "angle": "1 sentence positioning of the landing page",
+     "headline": "sales page headline",
+     "subheadline": "sales page subheadline",
+     "cta": "button text",
+     "pains": ["pain", "pain", "pain"],
+     "steps": ["step 1", "step 2", "step 3"],
+     "faq": [{"q":"question","a":"answer"},{"q":"question","a":"answer"},{"q":"question","a":"answer"}],
+     "style": "short visual style direction"
+   },
+   "ads": {
+     "angle": "core ad angle",
+     "hooks": ["scroll-stopping hook", "hook", "hook"]
+   }
+  }
+ ]
+}`;
+}
+function salesRefreshUser(o, market){
+  const lang = market==="il" ? "Hebrew" : "US English";
+  return `Write a NEW, different sales-page angle for this product. Language: ${lang}.
+Product: ${JSON.stringify(o.product)}
+Problem: ${o.problem}
+Evidence queries: ${JSON.stringify(o.evidence)}
+Previous angle (do NOT repeat): ${o.sales?.angle || ""}
+Return ONLY JSON: {"angle":"","headline":"","subheadline":"","cta":"","pains":["","",""],"steps":["","",""],"faq":[{"q":"","a":""},{"q":"","a":""},{"q":"","a":""}],"style":""}`;
+}
+
+/* local prompt builders — the long copy-paste prompts */
+const TYPE_HE={"web app":"אפליקציית ווב","calculator":"מחשבון","tracker":"כלי מעקב","template":"תבנית","checklist":"צ'קליסט","pdf guide":"מדריך PDF","planner":"מתכנן"};
+function typeLabel(t,market){ const k=String(t||"").trim().toLowerCase(); return market==="il" ? (TYPE_HE[k]||t||"אפליקציית ווב") : (t||"Web app"); }
+function cur(market,p){ return market==="il" ? `${p} ₪` : `$${p}`; }
+function productPrompt(o, market){
+  const p=o.product||{};
+  if(market==="il") return `בנה ${typeLabel(p.type,market)} מלא ועובד בשם "${p.name}".
+מטרה: ${p.description}
+הבעיה שהוא פותר: ${o.problem}
+קהל יעד: ${p.audience}
+אנשים מחפשים בגוגל בדיוק את זה: ${(o.evidence||[]).map(q=>`"${q}"`).join(", ")}
+
+פיצ'רים חובה:
+${(p.features||[]).map((f,i)=>`${i+1}. ${f}`).join("\n")}
+
+דרישות:
+- ממשק בעברית מלאה, כיוון RTL, רספונסיבי למובייל.
+- בלי הרשמה ובלי שרת: שמירת נתונים מקומית בדפדפן (localStorage).
+- כפתור ייצוא/הדפסה של התוצאה (PDF דרך הדפסה, או CSV).
+- מסך פתיחה קצר שמסביר מה עושים ב-3 צעדים.
+- עיצוב נקי ומודרני, כפתורים גדולים, טיפוגרפיה ברורה.
+- ללא ייעוץ רפואי/משפטי/פיננסי. הוסף הערת "מידע כללי בלבד" במקום המתאים.
+תן קוד מלא ועובד בקובץ אחד, מוכן לפרסום.`;
+  return `Build a complete, working ${p.type||"web app"} called "${p.name}".
+Purpose: ${p.description}
+Problem it solves: ${o.problem}
+Target users: ${p.audience}
+People are literally searching for: ${(o.evidence||[]).map(q=>`"${q}"`).join(", ")}
+
+Must-have features:
+${(p.features||[]).map((f,i)=>`${i+1}. ${f}`).join("\n")}
+
+Requirements:
+- Single page, fully responsive, mobile-first.
+- No login, no backend: save data locally (localStorage).
+- Export/print the result (print-to-PDF or CSV).
+- A short 3-step onboarding screen.
+- Clean modern UI, large tap targets, clear typography.
+- No medical/legal/financial advice; add a "general information only" note where relevant.
+Deliver complete working code in one file, ready to publish.`;
+}
+function salesPrompt(o, market){
+  const p=o.product||{}, s=o.sales||{};
+  if(market==="il") return `צור דף נחיתה ממיר (עמוד אחד) למוצר "${p.name}" – ${p.description}
+מבנה העמוד:
+1. Hero: כותרת "${s.headline}", תת-כותרת "${s.subheadline}", כפתור CTA בולט "${s.cta} (${cur(market,p.price)})".
+2. סקשן הבעיה: ${(s.pains||[]).map(x=>`• ${x}`).join(" ")}
+3. סקשן הפתרון ב-3 צעדים: ${(s.steps||[]).map((x,i)=>`${i+1}) ${x}`).join(" ")}
+4. פיצ'רים: ${(p.features||[]).join(" · ")}
+5. למי זה מתאים: ${p.audience}
+6. תמחור: תשלום חד-פעמי ${cur(market,p.price)}, כולל אחריות החזר כספי.
+7. FAQ: ${(s.faq||[]).map(f=>`ש: ${f.q} ת: ${f.a}`).join(" | ")}
+8. CTA סופי חוזר עם הכפתור "${s.cta}".
+סגנון: ${s.style||"נקי ומודרני"}. עברית מלאה, RTL, רספונסיבי, ניגודיות גבוהה בכפתורים, בלי עיצוב markdown בטקסט המוצג.
+זווית שיווקית: ${s.angle}`;
+  return `Create a high-converting single-page landing page for "${p.name}" – ${p.description}
+Page structure:
+1. Hero: headline "${s.headline}", subheadline "${s.subheadline}", prominent CTA button "${s.cta} (${cur(market,p.price)})".
+2. Problem section: ${(s.pains||[]).map(x=>`• ${x}`).join(" ")}
+3. 3-step solution section: ${(s.steps||[]).map((x,i)=>`${i+1}) ${x}`).join(" ")}
+4. Features grid: ${(p.features||[]).join(" · ")}
+5. Who it's for: ${p.audience}
+6. Pricing: one-time ${cur(market,p.price)} with a money-back guarantee badge.
+7. FAQ: ${(s.faq||[]).map(f=>`Q: ${f.q} A: ${f.a}`).join(" | ")}
+8. Final CTA repeating "${s.cta}".
+Style: ${s.style||"clean and modern"}. Fully responsive, high-contrast buttons, plain text (no markdown formatting in rendered copy).
+Positioning angle: ${s.angle}`;
+}
+function adCopyPrompt(o, market){
+  const p=o.product||{}, a=o.ads||{};
+  if(market==="il") return `כתוב 5 וריאציות למודעה בפייסבוק ובאינסטגרם למוצר "${p.name}" (${p.description}).
+קהל: ${p.audience}. מחיר: ${cur(market,p.price)} חד-פעמי.
+זווית מרכזית: ${a.angle}
+אנשים מחפשים: ${(o.evidence||[]).map(q=>`"${q}"`).join(", ")}
+השתמש בהוקים האלה כנקודת פתיחה: ${(a.hooks||[]).map(h=>`"${h}"`).join(" / ")}
+לכל וריאציה: הוק לשורה הראשונה (עד 8 מילים), גוף של 2-3 משפטים, כותרת (עד 40 תווים), CTA.
+טון: ישיר, אנושי, בלי הבטחות מוגזמות ובלי סימני קריאה מרובים. עברית טבעית.`;
+  return `Write 5 Facebook/Instagram ad variations for "${p.name}" (${p.description}).
+Audience: ${p.audience}. Price: ${cur(market,p.price)} one-time.
+Core angle: ${a.angle}
+People search for: ${(o.evidence||[]).map(q=>`"${q}"`).join(", ")}
+Start from these hooks: ${(a.hooks||[]).map(h=>`"${h}"`).join(" / ")}
+For each: first-line hook (max 8 words), 2-3 sentence body, headline (max 40 chars), CTA.
+Tone: direct, human, no hype, no exaggerated claims.`;
+}
+function adCreativePrompt(o, market){
+  const p=o.product||{}, a=o.ads||{};
+  if(market==="il") return `צור קונספט ויזואלי למודעה אנכית 9:16 (תמונה או וידאו של 15 שניות) למוצר "${p.name}".
+שנייה 0-3: המחשה של הרגע המתסכל – ${o.problem}
+שנייה 3-10: המסך של הכלי פותר את זה (צילום מסך של הממשק, תנועה עדינה).
+שנייה 10-15: טקסט על המסך "${(a.hooks||[])[0]||p.name}" + CTA "${o.sales?.cta||"להתחיל עכשיו"}".
+סגנון: ${o.sales?.style||"נקי ומודרני"}, צבעים חזקים, טקסט גדול קריא במובייל, בלי לוגואים של מותגים אחרים.`;
+  return `Create a vertical 9:16 ad concept (image or 15-second video) for "${p.name}".
+0-3s: show the frustrating moment – ${o.problem}
+3-10s: the tool's screen solving it (UI screenshot, subtle motion).
+10-15s: on-screen text "${(a.hooks||[])[0]||p.name}" + CTA "${o.sales?.cta||"Get started"}".
+Style: ${o.sales?.style||"clean and modern"}, bold colors, large mobile-readable text, no third-party logos.`;
+}
+
+/* ---------------- scoring ---------------- */
+function enrich(result, ev){
+  const idx = new Map(ev.map(x=>[x.q, x]));
+  const ops = (result.opportunities||[]).filter(o=>o && o.title);
+  ops.forEach(o=>{
+    o.evidence = (o.evidence||[]).map(q=>String(q).trim()).filter(Boolean);
+    let sig=0, matched=0;
+    o.evidence.forEach(q=>{
+      const k=q.toLowerCase();
+      let hit = idx.get(k);
+      if(!hit){ hit = ev.find(x=>x.q.includes(k) || k.includes(x.q)); }
+      if(hit){ sig += hit.score; matched++; }
+    });
+    o._signal = sig; o._matched = matched;
+  });
+  const maxSig = Math.max(1, ...ops.map(o=>o._signal));
+  ops.forEach(o=>{
+    o.demand = o._matched ? Math.round(clamp(35 + 65*Math.sqrt(o._signal/maxSig), 1, 99)) : Math.round(clamp(Number(o.demand)||40,1,99));
+    o.competition = Math.round(clamp(Number(o.competition)||50, 1, 99));
+    o.opp = Math.round(clamp(o.demand*0.55 + (100-o.competition)*0.45, 1, 99));
+  });
+  ops.sort((a,b)=>b.opp-a.opp);
+  result.opportunities = ops;
+  return result;
+}
+
+/* ---------------- rendering ---------------- */
+const state = { seed:"", market:"il", ev:[], trend:null, result:null, running:false };
+function barColor(v, inverse){ const good = inverse ? v<40 : v>=65; const mid = inverse ? v<65 : v>=40; return good?"var(--good)":mid?"var(--warn)":"var(--hot)"; }
+function cardHTML(o, i, ctx){
+  const {market, saved, savedMode} = ctx;
+  const p=o.product||{}, s=o.sales||{}, a=o.ads||{};
+  const uid = o._id;
+  return `<article class="card" data-id="${esc(uid)}">
+    <div class="card-h"><h3><span class="rank">#${i+1}</span>${esc(o.title)}</h3><span class="opp" title="ציון הזדמנות: ביקוש גבוה + תחרות נמוכה">${o.opp} הזדמנות</span></div>
+    <p class="prob">${esc(o.problem)}</p>
+    ${savedMode?`<div class="note">נישה: <b>${esc(o._seed||"")}</b> · ${o._market==="us"?"ארה״ב":"ישראל"} · נשמר ${esc(o._date||"")}</div>`:""}
+    <div class="vol"><div><small>חיפושים חודשיים (הערכת AI)</small><div class="qq mono" dir="auto">"${esc(o.top_query)}"</div></div><b dir="ltr">~${fmtNum(o.est_monthly_searches)}</b></div>
+    <div class="bars">
+      <div class="bar"><div class="lbl"><span>↗ ביקוש (מאותות אמיתיים)</span><b>${o.demand}</b></div><div class="track"><div class="fill" style="width:${o.demand}%;background:${barColor(o.demand)}"></div></div></div>
+      <div class="bar"><div class="lbl"><span>⚔ תחרות (הערכה)</span><b>${o.competition}</b></div><div class="track"><div class="fill" style="width:${o.competition}%;background:${barColor(o.competition,true)}"></div></div></div>
+    </div>
+
+    <div class="box">
+      <div class="box-h"><span>▣ מוצר לבנות</span><button class="btn btn-ghost btn-sm" data-act="copy-product">העתק פרומפט</button></div>
+      <p><b>${esc(p.name)}</b>: ${esc(p.description)}</p>
+      <div class="tags"><span class="tag">${esc(typeLabel(p.type,market))}</span><span class="tag">תשלום חד-פעמי · ${esc(cur(market,p.price))}</span></div>
+      <div class="aud">👥 ${esc(p.audience)}</div>
+      <details class="prompt"><summary>פרומפט לבניית המוצר <span>▾</span></summary><pre dir="auto">${esc(productPrompt(o,market))}</pre></details>
+    </div>
+
+    <div class="box">
+      <div class="box-h"><span>▤ דף מכירה לבנות</span>
+        <span style="display:flex;gap:6px">${(!savedMode && settings.provider!=="manual")?`<button class="btn btn-ghost btn-sm" data-act="refresh">↻ זווית חדשה</button>`:""}<button class="btn btn-ghost btn-sm" data-act="copy-sales">העתק פרומפט</button></span></div>
+      <p>${esc(s.angle)}</p>
+      <div class="kv"><b>כותרת: </b><span dir="auto">${esc(s.headline)}</span></div>
+      <div class="kv"><b>תת-כותרת: </b><span dir="auto">${esc(s.subheadline)}</span></div>
+      <details class="prompt"><summary>פרומפט לבניית דף המכירה <span>▾</span></summary><pre dir="auto">${esc(salesPrompt(o,market))}</pre></details>
+    </div>
+
+    <div class="box">
+      <div class="box-h"><span>✺ מודעות</span><span style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" data-act="copy-adcopy">פרומפט קופי</button><button class="btn btn-ghost btn-sm" data-act="copy-adcreative">פרומפט קריאייטיב</button></span></div>
+      <ul class="hooks" dir="auto">${(a.hooks||[]).map(h=>`<li>${esc(h)}</li>`).join("")}</ul>
+    </div>
+
+    ${leadBox(o)}
+    <div class="evid"><small>ראיות מהנתונים החיים</small>${(o.evidence||[]).map(q=>`<div dir="auto">"${esc(q)}"</div>`).join("")}</div>
+    <div class="card-f">
+      ${savedMode ? `<button class="btn btn-ghost" data-act="unsave">הסר מהשמורים</button>`
+                  : `<button class="btn btn-ghost ${saved?"saved-on":""}" data-act="save">${saved?"✓ נשמר":"🔖 שמור"}</button>`}
+      <button class="btn btn-ghost" data-act="copy-all">העתק הכל</button>
+    </div>
+  </article>`;
+}
+function leadKws(o){ const k=(Array.isArray(o.lead_keywords)?o.lead_keywords:[]).map(x=>String(x).trim()).filter(Boolean); return k.length?k.slice(0,4):[o._seed||state.seed].filter(Boolean); }
+function leadHref(o, kw){ const all=leadKws(o); return "../leads-radar/?kw="+encodeURIComponent(kw)+"&opp="+encodeURIComponent(o.title||"")+"&prod="+encodeURIComponent(o.product?.name||"")+"&alt="+encodeURIComponent(all.join("|")); }
+function leadBox(o){
+  const k=leadKws(o); if(!k.length) return "";
+  return `<div class="box"><div class="box-h"><span>🎯 עסקים שיקנו או ימליצו (Leads Radar)</span></div>
+    <p class="note" style="margin:0">לחיצה פותחת את Leads Radar עם מילת החיפוש מוכנה. נשאר לבחור אזור וללחוץ סריקה.</p>
+    <div class="leadchips">${k.map(x=>`<a href="${esc(leadHref(o,x))}" dir="auto">📍 ${esc(x)}</a>`).join("")}</div></div>`;
+}
+function allText(o, market){
+  return [`# ${o.title}`, o.problem, "", "## פרומפט מוצר", productPrompt(o,market), "", "## פרומפט דף מכירה", salesPrompt(o,market), "", "## פרומפט קופי למודעות", adCopyPrompt(o,market), "", "## פרומפט קריאייטיב", adCreativePrompt(o,market), "", "ראיות: "+(o.evidence||[]).join(" | ")].join("\n");
+}
+function renderResults(){
+  const r=state.result; if(!r) return;
+  $("#sigSeed").textContent = state.seed;
+  $("#sigText").textContent = r.signal || "";
+  $("#signalBox").classList.remove("hidden");
+  const savedIds = new Set(getSaved().map(x=>x._id));
+  $("#cards").innerHTML = r.opportunities.map((o,i)=>cardHTML(o,i,{market:state.market,saved:savedIds.has(o._id)})).join("");
+  $("#resultsBox").classList.remove("hidden");
+}
+function renderEvidence(){
+  const ev=state.ev;
+  $("#evLead").textContent = `${ev.length} שאילתות ייחודיות שאנשים באמת מקלידים, נאספו עכשיו. מספר = עוצמת האות.`;
+  $("#qlist").innerHTML = ev.slice(0,60).map(x=>`<span class="q" dir="auto"><span class="s">${x.score}</span>${esc(x.q)}${x.src.includes("YT")?'<span class="src">YT</span>':""}</span>`).join("");
+  const t=state.trend;
+  if(t){
+    $("#trLead").innerHTML = `ערך: <a href="${esc(t.url)}" target="_blank" rel="noopener">${esc(t.title)}</a> (${t.lang==="he"?"ויקיפדיה עברית":"ויקיפדיה אנגלית"}) · 120 יום אחרונים`;
+    const c=t.a.change, f=t.a.fChange;
+    $("#trKpis").innerHTML = `<div class="kpi"><b dir="ltr">${fmtNum(t.a.daily)}</b><span>צפיות ביום (ממוצע 30 יום)</span></div>
+      <div class="kpi"><b dir="ltr" class="${c>=0?"up":"down"}">${c>=0?"+":""}${c.toFixed(0)}%</b><span>לעומת 30 הימים הקודמים</span></div>
+      <div class="kpi"><b dir="ltr" class="${f>=0?"up":"down"}">${f>=0?"+":""}${f.toFixed(0)}%</b><span>תחזית ל-30 הימים הבאים</span></div>`;
+    drawChart(t.a.ma, t.a.forecast);
+  }else{
+    $("#trLead").textContent = "לא נמצא ערך ויקיפדיה מתאים לנישה הזו. נסו ניסוח כללי יותר (למשל 'כושר' במקום 'כושר לנשים אחרי לידה').";
+    $("#trKpis").innerHTML=""; $("#trChart").innerHTML="";
+  }
+  $("#evidenceBox").classList.remove("hidden");
+}
+
+/* ---------------- progress ---------------- */
+const STEPS=[["collect","אוסף שאילתות אמיתיות מגוגל ומ-YouTube"],["trend","בודק מגמת עניין בוויקיפדיה"],["ai","מנתח עם AI ומזהה פערים"],["build","בונה כרטיסי הזדמנות ופרומפטים"]];
+function stepsInit(){ $("#steps").innerHTML = STEPS.map(([k,t])=>`<li id="st-${k}"><span class="ic"></span><span class="tx">${t}</span></li>`).join(""); $("#progress").classList.add("on"); }
+function step(k, st, extra){ const li=$("#st-"+k); if(!li) return; li.className=st; li.querySelector(".ic").textContent = st==="ok"?"✓":st==="err"?"!":""; if(extra!=null) li.querySelector(".tx").textContent = STEPS.find(s=>s[0]===k)[1] + " · " + extra; }
+function showErr(msg){ const b=$("#errBox"); b.textContent=msg; b.classList.toggle("on",!!msg); }
+
+/* ---------------- main flow ---------------- */
+async function run(seed, market){
+  if(state.running) return;
+  state.running=true; state.seed=seed; state.market=market; state.result=null;
+  $("#goBtn").disabled=true; $("#goBtn").innerHTML='<span class="spin"></span> מחפש…';
+  showErr(""); $("#howBox").classList.add("hidden");
+  ["manualBox","evidenceBox","signalBox","resultsBox"].forEach(id=>$("#"+id).classList.add("hidden"));
+  stepsInit();
+  try{
+    step("collect","run");
+    const [col, trend] = await Promise.all([
+      collectSuggestions(seed, market, (d,t)=>step("collect","run",`${d}/${t}`)),
+      (async()=>{ step("trend","run"); const t=await wikiTrend(seed, market); if(t){ t.a=analyzeTrend(t.series); step("trend","ok", `${t.title}`);} else step("trend","ok","לא נמצא ערך מתאים"); return t; })()
+    ]);
+    state.ev = col.list; state.trend = trend;
+    if(!col.list.length){ step("collect","err","לא התקבלו נתונים"); throw new Error("לא התקבלו השלמות אוטומטיות. בדקו חיבור לאינטרנט, או נסו ניסוח אחר או קצר יותר לנישה."); }
+    step("collect","ok",`${col.list.length} שאילתות · ${col.okRequests}/${col.requests} בקשות`);
+    renderEvidence();
+
+    if(settings.provider==="manual" || !settings.key || !settings.model){
+      step("ai","run","ממתין לתשובה מ-Claude.ai (מצב ידני)");
+      $("#manualBox").classList.remove("hidden");
+      $("#pasteBox").value="";
+      $("#manualBox").scrollIntoView({behavior:"smooth",block:"start"});
+      return;
+    }
+    step("ai","run", settings.model);
+    const txt = await callAI(aiSystem(), aiUser(seed, market, state.ev, state.trend), 8000);
+    await finish(txt);
+  }catch(e){
+    console.error(e);
+    const running=$$("#steps li.run"); running.forEach(li=>{ li.className="err"; li.querySelector(".ic").textContent="!"; });
+    showErr("שגיאה: "+e.message);
+  }finally{
+    state.running=false; $("#goBtn").disabled=false; $("#goBtn").textContent="גלה טרנדים";
+  }
+}
+async function finish(txt){
+  let data;
+  try{ data = parseJSON(txt); }catch(e){ step("ai","err"); throw new Error("תשובת ה-AI לא בפורמט JSON תקין. נסו שוב. ("+e.message+")"); }
+  step("ai","ok"); step("build","run");
+  const stamp = Date.now().toString(36);
+  (data.opportunities||[]).forEach((o,i)=>{ o._id = `${stamp}-${i}`; o._seed=state.seed; o._market=state.market; });
+  state.result = enrich(data, state.ev);
+  if(!state.result.opportunities.length) { step("build","err"); throw new Error("ה-AI לא החזיר הזדמנויות."); }
+  renderResults(); step("build","ok",`${state.result.opportunities.length} הזדמנויות`);
+  $("#manualBox").classList.add("hidden");
+  $("#signalBox").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+$("#searchForm").addEventListener("submit",e=>{ e.preventDefault(); const s=$("#seed").value.trim(); if(s) run(s, $("#market").value); });
+$("#copyPromptBtn").addEventListener("click",()=>{
+  const full = aiSystem()+"\n\n"+aiUser(state.seed, state.market, state.ev, state.trend);
+  copyText(full);
+});
+$("#renderPasteBtn").addEventListener("click",async()=>{
+  const txt=$("#pasteBox").value.trim(); if(!txt){ toast("הדביקו קודם את התשובה"); return; }
+  try{ showErr(""); await finish(txt); }catch(e){ showErr("שגיאה: "+e.message); }
+});
+
+/* chips */
+const CHIPS = { il:["משכנתא","שינה של תינוקות","חתונה","גיל המעבר","כאבי גב","עסק קטן","שכר דירה","בר מצווה"], us:["toddler sleep","van life","menopause symptoms","side hustle","meal prep","chronic pain","wedding planning","small business taxes"] };
+function renderChips(){ const m=$("#market").value; $("#chips").innerHTML = CHIPS[m].map(c=>`<button class="chip" type="button" dir="auto">${esc(c)}</button>`).join(""); }
+$("#market").addEventListener("change",()=>{ renderChips(); LS.set("hub_nh_market",$("#market").value); });
+$("#chips").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; $("#seed").value=b.textContent; run(b.textContent, $("#market").value); });
+
+/* ---------------- saved ---------------- */
+function getSaved(){ return LS.get("hub_nh_saved",[]); }
+function setSaved(a){ LS.set("hub_nh_saved",a); $("#savedCount").textContent = a.length; }
+function renderSaved(){
+  const a=getSaved();
+  $("#savedEmpty").classList.toggle("hidden", a.length>0);
+  $("#savedCards").innerHTML = a.map((o,i)=>cardHTML(o,i,{market:o._market||"il",savedMode:true})).join("");
+}
+function findOpp(id){
+  return (state.result?.opportunities||[]).find(o=>o._id===id) || getSaved().find(o=>o._id===id);
+}
+document.addEventListener("click",async e=>{
+  const btn=e.target.closest("[data-act]"); if(!btn) return;
+  const card=btn.closest(".card"); const id=card?.dataset.id; const o=findOpp(id); if(!o) return;
+  const market=o._market||state.market;
+  const act=btn.dataset.act;
+  if(act==="copy-product") copyText(productPrompt(o,market));
+  if(act==="copy-sales") copyText(salesPrompt(o,market));
+  if(act==="copy-adcopy") copyText(adCopyPrompt(o,market));
+  if(act==="copy-adcreative") copyText(adCreativePrompt(o,market));
+  if(act==="copy-all") copyText(allText(o,market));
+  if(act==="save"){
+    const a=getSaved();
+    if(a.some(x=>x._id===o._id)){ setSaved(a.filter(x=>x._id!==o._id)); btn.classList.remove("saved-on"); btn.textContent="🔖 שמור"; toast("הוסר מהשמורים"); }
+    else{ a.unshift(Object.assign({},o,{_date:new Date().toLocaleDateString("he-IL")})); setSaved(a); btn.classList.add("saved-on"); btn.textContent="✓ נשמר"; toast("נשמר ✓"); }
+  }
+  if(act==="unsave"){ setSaved(getSaved().filter(x=>x._id!==o._id)); renderSaved(); toast("הוסר"); }
+  if(act==="refresh"){
+    btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+    try{
+      const txt = await callAI("You write high-converting sales page copy. Output ONLY valid JSON.", salesRefreshUser(o, market), 1500);
+      o.sales = Object.assign({}, o.sales, parseJSON(txt));
+      renderResults(); toast("זווית חדשה ✓");
+    }catch(err){ toast("נכשל: "+err.message); btn.disabled=false; btn.textContent="↻ זווית חדשה"; }
+  }
+});
+$("#expJson").addEventListener("click",()=>download(`niche-hunter-saved-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(getSaved(),null,2), "application/json"));
+$("#expCsv").addEventListener("click",()=>{
+  const rows=[["נישה","שוק","כותרת","ציון הזדמנות","ביקוש","תחרות","חיפושים (הערכה)","שאילתה מובילה","מוצר","סוג","מחיר","קהל","כותרת דף מכירה","פרומפט מוצר","פרומפט דף מכירה"]];
+  getSaved().forEach(o=>{ const m=o._market||"il"; rows.push([o._seed,m==="us"?"ארה״ב":"ישראל",o.title,o.opp,o.demand,o.competition,o.est_monthly_searches,o.top_query,o.product?.name,o.product?.type,o.product?.price,o.product?.audience,o.sales?.headline,productPrompt(o,m),salesPrompt(o,m)]); });
+  const csv="﻿"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n");
+  download(`niche-hunter-saved-${new Date().toISOString().slice(0,10)}.csv`, csv, "text/csv;charset=utf-8");
+});
+$("#impJson").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{ const arr=JSON.parse(await f.text()); if(!Array.isArray(arr)) throw new Error("הקובץ לא ברשימה");
+    const cur=getSaved(); const ids=new Set(cur.map(x=>x._id)); arr.forEach(x=>{ if(x&&x._id&&!ids.has(x._id)) cur.push(x); }); setSaved(cur); renderSaved(); toast(`יובאו ${arr.length}`);
+  }catch(err){ toast("ייבוא נכשל: "+err.message); }
+  e.target.value="";
+});
+
+/* ---------------- init ---------------- */
+(function init(){
+  const m=LS.get("hub_nh_market",null); if(m) $("#market").value=m;
+  renderChips(); updateModeNote(); setSaved(getSaved());
+  // HUB: arrived from Leads Radar
+  const q=new URLSearchParams(location.search), seed=(q.get("seed")||"").trim();
+  if(seed){ const mk=q.get("market"); if(mk==="il"||mk==="us"){ $("#market").value=mk; renderChips(); }
+    $("#seed").value=seed; try{ history.replaceState(null,"",location.pathname); }catch(e){}
+    if(q.get("auto")==="1") run(seed, $("#market").value); }
+})();
+</script>
+</body>
+</html>
