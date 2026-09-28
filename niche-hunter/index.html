@@ -189,6 +189,9 @@ details.prompt pre{white-space:pre-wrap;word-break:break-word;font-family:inheri
 .pm-side{max-height:640px;overflow:auto}
 .pm-hood{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;transition:box-shadow .3s}
 .pm-hood.pm-flash{box-shadow:0 0 0 3px var(--accent)}
+.pm-insight{margin-top:8px;background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:14px;line-height:1.6}
+.pm-insight ol{margin:4px 0;padding-inline-start:20px}
+.pm-warn{background:var(--hot-soft);color:var(--hot);border-radius:8px;padding:6px 8px;margin-bottom:6px;font-weight:500}
 .pm-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .pm-bar{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin:6px 0}
 .pm-bar i{display:block;height:100%;background:linear-gradient(90deg,#f2b632,#e5383b);border-radius:99px}
@@ -1422,6 +1425,28 @@ function pmProvHtml(p, iw){
   return `<div dir="rtl" style="font-family:Heebo,Arial;${iw?"max-width:230px":""}">${img}<b>${esc(p.name)}</b><div style="font-size:12px;color:#777">${esc(p.type||"")}${p.address?" · "+esc(p.address):""}</div>
     ${p.rating?`<div style="font-size:13px">⭐ ${p.rating} (${p.reviews})</div>`:""}${p.maps?`<a href="${esc(p.maps)}" target="_blank" rel="noopener" style="font-size:13px">פתח במפה ↗</a>`:""}</div>`;
 }
+/* HUB: plain-language insight for a neighbourhood card (added; the original lines stay) */
+function pmIsPhysical(L){ return PM_SVC.some(s=>s.he===L) || !/^(ai|בינה|ייעוץ|יועץ|שיווק|קורס|הדרכ|תוכנ|אפליקצי|אתר|דיגיטל|אונליין|ביטוח|משכנת|עורך דין|רואה חשבון|הנהלת חשבונות|גרפי|צילום אונליין)/i.test(L.trim()); }
+function pmDistM(a,b){ const R=6371000,t=Math.PI/180,x=Math.sin((b.lat-a.lat)*t/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin((b.lng-a.lng)*t/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+function pmNearest(h,n){ const ps=(pm.res&&pm.res.provs)||[]; return ps.filter(p=>p.loc).map(p=>({p,d:pmDistM(h.loc,p.loc)})).sort((a,b)=>a.d-b.d).slice(0,n); }
+function pmHoodInsight(h){
+  if(!pm.res || !h.loc) return "";
+  const L=pm.res.label||pmLabel(), W=pm.res.W||pmW(), near=pmNearest(h,3);
+  const units=Math.round(h.demand||0), far=Math.round(h.under||0);
+  const lvl=h.pct>=50?"גדול":h.pct>=25?"בינוני":h.pct>0?"קטן":"אין";
+  const what = h.mode==="place"
+    ? `ב<b>${esc(h.name)}</b> ${isFinite(h.d)?`העסק הקרוב מסוג «${esc(L)}» נמצא במרחק <b>${pmFmtD(h.d)}</b>`:`לא נמצא אף עסק מסוג «${esc(L)}»`}${h.far?`, יותר מהמרחק הסביר (${pmFmtD(W)})`:""}.`
+    : `ב<b>${esc(h.name)}</b> יש כ-<b>${units.toLocaleString("he-IL")}</b> יחידות דיור (הערכה לפי מספר הקומות בבניינים). מתוכן כ-<b>${far.toLocaleString("he-IL")}</b> (${h.pct}%) גרות רחוק יותר מ-${pmFmtD(W)} הליכה מהעסק הקרוב מסוג «${esc(L)}»${h.under?`: בממוצע ${pmFmtD(h.avgD)}, והכי רחוק ${pmFmtD(h.dMax)}`:""}.`;
+  const act = h.pct>=50||h.far ? `<b>פער ${lvl}:</b> לרוב התושבים אין «${esc(L)}» בהליכה. כאן יש הזדמנות לסניף, לשירות עד הבית או למשלוחים, או לפנות לעסקים הקרובים ולהציע להם לשרת את השכונה.`
+    : h.pct>=25 ? `<b>פער ${lvl}:</b> חלק מהשכונה מכוסה וחלק לא. כדאי לבדוק אם מחפשים את השירות («🔎 האם מחפשים את זה?») לפני שמשקיעים.`
+    : `<b>פער ${lvl}:</b> השכונה מכוסה היטב. ההזדמנות כאן היא בשיפור השירות של העסקים הקיימים, לא בעסק חדש.`;
+  const provs = near.length ? near.map(({p,d})=>`<li>${p.maps?`<a href="${esc(p.maps)}" target="_blank" rel="noopener">${esc(p.name)}</a>`:esc(p.name)} · ${pmFmtD(d)} ממרכז השכונה${p.rating?` · ⭐ ${p.rating} (${p.reviews||0})`:""}${p.address?` · <span class="note">${esc(p.address)}</span>`:""}</li>`).join("") : "<li>לא נמצאו עסקים מהסוג הזה באזור הסריקה</li>";
+  const gm=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(L+" ליד "+h.name)}`;
+  const warn = pmIsPhysical(L) ? "" : `<div class="pm-warn">⚠️ «${esc(L)}» הוא שירות שבדרך כלל לא הולכים אליו ברגל (ניתן גם אונליין או בטלפון), ולכן המרחק כאן כמעט לא אומר כלום. למדד הזה מתאימים שירותים פיזיים: סופר, מספרה, מרפאה, גן ילדים. לשירות כזה עדיף לבדוק ביקוש עם «🔎 האם מחפשים את זה?».</div>`;
+  return `<div class="pm-insight">${warn}<div>${what}</div><div style="margin-top:4px">${act}</div>
+    <div style="margin-top:6px"><b>העסקים הקרובים לשכונה:</b><ol>${provs}</ol><a href="${esc(gm)}" target="_blank" rel="noopener">חיפוש «${esc(L)}» ליד ${esc(h.name)} בגוגל מפות ↗</a></div>
+    <div class="note" style="margin-top:4px">«כאב ${h.pain}» = ציון 0–100 ביחס לשכונה הכי פגועה בסריקה הזו (שם הציון 100). הוא משווה בין שכונות, לא מדד מוחלט.</div></div>`;
+}
 function pmHoodHtml(h,i){
   const W=pm.res?pm.res.W:pmW(), L=pmLabel(), dot=h.pct>=50?"🔴":h.pct>=25?"🟠":h.pct>0?"🟡":"🟢";
   const lr="https://shaharprod.github.io/leads-niche-hub/leads-radar/?kw="+encodeURIComponent(L)+"&opp="+encodeURIComponent("חוסר ב"+L+" ב"+h.name);
@@ -1429,8 +1454,9 @@ function pmHoodHtml(h,i){
     <div class="pm-h"><b>${dot} ${i+1}. ${esc(h.name)}</b><span class="opp">כאב ${h.pain}</span></div>
     <div class="note">${h.mode==="place"
       ? `${esc(PM_PLACE_HE[h.kind]||h.kind)} · אוכלוסייה ${h.popKnown?"":"(הערכה) "}${Math.round(h.demand).toLocaleString("he-IL")} · ${esc(L)} הכי קרוב: ${isFinite(h.d)?pmFmtD(h.d):"לא נמצא"}${h.far?` (מעבר ל-${pmFmtD(W)})`:" (בטווח)"} · ${h.provs} ספקים עד 3 ק״מ`
-      : `${h.pct}% מהמגורים רחוקים יותר מ-${pmFmtD(W)} מ${esc(L)}${h.under?` · מרחק ממוצע אצלם ${pmFmtD(h.avgD)} · הכי רחוק ${pmFmtD(h.dMax)}`:""} · ${h.provs} ספקים בשכונה`}</div>
+      : `${h.pct}% מהמגורים רחוקים יותר מ-${pmFmtD(W)} מהעסק הקרוב מסוג «${esc(L)}»${h.under?` · מרחק ממוצע אצלם ${pmFmtD(h.avgD)} · הכי רחוק ${pmFmtD(h.dMax)}`:""} · ${h.provs} ספקים בשכונה`}</div>
     <div class="pm-bar"><i style="width:${h.pct}%"></i></div>
+    ${pmHoodInsight(h)}
     <div class="pm-btns"><button class="btn btn-ghost btn-sm" data-pm="zoom">🔍 הצג במפה</button><button class="btn btn-ghost btn-sm" data-pm="demand">🔎 האם מחפשים את זה?</button><a class="btn btn-ghost btn-sm" href="${esc(lr)}">📍 ספקים קרובים ב-Leads Radar</a></div>
     <div class="pm-sugg"></div></div>`;
 }
