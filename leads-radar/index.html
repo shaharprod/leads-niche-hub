@@ -78,6 +78,13 @@ body.resizing iframe,body.resizing #map,body.resizing-v #map{pointer-events:none
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
 .biz{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:9px;position:relative}
 .biz:hover{border-color:var(--acc)}
+.deep-t{width:100%;border-collapse:collapse;font-size:13px}.deep-t th,.deep-t td{border-top:1px solid var(--line);padding:5px 4px;text-align:right;vertical-align:top}
+.deep-t th{font-weight:600;opacity:.75}.deep-t tr.dim td{opacity:.5}.deep-det td{border-top:0;padding-top:0}
+.deep blockquote{margin:4px 0;padding:4px 10px;border-inline-start:3px solid var(--good);font-size:13px}.deep blockquote.neg{border-color:var(--bad)}
+.deep h6{margin:12px 0 4px;font-size:14px}.deep-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.deep-grid ul,.deep ul{margin:0;padding-inline-start:18px;font-size:13.5px}
+.deep-opp{border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:6px 0;font-size:13.5px}
+.deep-pitch{background:rgba(79,124,255,.12);border-radius:10px;padding:8px 10px;font-size:14px}
+@media(max-width:700px){.deep-grid{grid-template-columns:1fr}}
 .bizph img{width:100%;height:130px;object-fit:cover;border-radius:10px;display:block;background:#0e1530}
 .bizph .phmore{margin-top:6px;font-size:12px;padding:4px 10px}
 .phstrip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-top:6px}
@@ -783,7 +790,7 @@ function scoreBiz(b){
 
 /* ---------- leads / pipeline ---------- */
 const slim = b => ({id:b.id,name:b.name,address:b.address,phone:b.phone,website:b.website,rating:b.rating,reviews:b.reviews,
-  type:b.type,maps:b.maps,loc:b.loc,photos:b.photos,hours:b.hours,status:b.status,site:b.site,rev:b.rev,psi:b.psi,types:b.types,photoUrl:b.photoUrl,photoUrls:b.photoUrls,ownerPh:b.ownerPh,dist:b.dist,astate:b.astate,gextra:b.gextra,lic:b.lic,kit:b.kit,hist:b.hist,hoursWeek:b.hoursWeek,cites:b.cites,comp:b.comp,rank:b.rank,reg:b.reg,revSummary:b.revSummary,live:b.live,ad:b.ad});
+  type:b.type,maps:b.maps,loc:b.loc,photos:b.photos,hours:b.hours,status:b.status,site:b.site,rev:b.rev,psi:b.psi,types:b.types,photoUrl:b.photoUrl,photoUrls:b.photoUrls,ownerPh:b.ownerPh,dist:b.dist,astate:b.astate,gextra:b.gextra,lic:b.lic,kit:b.kit,hist:b.hist,hoursWeek:b.hoursWeek,cites:b.cites,comp:b.comp,rank:b.rank,reg:b.reg,revSummary:b.revSummary,deep:b.deep,live:b.live,ad:b.ad});
 function stageOf(id){ return (leads[id]&&leads[id].stage)||'new'; }
 function setStage(id,st){
   const b=results.find(x=>x.id===id) || (leads[id]&&leads[id].biz); if(!b) return;
@@ -985,6 +992,7 @@ function cardHtml(b){
   if(b.site&&b.site.tech&&(b.site.tech.googleAds||b.site.tech.metaPixel)) chips.push('<span class="chip w">💰 מפרסם</span>');
   if(leads[b.id]&&leads[b.id].seq&&!leads[b.id].seq.done){ const d=seqDue(leads[b.id].seq); chips.push(`<span class="chip ${d>=0?'w':''}">🔁 סדרה${d>=0?' · להיום':''}</span>`); }
   if(b.kit) chips.push('<span class="chip ok">🎁 ערכה</span>');
+  if(b.deep){ const T=deepTotals(b.deep); chips.push(`<span class="chip ok" title="חפירה מעמיקה ברשת">🔎 ${T.sites} אתרים${T.count?' · '+T.count+' ביקורות':''}</span>`); }
   if(platformOf(b.website)) chips.push(`<span class="chip no">אתר = דף ${esc(platformOf(b.website))}</span>`);
   if(hasMobile(b)) chips.push('<span class="chip ok">📱 נייד</span>');
   if(leads[b.id]&&leads[b.id].contact) chips.push(`<span class="chip ok">👤 ${esc(leads[b.id].contact)}</span>`);
@@ -1061,7 +1069,7 @@ window.openBiz = id=>{
       <div>דירוג</div><div>⭐ ${b.rating||'—'} · ${b.reviews} ביקורות</div><div>תמונות</div><div>${b.photos}</div>
       <div>שעות פתיחה</div><div>${b.hours.length?b.hours.map(esc).join('<br>'):'— לא הוגדרו —'}</div>
       <div>גוגל מפות</div><div>${b.maps?`<a href="${esc(b.maps)}" target="_blank">פתח את הכרטיס</a>`:'—'}</div></div></div>
-    ${vitalHtml(b)}${presenceHtml(b)}${gextraHtml(b)}${liveHtml(b)}${compHtml(b)}${rankHtml(b)}${revH}${revSumHtml(b)}${site}${domainHtml(b)}${psiH}${signalsHtml(b)}${regHtml(b)}${licHtml(b)}${digHtml(b)}
+    ${deepHtml(b)}${vitalHtml(b)}${presenceHtml(b)}${gextraHtml(b)}${liveHtml(b)}${compHtml(b)}${rankHtml(b)}${revH}${revSumHtml(b)}${site}${domainHtml(b)}${psiH}${signalsHtml(b)}${regHtml(b)}${licHtml(b)}
     <div class="sec"><h5>📋 ניהול הליד</h5>
       <div class="row row2"><div><label>שלב</label><select id="ldStage">${STAGES.map(x=>`<option value="${x.id}" ${x.id===stageOf(id)?'selected':''}>${x.t}</option>`).join('')}</select></div>
         <div><label>תאריך מעקב</label><input type="date" id="ldDue" value="${esc(L.due||'')}"></div></div>
@@ -1506,6 +1514,123 @@ function regHtml(b){
     ${r?(r.records.length?r.records.slice(0,5).map(x=>`<div style="border-top:1px solid var(--line);padding:6px 0;font-size:13px"><b>${esc(x.name)}</b> · ח.פ. ${esc(x.number)} · <span style="color:${x.status==='פעילה'?'var(--good)':'var(--bad)'}">${esc(x.status)}</span>${x.violator?' · <span style="color:var(--bad)">חברה מפרה</span>':''}<br><span class="hint">${esc(x.type||'')} · הוקמה ${esc(x.founded||'—')} · דוח שנתי אחרון ${esc(x.lastReport||'—')} · ${esc(x.city||'')} ${esc(x.street||'')}</span>${x.desc?`<br><span class="hint">${esc(String(x.desc).slice(0,160))}</span>`:''}</div>`).join('')
       :'<div class="hint">לא נמצאה חברה בשם הזה. ייתכן שזה עוסק מורשה / פטור (לא רשום ברשם החברות) או שהשם הרשמי שונה.</div>'):'<div class="hint">חיפוש לפי שם העסק במאגר הרשמי: מספר ח.פ., סטטוס, תאריך הקמה, כתובת רשומה.</div>'}
     <button style="margin-top:8px" onclick="lookupRegistry('${b.id}')">🏢 ${r?'חפש שוב':'חפש ברשם החברות'}</button></div>`;
+}
+
+/* ---------- 🔎 HUB: deep dig — reviews on other sites, strengths, pains, where to help (inside the card) ---------- */
+const deepRunning = {};
+const DEEP_SITES = [['midrag.co.il','מידרג'],['easy.co.il','איזי'],['b144.co.il','B144'],['d.co.il','דפי זהב'],['zap.co.il','זאפ'],['rest.co.il','רסט'],['2eat.co.il','2eat'],
+  ['facebook.com','פייסבוק'],['instagram.com','אינסטגרם'],['tripadvisor','TripAdvisor'],['wolt.com','Wolt'],['10bis','10ביס'],['google','גוגל'],['yad2.co.il','יד2']];
+function deepSiteName(s, url){ const t=String(s||'')+' '+String(url||''); const m=DEEP_SITES.find(([d])=>t.toLowerCase().includes(d)); return m?m[1]:(s||'אתר'); }
+function deepParse(txt){
+  let s=String(txt||'').replace(/```json|```/g,''); const a=s.indexOf('{'), z=s.lastIndexOf('}');
+  if(a<0||z<0) throw new Error('תשובת ה-AI לא בפורמט הצפוי');
+  s=s.slice(a,z+1);
+  try{ return JSON.parse(s); }catch(e){ return JSON.parse(s.replace(/([֐-׿])"(?=[֐-׿])/g,'$1״')); }
+}
+function deepPrompt(b){
+  const sc=scoreBiz(b), pr=presenceOf(b), city=(b.address||'').split(',').slice(-2,-1)[0]||'';
+  const gr=(b.rev&&!b.rev.error&&b.rev.list||[]).map((r,i)=>`[${i+1}] ${r.rating}★ ${r.when}: ${r.text}`).join('\n');
+  const pk=pkgList().map(p=>p.name).join(' | ');
+  return `אתה חוקר עסקים מקומיים עבור "${settings.brand||''}" (${settings.tagline||'ייעוץ והטמעת בינה מלאכותית לעסקים'}). המטרה: להבין לעומק עסק אחד — מה אומרים עליו ברשת, במה הוא חזק, מה כואב לו, ואיפה בדיוק אפשר לעזור לו להתקדם.
+
+העסק:
+- שם: ${b.name}
+- קטגוריה: ${b.type||'—'}
+- כתובת: ${b.address||'—'} (עיר: ${city.trim()||'—'})
+- טלפון: ${b.phone||'—'}
+- אתר: ${b.website||'אין'}
+- גוגל: ${b.rating||'—'} מתוך 5, ${b.reviews||0} ביקורות, ${b.photos||0} תמונות
+- ערוצים דיגיטליים שזוהו: ${pr.channels.filter(c=>c.ok).map(c=>c.t).join(', ')||'—'}
+- ממצאי ביקורת דיגיטלית שכבר ידועים: ${sc.fix.map(f=>f.t).join(' ; ')||'—'}
+${gr?`- ביקורות גוגל אחרונות:\n${gr}`:''}
+
+שלב 1: חפש ב-Google Search את העסק הזה בדיוק (ודא התאמה לפי שם + עיר/כתובת/טלפון) באתרי ביקורות ואינדקסים: מידרג (midrag.co.il), איזי (easy.co.il), B144 (b144.co.il), דפי זהב (d.co.il), זאפ (zap.co.il), רסט ו-2eat (לעסקי אוכל), פייסבוק (דף העסק והמלצות), אינסטגרם, TripAdvisor, Wolt / 10ביס אם רלוונטי, ואתרי ביקורות של התחום. פתח את העמודים שמצאת וקרא את הביקורות עצמן.
+שלב 2: החזר JSON בלבד, בלי markdown ובלי טקסט נוסף, במבנה:
+{"identity":{"confidence":"high|medium|low","note":"איך וידאת שזה אותו עסק"},
+ "sources":[{"site":"שם האתר","url":"כתובת העמוד שקראת","found":true,"rating":null,"scale":5,"count":null,"positive":null,"negative":null,"last":"מתי הביקורת האחרונה","highlights":["מה משבחים"],"complaints":["על מה מתלוננים"],"quotes":[{"text":"ציטוט מילה במילה","positive":true}],"note":""}],
+ "owner_replies":"האם בעל העסק עונה לביקורות, איפה ואיך",
+ "strengths":["הסגולות של העסק — מבוסס ראיות"],
+ "pains":["הכאבים של העסק — גם מה שהלקוחות אומרים וגם חולשות בנוכחות הדיגיטלית"],
+ "opportunities":[{"area":"תחום","action":"מה בדיוק לעשות","evidence":"על סמך מה","where":"איפה (ערוץ / אתר / עמוד)","impact":"גבוה|בינוני|נמוך","service":"השירות המתאים מהרשימה"}],
+ "pitch":"2-3 משפטים לפתיחת שיחה ראשונה עם בעל העסק, שמזכירים ממצא ספציפי אחד חיובי וכאב אחד",
+ "facts":["עובדות נוספות: שנות פעילות, שם בעלים אם פורסם, מחירים שפורסמו, התמחויות, סניפים"]}
+כללים:
+- מספרים (rating, count, positive, negative) רק כפי שראית בעמוד. לא ראית או לא ניתן לספור: null. אל תמציא.
+- ציטוטים מילה במילה, עד 200 תווים כל אחד, עד 3 לכל אתר.
+- אתר שבדקת ולא מצאת בו את העסק: found:false. אם לא בטוח שזה אותו עסק: found:false והסבר ב-note.
+- opportunities: בין 3 ל-6, קונקרטיים ומבוססי ראיות. השירותים האפשריים: ${pk||'בניית אתר, SEO, ניהול מוניטין, רשתות חברתיות, אוטומציה ובוט'}.
+- הכל בעברית. בראשי תיבות השתמש בגרשיים ״ (למשל ש״ח), לא במירכאות רגילות.`;
+}
+window.deepDig = async id=>{
+  const b=findBiz(id); if(!b||deepRunning[id]) return;
+  if(!settings.gemini){ alert('לחפירה צריך מפתח Gemini: ⚙️ הגדרות → Gemini API Key.'); return; }
+  deepRunning[id]=Date.now(); reopen(id);
+  try{
+    if(!b.rev && typeof fetchReviews==='function'){ try{ b.rev=await fetchReviews(b); }catch(e){} }
+    const r=await fetchT('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(settings.model||'gemini-2.5-flash')+':generateContent?key='+encodeURIComponent(settings.gemini),
+      {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:deepPrompt(b)}]}],
+        tools:[{google_search:{}},{url_context:{}}], generationConfig:{temperature:0.2, maxOutputTokens:20000}})}, 180000);
+    const j=await r.json(); if(j.error) throw new Error(j.error.message);
+    const c=j.candidates&&j.candidates[0]; if(!c) throw new Error('לא התקבלה תשובה');
+    const d=deepParse((c.content&&c.content.parts||[]).map(p=>p.thought?'':(p.text||'')).join(''));
+    const gm=c.groundingMetadata||{};
+    d.refs=(gm.groundingChunks||[]).map(x=>x.web).filter(Boolean).map(w=>({title:w.title||'', uri:w.uri||''}));
+    d.queries=gm.webSearchQueries||[];
+    d.sources=(d.sources||[]).filter(s=>s&&s.site);
+    d.ts=Date.now();
+    b.deep=d;
+    // tick the business-directory checklist automatically for sites where the business was found
+    b.cites=Object.assign({},b.cites);
+    DIRS.forEach(([n,site],i)=>{ const dom=site.split(' ')[0].toLowerCase(), hn=n.split(' ')[0];
+      if(b.cites[i]===undefined && d.sources.some(s=>{ if(s.found===false) return false; const t=(String(s.site)+' '+String(s.url)).toLowerCase(); return t.includes(dom)||String(s.site).includes(hn); })) b.cites[i]=true; });
+    persistBiz(b); log('🔎 חפירה הושלמה: '+b.name+' · '+d.sources.filter(s=>s.found!==false).length+' אתרים');
+  }catch(e){ alert('החפירה נכשלה: '+(e.name==='AbortError'?'לקח יותר מ-3 דקות':e.message)); }
+  delete deepRunning[id]; reopen(id);
+};
+function deepTotals(d){ const f=(d.sources||[]).filter(s=>s.found!==false);
+  const sum=k=>f.reduce((a,s)=>a+(Number.isFinite(+s[k])&&s[k]!==null?+s[k]:0),0);
+  return {sites:f.length, count:sum('count'), pos:sum('positive'), neg:sum('negative')}; }
+function deepHtml(b){
+  const d=b.deep, run=deepRunning[b.id];
+  const manual=(()=>{ const city=(b.address||'').split(',').slice(-2,-1)[0]||'', n='"'+b.name+'"';
+    const links=[['📰 חדשות',gSearch(n+' '+city)],['⭐ ביקורות',gSearch(n+' ביקורות OR חוות דעת')],['📘 פייסבוק',gSearch(n+' '+city+' site:facebook.com')],['💼 לינקדאין',gSearch(n+' site:linkedin.com/company')],['🛒 דרושים',gSearch(n+' דרושים OR משרה')]];
+    return `<details style="margin-top:8px"><summary class="hint" style="cursor:pointer">חיפושים ידניים בגוגל (נפתחים בלשונית חדשה)</summary><div class="chips" style="margin-top:6px">${links.map(([t,u])=>`<a class="chip" href="${u}" target="_blank" style="text-decoration:none">${t}</a>`).join('')}</div></details>`; })();
+  const btn=`<button class="primary" ${run?'disabled':''} onclick="deepDig('${b.id}')">${run?'<span class="sp"></span> חופר ברשת…':'🔎 '+(d?'חפור שוב':'חפור עכשיו ברשת')}</button>`;
+  if(!d) return `<div class="sec deep"><h5>🔎 חפירה מעמיקה ברשת</h5>
+    <div class="hint" style="margin-bottom:8px">AI מחפש את העסק במידרג, איזי, B144, דפי זהב, זאפ, רסט, פייסבוק ועוד. הוא קורא את הביקורות ומביא לכאן את הדירוגים, כמה ביקורות טובות וכמה רעות, ציטוטים, סגולות, כאבים ואיפה בדיוק אפשר לעזור. בלי לצאת מהכרטיס.${run?'<br><b>זה לוקח בדרך כלל 40 עד 90 שניות. אפשר להמשיך לעבוד, התוצאה תישמר בכרטיס.</b>':''}</div>${btn}${manual}</div>`;
+  const T=deepTotals(d), fnum=v=>(v===null||v===undefined||v==='')?'—':esc(v);
+  const src=(d.sources||[]);
+  const rows=src.map((s,i)=>{ const name=deepSiteName(s.site,s.url), ok=s.found!==false;
+    const det=(s.highlights||[]).length+(s.complaints||[]).length+(s.quotes||[]).length;
+    return `<tr class="${ok?'':'dim'}"><td>${s.url&&ok?`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(name)}</a>`:esc(name)}</td>
+      <td>${ok?(s.rating!=null?`<b>${esc(s.rating)}</b>/${esc(s.scale||5)}`:'—'):'<span class="hint">לא נמצא</span>'}</td><td>${ok?fnum(s.count):''}</td>
+      <td style="color:var(--good)">${ok?fnum(s.positive):''}</td><td style="color:var(--bad)">${ok?fnum(s.negative):''}</td><td class="hint">${ok?esc(s.last||''):esc(s.note||'')}</td></tr>
+      ${ok&&det?`<tr class="deep-det"><td colspan="6"><details><summary>מה כתבו ב${esc(name)}</summary>
+        ${(s.highlights||[]).length?`<div><b style="color:var(--good)">👍 משבחים:</b> ${s.highlights.map(esc).join(' · ')}</div>`:''}
+        ${(s.complaints||[]).length?`<div><b style="color:var(--bad)">👎 מתלוננים:</b> ${s.complaints.map(esc).join(' · ')}</div>`:''}
+        ${(s.quotes||[]).map(q=>`<blockquote class="${q.positive===false?'neg':'pos'}">„${esc(q.text||q)}“</blockquote>`).join('')}
+        ${s.note?`<div class="hint">${esc(s.note)}</div>`:''}</details></td></tr>`:''}`; }).join('');
+  const g=`<tr><td>${b.maps?`<a href="${esc(b.maps)}" target="_blank">גוגל</a>`:'גוגל'}</td><td><b>${b.rating||'—'}</b>/5</td><td>${b.reviews||0}</td>
+    <td style="color:var(--good)">${b.rev&&!b.rev.error?b.rev.list.filter(r=>r.rating>=4).length+' מ-'+b.rev.list.length+' אחרונות':'—'}</td><td style="color:var(--bad)">${b.rev&&!b.rev.error?b.rev.negative:'—'}</td><td class="hint">${b.rev&&b.rev.daysSince!=null?'לפני '+b.rev.daysSince+' ימים':''}</td></tr>`;
+  const li=a=>(a||[]).length?`<ul>${a.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<div class="hint">—</div>';
+  const pk=pkgList();
+  const opp=(d.opportunities||[]).map(o=>{ const p=pk.find(x=>o.service&&(x.name.includes(o.service)||String(o.service).includes(x.name.split(' ')[0])));
+    const ic=/גבוה/.test(o.impact)?'no':/בינוני/.test(o.impact)?'w':'ok';
+    return `<div class="deep-opp"><div><b>${esc(o.area||'')}</b> <span class="chip ${ic}" style="padding:0 7px">השפעה: ${esc(o.impact||'—')}</span>${o.service?` <span class="chip">🧰 ${esc(o.service)}${p&&p.price?' · '+p.price.toLocaleString('he-IL')+' ₪':''}</span>`:''}</div>
+      <div>✅ ${esc(o.action||'')}</div>${o.where?`<div class="hint">📍 איפה: ${esc(o.where)}</div>`:''}${o.evidence?`<div class="hint">🔍 על סמך: ${esc(o.evidence)}</div>`:''}</div>`; }).join('');
+  const refs=(d.refs||[]).filter((r,i,a)=>r.uri&&a.findIndex(x=>x.title===r.title)===i);
+  const conf={high:'גבוהה',medium:'בינונית',low:'נמוכה'}[d.identity&&d.identity.confidence]||'—';
+  return `<div class="sec deep"><h5>🔎 חפירה מעמיקה ברשת</h5>
+    <div class="chips" style="margin-bottom:8px"><span class="chip ok">🌐 נמצא ב-${T.sites} אתרים</span>${T.count?`<span class="chip">💬 ${T.count.toLocaleString('he-IL')} ביקורות מחוץ לגוגל</span>`:''}${T.pos?`<span class="chip ok">👍 ${T.pos}</span>`:''}${T.neg?`<span class="chip no">👎 ${T.neg}</span>`:''}<span class="chip ${conf==='גבוהה'?'ok':'w'}" title="${esc(d.identity&&d.identity.note||'')}">התאמה לעסק: ${conf}</span></div>
+    <table class="deep-t"><tr><th>אתר</th><th>דירוג</th><th>ביקורות</th><th>👍</th><th>👎</th><th>אחרונה / הערה</th></tr>${g}${rows}</table>
+    <div class="deep-grid"><div><h6>💪 הסגולות</h6>${li(d.strengths)}</div><div><h6>🩹 הכאבים</h6>${li(d.pains)}</div></div>
+    ${d.owner_replies?`<div class="hint" style="margin-top:6px">💬 מענה לביקורות: ${esc(d.owner_replies)}</div>`:''}
+    <h6>🎯 איפה ואיך בדיוק אפשר לעזור</h6>${opp||'<div class="hint">—</div>'}
+    ${d.pitch?`<h6>📞 משפט פתיחה לשיחה</h6><div class="deep-pitch">${esc(d.pitch)} <button onclick="copyTxt(this)" data-t="${esc(d.pitch)}" style="font-size:11px;padding:3px 8px">📋 העתק</button></div>`:''}
+    ${(d.facts||[]).length?`<h6>ℹ️ עוד על העסק</h6>${li(d.facts)}`:''}
+    ${refs.length?`<details style="margin-top:8px"><summary class="hint" style="cursor:pointer">📚 ${refs.length} מקורות שה-AI קרא</summary><div class="chips" style="margin-top:6px">${refs.map(r=>`<a class="chip" href="${esc(r.uri)}" target="_blank" rel="noopener" style="text-decoration:none">${esc(r.title)}</a>`).join('')}</div></details>`:''}
+    <div class="hint" style="margin-top:8px">⚠️ נאסף ע״י חיפוש AI ב-Google ב-${new Date(d.ts).toLocaleString('he-IL')}. מספר שלא הופיע בעמוד מסומן "—". לפני שמצטטים מספר בשיחה, כדאי לפתוח את הקישור ולוודא.</div>
+    <div style="margin-top:8px">${btn}</div>${manual}</div>`;
 }
 
 /* ---------- AI review summary ---------- */
