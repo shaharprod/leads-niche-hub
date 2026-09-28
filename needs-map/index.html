@@ -151,9 +151,9 @@ footer{margin-top:40px;color:var(--ink-3);font-size:.85rem;text-align:center}
       <label for="maxBiz">כמה עסקים לסרוק: <b id="maxBizLbl"></b></label>
       <input type="range" id="maxBiz" min="10" max="150" step="10" value="60">
 
-      <div class="check"><input type="checkbox" id="useDeep"><label for="useDeep" style="margin:0">סריקת ביקורות עמוקה + תשובות בעלי העסק<small>דרך Apify: עד <span id="deepN">30</span> ביקורות לעסק במקום 5, כולל תשובות הבעלים. דורש טוקן ב-⚙️ הגדרות.</small></label></div>
+      <div class="check"><input type="checkbox" id="useDeep"><label for="useDeep" style="margin:0">סריקת ביקורות עמוקה + תשובות בעלי העסק<small>במקום 5 ביקורות לעסק מגוגל, קורא עד <span id="deepN">30</span> ביקורות לעסק דרך השירות <a href="https://apify.com/compass/google-maps-reviews-scraper" target="_blank" rel="noopener">Apify</a>, כולל <b>התשובות של בעל העסק</b> (אחוז מענה, טון התשובה). עלות: כ-0.30$ לכל 1,000 ביקורות. <span id="deepWhy"></span></small></label></div>
       <div class="check"><input type="checkbox" id="useDemand" checked><label for="useDemand" style="margin:0">חיפושים מקומיים בגוגל<small>מה אנשים מקלידים בגוגל על השירות + שם העיר</small></label></div>
-      <div class="check"><input type="checkbox" id="useAI" checked><label for="useAI" style="margin:0">סיווג עם AI<small>מדויק יותר. בלי AI הסיווג לפי מילות מפתח.</small></label></div>
+      <div class="check"><input type="checkbox" id="useAI" checked><label for="useAI" style="margin:0">סיווג עם AI<small>בינה מלאכותית (Gemini או Claude) קוראת כל ביקורת ומבינה על מה הלקוח מתלונן, גם בלי מילה מדויקת. בלי AI המערכת מחפשת מילות מפתח ("תור", "יקר", "חניה"), וזה פחות מדויק. <span id="aiWhy"></span></small></label></div>
 
       <div class="btns">
         <button class="btn" id="btnRun" type="button">🔍 מפה את הצרכים</button>
@@ -218,6 +218,9 @@ footer{margin-top:40px;color:var(--ink-3);font-size:.85rem;text-align:center}
   <label for="gkey">מפתח Google Maps (רק אם לא נמצא אוטומטית)</label>
   <input type="password" id="gkey" autocomplete="off" placeholder="AIza...">
   <p class="note">אותו מפתח שמשמש את Leads Radar. נוצר ב-<a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener">Google Cloud › Google Maps Platform › Keys &amp; Credentials</a>. נשמר רק בדפדפן הזה.</p>
+  <label for="aiProv">מפתח AI (רק אם לא נמצא אוטומטית)</label>
+  <div class="row"><select id="aiProv" style="flex:0 0 120px"><option value="gemini">Gemini</option><option value="claude">Claude</option></select><input type="password" id="aiKey" autocomplete="off" placeholder="AIza... או sk-ant-..."></div>
+  <p class="note">Gemini: <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio › API keys</a> · Claude: <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Anthropic Console › API keys</a>. נשמר רק בדפדפן הזה.</p>
   <label for="apify">טוקן Apify (לסריקה עמוקה, לא חובה)</label>
   <input type="password" id="apify" autocomplete="off" placeholder="apify_api_...">
   <p class="note">הטוקן נשמר רק בדפדפן הזה. משיגים אותו ב-<a href="https://console.apify.com/settings/integrations" target="_blank" rel="noopener">Apify › Settings › API & Integrations</a>. עלות לפי Apify: כ-0.30$ לכל 1,000 ביקורות.</p>
@@ -292,6 +295,7 @@ function mapsKey(){
   return "";
 }
 function aiCfg(){
+  if(NM.aiKey) return {provider:NM.aiProv||"gemini",key:NM.aiKey,model:(NM.aiProv==="claude"?"claude-sonnet-4-5":"gemini-2.5-flash")};
   const nh=LS.get("hub_nh_settings",null);
   if(nh && (nh.provider==="claude"||nh.provider==="gemini") && nh.key) return {provider:nh.provider,key:nh.key,model:nh.model||(nh.provider==="gemini"?"gemini-2.5-flash":"claude-sonnet-4-5")};
   const lr=LS.get("hub_lr_settings",null)||LS.get("lr_settings",null);
@@ -306,6 +310,9 @@ function updateModeNote(){
   $("#useDeep").disabled=!NM.apify; if(!NM.apify) $("#useDeep").checked=false;
   $("#useAI").disabled=!ai; if(!ai) $("#useAI").checked=false;
   $("#deepN").textContent=NM.maxRev;
+  $("#deepWhy").innerHTML=NM.apify?"<span class='ok'>✔ טוקן מוגדר</span>":"<b>כבוי כי אין טוקן:</b> <a href='#' data-open-settings>פותחים ⚙️ הגדרות ומדביקים טוקן Apify</a>";
+  $("#aiWhy").innerHTML=ai?`<span class='ok'>✔ ${ai.provider==="gemini"?"Gemini":"Claude"} מוגדר</span>`:"<b>כבוי כי אין מפתח AI:</b> <a href='#' data-open-settings>פותחים ⚙️ הגדרות ומדביקים מפתח</a>";
+  $$("[data-open-settings]").forEach(a=>a.onclick=e=>{ e.preventDefault(); $("#btnSettings").click(); });
 }
 
 /* ---------- ui basics ---------- */
@@ -682,7 +689,7 @@ async function classifyAndDemand(){
   step("ai","run");
   if(!S.reviews.length) step("ai","skip","אין ביקורות");
   else if(useAI){ const f=await aiClassify(S.reviews,S.biz); step("ai","ok",f?`${f} קבוצות סווגו לפי מילות מפתח`:"AI");
-    if(f && S.aiErr) showErr("ה-AI לא ענה, ולכן הסיווג נעשה לפי מילות מפתח (פחות מדויק). הסיבה: "+E(S.aiErr)+(/quota|exceeded|429/i.test(S.aiErr)?"<br>זו מגבלת מכסה בחשבון Gemini. בודקים ב-<a href=\"https://aistudio.google.com/usage\" target=\"_blank\" rel=\"noopener\">Google AI Studio › Usage</a>, או מגדירים מפתח Claude ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/niche-hunter/\" target=\"_blank\" rel=\"noopener\">צייד הנישות › ⚙️ הגדרות</a>.":"")); }
+    if(f && S.aiErr) showErr("ה-AI לא ענה, ולכן הסיווג נעשה לפי מילות מפתח (פחות מדויק). הסיבה: "+E(S.aiErr)+(/quota|exceeded|429/i.test(S.aiErr)?"<br>זו מגבלת מכסה בחשבון Gemini. בודקים ב-<a href=\"https://ai.dev/rate-limit\" target=\"_blank\" rel=\"noopener\">Google AI Studio › Rate limits</a>, או מגדירים מפתח Claude ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/niche-hunter/\" target=\"_blank\" rel=\"noopener\">צייד הנישות › ⚙️ הגדרות</a>.":"")); }
   else { ruleClassify(S.reviews); step("ai","ok","לפי מילות מפתח"); }
   if($("#useDemand").checked){
     step("demand","run");
@@ -763,12 +770,12 @@ $("#btnSettings").onclick=()=>{
   const ai=aiCfg(), mk=mapsKey();
   $("#keyStatus").innerHTML=`<div>${mk?"<span class='ok'>✔ מפתח Google נמצא</span>":"<span class='no'>✖ אין מפתח Google</span>"} (מ-<a href="https://shaharprod.github.io/leads-niche-hub/leads-radar/">Leads Radar</a>)</div>
     <div>${ai?`<span class='ok'>✔ AI: ${ai.provider==="gemini"?"Gemini":"Claude"} · ${E(ai.model)}</span>`:"<span class='no'>✖ אין מפתח AI</span>"} (מ-<a href="https://shaharprod.github.io/leads-niche-hub/niche-hunter/">צייד הנישות</a> או Leads Radar)</div>`;
-  $("#apify").value=NM.apify; $("#gkey").value=NM.gkey||""; $("#maxRev").value=NM.maxRev; $("#maxRevLbl").textContent=NM.maxRev; $("#signName").value=NM.sign;
+  $("#apify").value=NM.apify; $("#gkey").value=NM.gkey||""; $("#aiKey").value=NM.aiKey||""; $("#aiProv").value=NM.aiProv||"gemini"; $("#maxRev").value=NM.maxRev; $("#maxRevLbl").textContent=NM.maxRev; $("#signName").value=NM.sign;
   $("#dlg").showModal();
 };
 $("#maxRev").oninput=()=>$("#maxRevLbl").textContent=$("#maxRev").value;
 $("#dlgClose").onclick=()=>$("#dlg").close();
-$("#dlgSave").onclick=()=>{ const hadKey=!!mapsKey(); NM.gkey=$("#gkey").value.trim(); NM.apify=$("#apify").value.trim(); NM.maxRev=+$("#maxRev").value; NM.sign=$("#signName").value.trim()||NM.sign; saveNM(); updateModeNote(); updateCost(); $("#dlg").close(); if(!hadKey && mapsKey()) initMap(); };
+$("#dlgSave").onclick=()=>{ const hadKey=!!mapsKey(); NM.gkey=$("#gkey").value.trim(); NM.aiKey=$("#aiKey").value.trim(); NM.aiProv=$("#aiProv").value; NM.apify=$("#apify").value.trim(); NM.maxRev=+$("#maxRev").value; NM.sign=$("#signName").value.trim()||NM.sign; saveNM(); updateModeNote(); updateCost(); $("#dlg").close(); if(!hadKey && mapsKey()) initMap(); };
 
 /* ---------- init ---------- */
 (function init(){
