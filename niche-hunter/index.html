@@ -1595,16 +1595,18 @@ function pmMeasure(){ const r=document.querySelector('input[name="pmMeasure"]:ch
 function pmNeedDist(a,b){ const R=6371000,t=Math.PI/180,x=Math.sin((b.lat-a.lat)*t/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin((b.lng-a.lng)*t/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
 async function pmNeedAI(reviews, byId){
   const batches=[]; for(let i=0;i<reviews.length;i+=35) batches.push(reviews.slice(i,i+35));
-  let failed=0, lastErr="";
+  let failed=0, lastErr="", doneB=0;
   await pool(batches,2,async bt=>{
     const user=bt.map((r,k)=>`[${k}] {${(byId[r.biz]&&byId[r.biz].type)||"עסק"}} ★${r.rating} ${String(r.text).replace(/\s+/g," ")}`).join("\n");
-    try{ let j; try{ j=parseJSON(await callAI(NM_AI_SYS,user,6000)); }catch(e1){ j=parseJSON(await callAI(NM_AI_SYS,user,6000)); }
+    const ask=()=>Promise.race([callAI(NM_AI_SYS,user,6000), new Promise((_,rej)=>setTimeout(()=>rej(new Error("ה-AI לא ענה תוך 70 שניות")),70000))]);
+    try{ let j; try{ j=parseJSON(await ask()); }catch(e1){ if(/70 שניות/.test(e1.message)) throw e1; j=parseJSON(await ask()); }
       bt.forEach(r=>r.m=[]);
       (j.r||[]).forEach(o=>{ const r=bt[o.i]; if(!r) return; const seen=new Set(), out=[];
         (o.m||[]).filter(x=>NM_NEEDS[x.n] && nmQuoteInText(x.q,r.text)).forEach(x=>{ const side=x.side==="praise"?"praise":"pain", q=String(x.q||"").slice(0,110);
           (side==="pain"?nmVerifyLabel(x.n,q,r.rating):[x.n]).forEach(n=>{ if(seen.has(n+side)) return; seen.add(n+side); out.push({n,side,x:Math.max(1,Math.min(3,+x.x||1)),q}); }); });
         r.m=out; });
     }catch(e){ failed++; lastErr=String(e.message||e).slice(0,160); nmRuleClassify(bt); }
+    pmStep("ai","run",`${++doneB}/${batches.length} קבוצות`);
   });
   return {failed,lastErr};
 }
