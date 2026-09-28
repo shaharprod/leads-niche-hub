@@ -506,7 +506,7 @@ let miniIW=null, miniTimer=null, miniFor=null;
 function miniHtml(b){
   const sc=scoreBiz(b), pr=presenceOf(b), col=sc.opp>=70?'#ff6b6b':sc.opp>=40?'#ffc24d':'#2fd48f';
   return `<div class="mini" dir="rtl" id="miniCard">
-    ${b.photoUrl?`<div class="mini-img" style="background-image:url('${esc(b.photoUrl)}')"></div>`:`<div class="mini-img mini-noimg">🏪</div>`}
+    ${photosOf(b)[0]?`<div class="mini-img" style="background-image:url('${esc(photosOf(b)[0])}')"></div>`:`<div class="mini-img mini-noimg">🏪</div>`}
     <div class="mini-b">
       <div class="mini-top"><b class="mini-name">${esc(b.name)}</b><span class="mini-score" style="color:${col};border-color:${col}">${sc.opp}</span></div>
       <div class="mini-meta">${esc(b.type)}${b.dist!=null?' · '+fmtDist(b.dist):''}</div>
@@ -613,7 +613,7 @@ function toBiz(p){
     hoursWeek:(()=>{ try{ const ps=p.regularOpeningHours&&p.regularOpeningHours.periods; if(!ps||!ps.length) return null;
       if(ps.length===1&&!ps[0].close) return 168; let m=0; ps.forEach(x=>{ if(!x.close) return; let a=x.open.day*1440+x.open.hour*60+x.open.minute, c=x.close.day*1440+x.close.hour*60+x.close.minute; if(c<=a) c+=10080; m+=c-a; }); return Math.round(m/60); }catch(e){ return null; } })(),
     type:p.primaryTypeDisplayName||(p.types&&p.types[0])||'', types:p.types||[],
-    photos:(p.photos||[]).length, photoUrl:(p.photos&&p.photos[0])?p.photos[0].getURI({maxWidth:600}):'', photoUrls:(p.photos||[]).slice(0,8).map(ph=>{ try{ return ph.getURI({maxWidth:800}); }catch(e){ return ''; } }).filter(Boolean),
+    photos:(p.photos||[]).length, photoUrl:(p.photos&&p.photos[0])?p.photos[0].getURI({maxWidth:600}):'', photoUrls:ownerPhotoUrls(p, p.displayName, 8), ownerPh:true,
     priceLevel:p.priceLevel||'', maps:p.googleMapsURI||'', loc, dist:loc?Math.round(dist(center,loc)):null,
     site:null, rev:null, psi:null, astate:'' };
 }
@@ -783,7 +783,7 @@ function scoreBiz(b){
 
 /* ---------- leads / pipeline ---------- */
 const slim = b => ({id:b.id,name:b.name,address:b.address,phone:b.phone,website:b.website,rating:b.rating,reviews:b.reviews,
-  type:b.type,maps:b.maps,loc:b.loc,photos:b.photos,hours:b.hours,status:b.status,site:b.site,rev:b.rev,psi:b.psi,types:b.types,photoUrl:b.photoUrl,photoUrls:b.photoUrls,dist:b.dist,astate:b.astate,gextra:b.gextra,lic:b.lic,kit:b.kit,hist:b.hist,hoursWeek:b.hoursWeek,cites:b.cites,comp:b.comp,rank:b.rank,reg:b.reg,revSummary:b.revSummary,live:b.live,ad:b.ad});
+  type:b.type,maps:b.maps,loc:b.loc,photos:b.photos,hours:b.hours,status:b.status,site:b.site,rev:b.rev,psi:b.psi,types:b.types,photoUrl:b.photoUrl,photoUrls:b.photoUrls,ownerPh:b.ownerPh,dist:b.dist,astate:b.astate,gextra:b.gextra,lic:b.lic,kit:b.kit,hist:b.hist,hoursWeek:b.hoursWeek,cites:b.cites,comp:b.comp,rank:b.rank,reg:b.reg,revSummary:b.revSummary,live:b.live,ad:b.ad});
 function stageOf(id){ return (leads[id]&&leads[id].stage)||'new'; }
 function setStage(id,st){
   const b=results.find(x=>x.id===id) || (leads[id]&&leads[id].biz); if(!b) return;
@@ -945,8 +945,20 @@ function render(){
   $('grid').innerHTML=list.map(cardHtml).join('');
   if(map && markerKeyOf(list)!==markerKey) drawMarkers(list);
 }
+/* HUB: keep only photos uploaded by the business itself (photo author name matches the business name) */
+function ownerPhotoUrls(p, name, max){
+  const N=s=>String(s||"").toLowerCase().replace(/["'׳״`]/g,"").replace(/[^\p{L}\p{N}]+/gu," ").trim();
+  const STOP=new Set(["של","the","and","shop","salon","hair","barber","store","ltd","בעמ","סניף","מספרה","מספרת","סלון","חנות","קפה","cafe","coffee","מסעדה","restaurant","סופר","super","market","מרכז","center","israel","ישראל","jerusalem","ירושלים","בירושלים","tel","aviv","תל","אביב","לגברים","לנשים","עיצוב","שיער","beauty","studio","סטודיו"]);
+  const toks=s=>new Set(N(s).split(" ").filter(w=>w.length>=2&&!STOP.has(w)));
+  const bn=N(name), bt=toks(name);
+  const isOwner=a=>{ const an=N(a&&a.displayName); if(an.length<3) return false; if(an===bn) return true;
+    if(an.length>=6&&bn.length>=6&&(bn.includes(an)||an.includes(bn))) return true;
+    let k=0; toks(an).forEach(w=>{ if(bt.has(w)) k++; }); return k>=2; };
+  return (p.photos||[]).filter(ph=>(ph.authorAttributions||[]).some(isOwner)).slice(0,max||8)
+    .map(ph=>{ try{ return ph.getURI({maxWidth:800}); }catch(e){ return ""; } }).filter(Boolean);
+}
 /* HUB: business photos in cards (1 lazy cover photo; more only on request, each photo load is a paid Google call) */
-function photosOf(b){ const a=(b.photoUrls&&b.photoUrls.length)?b.photoUrls:(b.photoUrl?[b.photoUrl]:[]); return a; }
+function photosOf(b){ return b.ownerPh ? (b.photoUrls||[]) : []; }  // only photos uploaded by the business owner
 function bizPhotoHtml(b){
   const a=photosOf(b); if(!a.length) return '';
   return `<div class="bizph"><a href="${esc(b.maps||a[0])}" target="_blank" rel="noopener" title="פתח בגוגל מפות"><img src="${esc(a[0])}" loading="lazy" alt="${esc(b.name)}" onerror="this.closest('.bizph').remove()"></a>
