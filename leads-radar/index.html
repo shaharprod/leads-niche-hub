@@ -78,6 +78,10 @@ body.resizing iframe,body.resizing #map,body.resizing-v #map{pointer-events:none
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
 .biz{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:9px;position:relative}
 .biz:hover{border-color:var(--acc)}
+.bizph img{width:100%;height:130px;object-fit:cover;border-radius:10px;display:block;background:#0e1530}
+.bizph .phmore{margin-top:6px;font-size:12px;padding:4px 10px}
+.phstrip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-top:6px}
+.phstrip img{height:86px;width:auto;border-radius:8px;display:block}
 .biz h4{margin:0;font-size:16px;padding-left:54px}
 .score{position:absolute;top:12px;left:12px;width:44px;height:44px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:16px}
 .score small{font-size:8px;font-weight:600;opacity:.85}
@@ -609,7 +613,7 @@ function toBiz(p){
     hoursWeek:(()=>{ try{ const ps=p.regularOpeningHours&&p.regularOpeningHours.periods; if(!ps||!ps.length) return null;
       if(ps.length===1&&!ps[0].close) return 168; let m=0; ps.forEach(x=>{ if(!x.close) return; let a=x.open.day*1440+x.open.hour*60+x.open.minute, c=x.close.day*1440+x.close.hour*60+x.close.minute; if(c<=a) c+=10080; m+=c-a; }); return Math.round(m/60); }catch(e){ return null; } })(),
     type:p.primaryTypeDisplayName||(p.types&&p.types[0])||'', types:p.types||[],
-    photos:(p.photos||[]).length, photoUrl:(p.photos&&p.photos[0])?p.photos[0].getURI({maxWidth:600}):'',
+    photos:(p.photos||[]).length, photoUrl:(p.photos&&p.photos[0])?p.photos[0].getURI({maxWidth:600}):'', photoUrls:(p.photos||[]).slice(0,8).map(ph=>{ try{ return ph.getURI({maxWidth:800}); }catch(e){ return ''; } }).filter(Boolean),
     priceLevel:p.priceLevel||'', maps:p.googleMapsURI||'', loc, dist:loc?Math.round(dist(center,loc)):null,
     site:null, rev:null, psi:null, astate:'' };
 }
@@ -779,7 +783,7 @@ function scoreBiz(b){
 
 /* ---------- leads / pipeline ---------- */
 const slim = b => ({id:b.id,name:b.name,address:b.address,phone:b.phone,website:b.website,rating:b.rating,reviews:b.reviews,
-  type:b.type,maps:b.maps,loc:b.loc,photos:b.photos,hours:b.hours,status:b.status,site:b.site,rev:b.rev,psi:b.psi,types:b.types,photoUrl:b.photoUrl,dist:b.dist,astate:b.astate,gextra:b.gextra,lic:b.lic,kit:b.kit,hist:b.hist,hoursWeek:b.hoursWeek,cites:b.cites,comp:b.comp,rank:b.rank,reg:b.reg,revSummary:b.revSummary,live:b.live,ad:b.ad});
+  type:b.type,maps:b.maps,loc:b.loc,photos:b.photos,hours:b.hours,status:b.status,site:b.site,rev:b.rev,psi:b.psi,types:b.types,photoUrl:b.photoUrl,photoUrls:b.photoUrls,dist:b.dist,astate:b.astate,gextra:b.gextra,lic:b.lic,kit:b.kit,hist:b.hist,hoursWeek:b.hoursWeek,cites:b.cites,comp:b.comp,rank:b.rank,reg:b.reg,revSummary:b.revSummary,live:b.live,ad:b.ad});
 function stageOf(id){ return (leads[id]&&leads[id].stage)||'new'; }
 function setStage(id,st){
   const b=results.find(x=>x.id===id) || (leads[id]&&leads[id].biz); if(!b) return;
@@ -941,6 +945,17 @@ function render(){
   $('grid').innerHTML=list.map(cardHtml).join('');
   if(map && markerKeyOf(list)!==markerKey) drawMarkers(list);
 }
+/* HUB: business photos in cards (1 lazy cover photo; more only on request, each photo load is a paid Google call) */
+function photosOf(b){ const a=(b.photoUrls&&b.photoUrls.length)?b.photoUrls:(b.photoUrl?[b.photoUrl]:[]); return a; }
+function bizPhotoHtml(b){
+  const a=photosOf(b); if(!a.length) return '';
+  return `<div class="bizph"><a href="${esc(b.maps||a[0])}" target="_blank" rel="noopener" title="פתח בגוגל מפות"><img src="${esc(a[0])}" loading="lazy" alt="${esc(b.name)}" onerror="this.closest('.bizph').remove()"></a>
+    ${a.length>1?`<button type="button" class="phmore" onclick="morePh(this,'${esc(b.id)}')">🖼️ עוד ${a.length-1} תמונות</button>`:''}</div>`;
+}
+window.morePh=(btn,id)=>{ const b=findBiz(id); if(!b) return; const a=photosOf(b).slice(1);
+  const d=document.createElement('div'); d.className='phstrip';
+  d.innerHTML=a.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" loading="lazy" onerror="this.parentNode.remove()"></a>`).join('');
+  btn.replaceWith(d); };
 function cardHtml(b){
   const sc=b._s||scoreBiz(b), cls=sc.opp>=70?'s-hi':sc.opp>=40?'s-mid':'s-low', st=stageOf(b.id), s=b.site;
   const chip=(ok,t,warn)=>`<span class="chip ${ok?'ok':(warn?'w':'no')}">${ok?'✓ ':''}${t}</span>`;
@@ -970,6 +985,7 @@ function cardHtml(b){
     <h4>${esc(b.name)}</h4>
     <div class="meta">${esc(b.type)}${b.dist!=null?' · '+fmtDist(b.dist):''}<br>${esc(b.address)}<br>
       ${b.phone?'📞 <b>'+esc(b.phone)+'</b><br>':''}⭐ ${b.rating||'—'} (${b.reviews} ביקורות)</div>
+    ${bizPhotoHtml(b)}
     <div class="chips">${chips.join('')}</div>
     ${sc.fix[0]?`<div class="hint">🎯 <b style="color:var(--gold)">${esc(sc.fix[0].t)}</b></div>`:''}
     <div class="acts">
@@ -1019,7 +1035,7 @@ window.openBiz = id=>{
     <div class="hint" style="margin-bottom:8px">${b.rev.list.length} אחרונות · ${b.rev.negative} שליליות · האחרונה: ${b.rev.daysSince!=null?'לפני '+b.rev.daysSince+' ימים':'—'}</div>
     ${b.rev.list.map(r=>`<div style="border-top:1px solid var(--line);padding:7px 0;font-size:13px"><b style="color:${r.rating<=3?'var(--bad)':'var(--good)'}">${'★'.repeat(r.rating||0)}</b> <span class="hint">${esc(r.when)} · ${esc(r.author)}</span><br>${esc(r.text)}</div>`).join('')}</div>`;
   $('bizBody').innerHTML=`
-    ${b.photoUrl?`<img src="${esc(b.photoUrl)}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:14px">`:''}
+    ${photosOf(b).length?`<img src="${esc(photosOf(b)[0])}" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;margin-bottom:8px">${photosOf(b).length>1?`<div class="phstrip" style="margin-bottom:14px">${photosOf(b).slice(1).map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" loading="lazy" onerror="this.parentNode.remove()"></a>`).join('')}</div>`:''}`:''}
     <div class="sec"><h5>🎯 ציון הזדמנות</h5>
       <div style="display:flex;align-items:center;gap:14px"><div style="font-size:40px;font-weight:800">${sc.opp}</div>
       <div style="flex:1"><div class="bar"><i style="width:${sc.opp}%"></i></div>

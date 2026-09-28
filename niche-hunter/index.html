@@ -167,6 +167,30 @@ details.prompt pre{white-space:pre-wrap;word-break:break-word;font-family:inheri
 .saved-on{background:var(--good-soft)!important;color:var(--good)!important;border-color:var(--good)!important}
 .hooks{margin:4px 0 0;padding-inline-start:18px;font-size:14px;color:var(--ink-2)}
 
+/* pain map (HUB) */
+.pm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.pm-grid label{display:block;font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
+.pm-grid input,.pm-grid select{width:100%;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:10px;padding:10px;font:inherit}
+.pm-grid input[type=range]{padding:0;accent-color:var(--accent)}
+.pm-go{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.pm-layout{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start}
+.pm-mapwrap{padding:8px}
+#pmMap{height:560px;border-radius:12px}
+.pm-legend{flex-wrap:wrap;padding:6px 4px 0}
+.pm-legend i{height:10px;width:14px;border-radius:3px}
+.pm-side{max-height:640px;overflow:auto}
+.pm-hood{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;transition:box-shadow .3s}
+.pm-hood.pm-flash{box-shadow:0 0 0 3px var(--accent)}
+.pm-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pm-bar{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin:6px 0}
+.pm-bar i{display:block;height:100%;background:linear-gradient(90deg,#f2b632,#e5383b);border-radius:99px}
+.pm-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pm-btns a.btn{text-decoration:none}
+.pm-sugg{margin-top:6px}
+.pm-provs{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:10px}
+.pm-prov{border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface-2)}
+@media (max-width:900px){ .pm-grid,.pm-layout{grid-template-columns:1fr} #pmMap{height:420px} .pm-side{max-height:none} }
+
 /* settings */
 .settings .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .settings label{display:block;font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:6px}
@@ -210,6 +234,7 @@ footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 30px;colo
     </div>
     <nav class="nav" aria-label="ניווט">
       <button data-view="home" aria-current="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="t">חיפוש</span></button>
+      <button data-view="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg><span class="t">מפת כאבים</span></button>
       <button data-view="saved"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span class="t">שמורים</span><span class="badge-count" id="savedCount">0</span></button>
       <button data-view="settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span class="t">הגדרות</span></button>
       <a class="hublink" href="https://shaharprod.github.io/leads-niche-hub/" title="מרכז"><span>🏠</span><span class="t">מרכז</span></a>
@@ -303,6 +328,44 @@ footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 30px;colo
   <!-- results -->
   <section class="block hidden" id="resultsBox">
     <div class="cards" id="cards"></div>
+  </section>
+</div>
+
+<!-- ================= PAIN MAP (HUB) ================= -->
+<div id="view-map" class="hidden">
+  <section class="block">
+    <div class="panel pm-form">
+      <h2>🗺️ מפת כאבים · איפה חסר שירות</h2>
+      <p class="lead">בוחרים אזור ושירות. הכלי מסמן אזורי מגורים שרחוקים מהשירות, ומדרג את השכונות לפי גודל הכאב. ב-Leads Radar רואים את הספקים, וכאן רואים איפה אין.</p>
+      <div class="pm-grid">
+        <div><label for="pmAddr">עיר / שכונה / כתובת</label><input id="pmAddr" value="ירושלים"></div>
+        <div><label for="pmRad">רדיוס</label><select id="pmRad"><option value="1500">1.5 ק״מ</option><option value="2500">2.5 ק״מ</option><option value="3000" selected>3 ק״מ</option><option value="4000">4 ק״מ</option><option value="5000">5 ק״מ</option></select></div>
+        <div><label for="pmSvc">שירות</label><select id="pmSvc"></select></div>
+        <div><label for="pmKw">או מילה חופשית (Google בלבד)</label><input id="pmKw" placeholder="לדוגמה: קונדיטוריה"></div>
+        <div><label for="pmWalk">מרחק הליכה סביר: <b id="pmWalkLbl"></b></label><input type="range" id="pmWalk" min="200" max="2000" step="100" value="600"></div>
+        <div><label for="pmSrc">מקור הספקים</label><select id="pmSrc"><option value="google">Google Places (מדויק, לפי שימוש)</option><option value="osm">OpenStreetMap (חינם, פחות מלא)</option></select></div>
+      </div>
+      <div class="pm-go"><button class="btn btn-primary" id="pmGo" type="button">🗺️ מפה את הכאב</button><span class="note" id="pmCost"></span></div>
+      <div class="note" id="pmKeyNote"></div>
+      <div class="progress" id="pmProg" style="max-width:none"><ol id="pmSteps"></ol></div>
+      <div class="err-box" id="pmErr"></div>
+    </div>
+  </section>
+  <section class="block hidden" id="pmOut">
+    <div class="pm-layout">
+      <div class="panel pm-mapwrap"><div id="pmMap"></div>
+        <div class="legend pm-legend"><span><i style="background:#e5383b"></i>פי 2+ ממרחק ההליכה</span><span><i style="background:#ff8a3d"></i>פי 1.5–2</span><span><i style="background:#f2b632"></i>קצת מעבר</span><span><i style="background:#12a26b"></i>בטווח הליכה</span><span>⚫ ספק · 🔴 מספר = דירוג השכונה</span></div></div>
+      <div class="panel pm-side"><h2>השכונות עם הכאב הגדול</h2><p class="lead" id="pmSum"></p><div id="pmList"></div>
+        <div style="margin-top:10px"><button id="pmCsv" class="btn btn-ghost btn-sm" type="button">ייצוא CSV (אקסל)</button></div></div>
+    </div>
+    <div class="panel" style="margin-top:16px"><h2>הספקים שנמצאו (<span id="pmProvN">0</span>)</h2><div class="pm-provs" id="pmProvs"></div></div>
+    <div class="panel" style="margin-top:16px"><h2>איך זה מחושב (בשקיפות)</h2>
+      <ul class="note" style="margin:6px 0 0;padding-inline-start:18px;line-height:1.8">
+        <li><b>מגורים</b>: מבנים מ-OpenStreetMap. בניין דירות נספר לפי מספר הקומות (ברירת מחדל 4), בית פרטי = 1. זו הערכה של צפיפות מגורים, לא ספירת תושבים.</li>
+        <li><b>ספקים</b>: Google Places (עד 20 תוצאות לנקודת חיפוש, ולכן באזורים צפופים מאוד ייתכנו עוד), או OpenStreetMap, שבו חלק מהעסקים לא ממופים.</li>
+        <li><b>כאב</b>: לכל משבצת נמדד המרחק בקו אווירי לספק הקרוב. משבצת רחוקה יותר ממרחק ההליכה נחשבת חסרה. ציון הכאב של שכונה = כמה מגורים חסרים בה, יחסית לשכונה הכי חסרה.</li>
+        <li><b>"האם מחפשים את זה?"</b>: השלמות אוטומטיות אמיתיות מגוגל עם שם השכונה.</li>
+      </ul></div>
   </section>
 </div>
 
@@ -401,7 +464,7 @@ $("#themeBtn").addEventListener("click",()=>{
 
 /* ---------------- views ---------------- */
 function show(view){
-  ["home","saved","settings"].forEach(v=>$("#view-"+v).classList.toggle("hidden",v!==view));
+  ["home","map","saved","settings"].forEach(v=>$("#view-"+v).classList.toggle("hidden",v!==view));
   $$(".nav button[data-view]").forEach(b=>b.setAttribute("aria-current", String(b.dataset.view===view)));
   if(view==="saved") renderSaved();
   if(view==="settings") loadSettingsUI();
@@ -488,7 +551,7 @@ async function callAI(system, user, maxTokens){
   }
   if(provider==="gemini"){
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"content-type":"application/json"},
-      body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:user}]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:Math.max(maxTokens,16000)+(/2\.5/.test(model)?4096:0),...(/2\.5-flash/.test(model)?{thinkingConfig:{thinkingBudget:2048}}:{}),temperature:0.7}})});
+      body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:user}]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:(/2\.5|-[3-9]/.test(model)?Math.max(maxTokens,16000)+4096:maxTokens),...(/2\.5-flash/.test(model)?{thinkingConfig:{thinkingBudget:2048}}:{}),temperature:0.7}})});
     if(!r.ok) throw new Error(await errText(r));
     const j = await r.json(); const c0=j.candidates?.[0]; if(c0?.finishReason==="MAX_TOKENS") console.warn("Gemini: answer hit MAX_TOKENS"); return (c0?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
   }
@@ -1019,6 +1082,277 @@ $("#impJson").addEventListener("change",async e=>{
   }catch(err){ toast("ייבוא נכשל: "+err.message); }
   e.target.value="";
 });
+
+/* ================================================================
+   HUB: 🗺️ מפת כאבים — where residents lack a nearby service
+   demand  = residential buildings from OpenStreetMap (weighted by floors)
+   supply  = service providers from Google Places (or OSM, free)
+   pain    = homes farther than a walking distance from the nearest provider
+   ================================================================ */
+const PM_SVC = [
+  {id:"supermarket", he:"סופרמרקט", g:["supermarket"], osm:['"shop"="supermarket"'], w:600},
+  {id:"grocery", he:"מכולת / סופר שכונתי", g:["grocery_store","convenience_store","supermarket"], osm:['"shop"="supermarket"','"shop"="convenience"','"shop"="greengrocer"'], w:400},
+  {id:"hair", he:"מספרה", g:["hair_salon","hair_care","barber_shop"], osm:['"shop"="hairdresser"'], w:700},
+  {id:"beauty", he:"מכון יופי / קוסמטיקה", g:["beauty_salon"], osm:['"shop"="beauty"'], w:900},
+  {id:"pharmacy", he:"בית מרקחת", g:["pharmacy","drugstore"], osm:['"amenity"="pharmacy"'], w:700},
+  {id:"bakery", he:"מאפייה", g:["bakery"], osm:['"shop"="bakery"'], w:600},
+  {id:"cafe", he:"בית קפה", g:["cafe","coffee_shop"], osm:['"amenity"="cafe"'], w:500},
+  {id:"gym", he:"חדר כושר / סטודיו", g:["gym","fitness_center"], osm:['"leisure"="fitness_centre"'], w:1200},
+  {id:"dentist", he:"רופא שיניים", g:["dentist","dental_clinic"], osm:['"amenity"="dentist"','"healthcare"="dentist"'], w:1000},
+  {id:"vet", he:"וטרינר", g:["veterinary_care"], osm:['"amenity"="veterinary"'], w:1500},
+  {id:"laundry", he:"מכבסה", g:["laundry"], osm:['"shop"="laundry"','"shop"="dry_cleaning"'], w:800},
+  {id:"kinder", he:"גן ילדים / מעון", g:["preschool","child_care_agency"], osm:['"amenity"="kindergarten"','"amenity"="childcare"'], w:500},
+  {id:"post", he:"סניף דואר", g:["post_office"], osm:['"amenity"="post_office"'], w:1000},
+  {id:"atm", he:"כספומט / בנק", g:["atm","bank"], osm:['"amenity"="atm"','"amenity"="bank"'], w:700},
+  {id:"library", he:"ספרייה", g:["library"], osm:['"amenity"="library"'], w:1500}
+];
+const PM_NONRES = /^(industrial|commercial|retail|warehouse|office|school|university|college|hospital|church|mosque|synagogue|temple|religious|garage|garages|shed|roof|construction|public|civic|government|kindergarten|service|parking|hotel|stadium|sports_hall|transportation|train_station|hangar|greenhouse|farm_auxiliary|barn|cabin|kiosk|toilets|bunker|ruins|container|carport|storage_tank|water_tower|tower)$/;
+const PM_OVERPASS = ["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter"];
+const pm = { map:null, overlays:[], iw:null, res:null, mapsReady:null };
+
+function pmMapsKey(){
+  const s = LS.get("hub_lr_settings",null) || LS.get("lr_settings",null) || {};
+  if(s.key) return s.key;
+  for(const k of ["hub_lr_apikey","lr_apikey"]){ try{ const v=localStorage.getItem(k); if(v) return v.replace(/^"|"$/g,""); }catch(e){} }
+  return "";
+}
+function pmLoadMaps(){
+  if(window.google && google.maps && google.maps.importLibrary) return Promise.resolve();
+  if(pm.mapsReady) return pm.mapsReady;
+  const key=pmMapsKey();
+  if(!key) return Promise.reject(new Error("NOKEY"));
+  pm.mapsReady = new Promise((res,rej)=>{
+    window.__pmMapsReady=()=>res();
+    const s=document.createElement("script");
+    s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(key)+"&v=weekly&libraries=places,geometry&language=iw&region=IL&loading=async&callback=__pmMapsReady";
+    s.onerror=()=>{ pm.mapsReady=null; rej(new Error("טעינת Google Maps נכשלה")); };
+    document.head.appendChild(s);
+  });
+  return pm.mapsReady;
+}
+async function pmOverpass(q){
+  let last;
+  for(const ep of PM_OVERPASS){
+    try{
+      const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)});
+      if(!r.ok) throw new Error("Overpass "+r.status);
+      return await r.json();
+    }catch(e){ last=e; }
+  }
+  throw last||new Error("Overpass לא זמין");
+}
+/* local planar projection (meters) around the scan center */
+function pmProj(c){ const kx=111320*Math.cos(c.lat*Math.PI/180), ky=110540;
+  return { xy:p=>({x:(p.lng-c.lng)*kx, y:(p.lat-c.lat)*ky}), ll:(x,y)=>({lat:c.lat+y/ky, lng:c.lng+x/kx}) }; }
+function pmHexPoints(R, sp){ const pts=[]; const h=sp*Math.sqrt(3)/2;
+  for(let j=-Math.ceil(R/h); j<=Math.ceil(R/h); j++) for(let i=-Math.ceil(R/sp)-1; i<=Math.ceil(R/sp)+1; i++){
+    const x=i*sp+(j%2?sp/2:0), y=j*h; if(Math.hypot(x,y)<=R+sp*0.35) pts.push({x,y}); }
+  return pts; }
+function pmSvc(){ return PM_SVC.find(s=>s.id===$("#pmSvc").value) || PM_SVC[0]; }
+function pmLabel(){ const kw=$("#pmKw").value.trim(); return kw || pmSvc().he; }
+function pmStepsInit(list){ $("#pmSteps").innerHTML=list.map(([k,t])=>`<li id="pms-${k}"><span class="ic"></span><span class="tx">${t}</span></li>`).join(""); $("#pmProg").classList.add("on"); }
+function pmStep(k, st, extra){ const li=$("#pms-"+k); if(!li) return; li.className=st; li.querySelector(".ic").textContent=st==="ok"?"✓":st==="err"?"!":""; if(extra!=null){ const base=li.dataset.base||li.querySelector(".tx").textContent; li.dataset.base=base; li.querySelector(".tx").textContent=base+" · "+extra; } }
+function pmErr(msg){ const b=$("#pmErr"); b.innerHTML=msg||""; b.classList.toggle("on",!!msg); }
+function pmFmtD(m){ return m>=1000 ? (m/1000).toFixed(1).replace(/\.0$/,"")+" ק״מ" : Math.round(m/10)*10+" מ׳"; }
+function pmUpdateCost(){
+  const R=+$("#pmRad").value, W=+$("#pmWalk").value, src=$("#pmSrc").value;
+  if(src==="osm"){ $("#pmCost").textContent="מקור חינמי: אין עלות Google."; return; }
+  const n=pmHexPoints(R+W, 1100).length;
+  $("#pmCost").textContent=`כ-${n} חיפושים ב-Google Places (בערך $${(n*0.035).toFixed(2)} לפי המחירון, לפני המכסה החינמית החודשית).`;
+}
+
+async function pmGoogleProviders(center, R, W, svc, kw, onTick){
+  const {Place, SearchNearbyRankPreference} = await google.maps.importLibrary("places");
+  const P=pmProj(center), pts=pmHexPoints(R+W, 1100);
+  const fields=["id","displayName","location","formattedAddress","rating","userRatingCount","photos","googleMapsURI","businessStatus","primaryTypeDisplayName"];
+  const found=new Map(); let saturated=0, done=0, fails=0, useText=!!kw;
+  await pool(pts, 4, async pt=>{
+    const c=P.ll(pt.x,pt.y);
+    let res;
+    try{
+      if(!useText){
+        try{ res=await Place.searchNearby({fields, locationRestriction:{center:c, radius:800}, includedPrimaryTypes:svc.g, maxResultCount:20, language:"iw", region:"IL", rankPreference:SearchNearbyRankPreference.DISTANCE}); }
+        catch(e){ if(/type/i.test(e.message)){ useText=true; } else throw e; }
+      }
+      if(useText) res=await Place.searchByText({textQuery:kw||svc.he, fields, locationBias:{center:c, radius:800}, maxResultCount:20, language:"iw", region:"IL"});
+      const list=res.places||[];
+      if(list.length>=20) saturated++;
+      list.forEach(p=>{
+        if(!p.location || p.businessStatus==="CLOSED_PERMANENTLY") return;
+        const loc={lat:p.location.lat(), lng:p.location.lng()}, xy=P.xy(loc);
+        if(Math.hypot(xy.x,xy.y) > R+W) return;
+        if(!found.has(p.id)) found.set(p.id,{id:p.id, name:p.displayName||"", address:p.formattedAddress||"", loc, rating:p.rating||null, reviews:p.userRatingCount||0,
+          type:p.primaryTypeDisplayName||"", maps:p.googleMapsURI||"",
+          photos:(p.photos||[]).slice(0,4).map(ph=>{ try{ return ph.getURI({maxWidth:600}); }catch(e){ return ""; } }).filter(Boolean)});
+      });
+    }catch(e){ fails++; console.warn("pm google", e); }
+    done++; onTick && onTick(done, pts.length);
+  });
+  if(fails===pts.length) throw new Error("כל החיפושים ב-Google נכשלו. בדקו שה-Places API (New) מופעל במפתח.");
+  return {list:[...found.values()], calls:pts.length, saturated, source:"google"};
+}
+async function pmOsmProviders(center, R, W, svc){
+  const a=`(around:${Math.round(R+W)},${center.lat},${center.lng})`;
+  const q=`[out:json][timeout:60];(${svc.osm.map(t=>`nwr[${t}]${a};`).join("")});out center tags;`;
+  const j=await pmOverpass(q);
+  const list=(j.elements||[]).map(e=>{ const loc=e.type==="node"?{lat:e.lat,lng:e.lon}:(e.center?{lat:e.center.lat,lng:e.center.lon}:null); if(!loc) return null;
+    const t=e.tags||{}; return {id:"osm-"+e.type+e.id, name:t["name:he"]||t.name||"(ללא שם)", address:[t["addr:street"],t["addr:housenumber"]].filter(Boolean).join(" "), loc, rating:null, reviews:0, type:"", maps:`https://www.openstreetmap.org/${e.type}/${e.id}`, photos:[]}; }).filter(Boolean);
+  return {list, calls:0, saturated:0, source:"osm"};
+}
+async function pmDemand(center, R){
+  const a=`(around:${Math.round(R)},${center.lat},${center.lng})`;
+  const q=`[out:json][timeout:120];way["building"]${a};out center tags;node["place"~"^(neighbourhood|suburb|quarter)$"](around:${Math.round(R+1200)},${center.lat},${center.lng});out tags;`;
+  const j=await pmOverpass(q);
+  const homes=[], hoods=[];
+  (j.elements||[]).forEach(e=>{
+    const t=e.tags||{};
+    if(e.type==="node" && t.place){ const n=t["name:he"]||t.name; if(n) hoods.push({name:n, loc:{lat:e.lat,lng:e.lon}, kind:t.place}); return; }
+    if(e.type!=="way" || !e.center) return;
+    const b=String(t.building||"yes");
+    if(PM_NONRES.test(b)) return;
+    if(t.amenity || t.shop || t.office || t.tourism) return;
+    const lv=parseFloat(t["building:levels"]);
+    let w = b==="apartments" ? (lv||4) : /^(house|detached|semidetached_house|terrace|bungalow)$/.test(b) ? 1 : (lv||2);
+    w=Math.max(1,Math.min(w,30));
+    homes.push({loc:{lat:e.center.lat,lng:e.center.lon}, w});
+  });
+  return {homes, hoods};
+}
+function pmAnalyze(center, R, W, homes, hoods, provs){
+  const P=pmProj(center), s=Math.max(200, Math.min(450, Math.round(R/11/10)*10));
+  const cells=new Map();
+  homes.forEach(h=>{ const p=P.xy(h.loc); const i=Math.floor(p.x/s), j=Math.floor(p.y/s), k=i+","+j;
+    const c=cells.get(k)||{i,j,demand:0,n:0}; c.demand+=h.w; c.n++; cells.set(k,c); });
+  const pv=provs.map(p=>P.xy(p.loc));
+  const H=hoods.map(h=>({...h, xy:P.xy(h.loc), demand:0, under:0, cells:0, dSum:0, dMax:0, provs:0}));
+  const list=[...cells.values()].map(c=>{
+    const x=(c.i+.5)*s, y=(c.j+.5)*s; let d=Infinity;
+    for(const q of pv){ const dd=Math.hypot(q.x-x,q.y-y); if(dd<d) d=dd; }
+    const ll=P.ll(x,y), sw=P.ll(c.i*s,c.j*s), ne=P.ll((c.i+1)*s,(c.j+1)*s);
+    let hood=null, hd=Infinity; H.forEach(h=>{ const dd=Math.hypot(h.xy.x-x,h.xy.y-y); if(dd<hd){hd=dd;hood=h;} });
+    if(hd>1800) hood=null;
+    const under = d>W;
+    const cell={x,y,ll,sw,ne,demand:c.demand,homes:c.n,d,under,ratio:d/W,hood};
+    if(hood){ hood.demand+=c.demand; hood.cells++; if(under){ hood.under+=c.demand; hood.dSum+=d*c.demand; hood.dMax=Math.max(hood.dMax,d); } }
+    return cell;
+  });
+  provs.forEach((p,k)=>{ let best=null, bd=Infinity; H.forEach(h=>{ const dd=Math.hypot(h.xy.x-pv[k].x,h.xy.y-pv[k].y); if(dd<bd){bd=dd;best=h;} }); if(best&&bd<1800) best.provs++; });
+  const maxU=Math.max(1,...H.map(h=>h.under));
+  const ranked=H.filter(h=>h.demand>0).map(h=>({...h, pct:Math.round(100*h.under/h.demand), avgD:h.under?h.dSum/h.under:0, pain:Math.round(100*h.under/maxU)}))
+    .sort((a,b)=>b.under-a.under);
+  const tot=list.reduce((a,c)=>a+c.demand,0), totU=list.filter(c=>c.under).reduce((a,c)=>a+c.demand,0);
+  return {cells:list, hoods:ranked, cellSize:s, totPct: tot?Math.round(100*totU/tot):0};
+}
+function pmColor(c){ if(!c.under) return "#12a26b"; return c.ratio<1.5 ? "#f2b632" : c.ratio<2 ? "#ff8a3d" : "#e5383b"; }
+function pmDraw(center, R, W, res, provs){
+  pm.overlays.forEach(o=>o.setMap(null)); pm.overlays=[];
+  if(!pm.map){ pm.map=new google.maps.Map($("#pmMap"),{center, zoom:13, mapTypeControl:false, streetViewControl:false, fullscreenControl:true, gestureHandling:"greedy"}); pm.iw=new google.maps.InfoWindow(); }
+  const maxD=Math.max(1,...res.cells.map(c=>c.demand));
+  res.cells.forEach(c=>{
+    const op = c.under ? 0.25+0.5*Math.sqrt(c.demand/maxD) : 0.12+0.18*Math.sqrt(c.demand/maxD);
+    const r=new google.maps.Rectangle({map:pm.map, bounds:{south:c.sw.lat, west:c.sw.lng, north:c.ne.lat, east:c.ne.lng}, strokeWeight:0, fillColor:pmColor(c), fillOpacity:op, clickable:true});
+    r.addListener("click",()=>{ pm.iw.setContent(`<div dir="rtl" style="font-family:Heebo,Arial;min-width:180px"><b>${esc(c.hood?c.hood.name:"אזור")}</b><br>${c.homes} מבנים · מדד מגורים ${Math.round(c.demand)}<br>${esc(pmLabel())} הכי קרוב: <b>${isFinite(c.d)?pmFmtD(c.d):"לא נמצא"}</b><br>${c.under?'<span style="color:#e5383b">🔴 מעבר למרחק הליכה ('+pmFmtD(W)+')</span>':'<span style="color:#12a26b">🟢 בטווח הליכה</span>'}</div>`); pm.iw.setPosition(c.ll); pm.iw.open(pm.map); });
+    pm.overlays.push(r);
+  });
+  pm.overlays.push(new google.maps.Circle({map:pm.map, center, radius:R, fillOpacity:0, strokeColor:"#6d4aff", strokeWeight:2, strokeOpacity:.7, clickable:false}));
+  provs.forEach(p=>{
+    const m=new google.maps.Marker({map:pm.map, position:p.loc, title:p.name, icon:{path:google.maps.SymbolPath.CIRCLE, scale:5, fillColor:"#1b1830", fillOpacity:1, strokeColor:"#fff", strokeWeight:1.5}});
+    m.addListener("click",()=>{ pm.iw.setContent(pmProvHtml(p,true)); pm.iw.open({map:pm.map, anchor:m}); });
+    pm.overlays.push(m);
+  });
+  res.hoods.slice(0,8).forEach((h,i)=>{
+    if(!h.under) return;
+    const m=new google.maps.Marker({map:pm.map, position:h.loc, label:{text:String(i+1), color:"#fff", fontWeight:"800", fontSize:"12px"}, title:h.name, zIndex:999,
+      icon:{path:google.maps.SymbolPath.CIRCLE, scale:12, fillColor:"#e5383b", fillOpacity:1, strokeColor:"#fff", strokeWeight:2}});
+    m.addListener("click",()=>pmFocus(i)); pm.overlays.push(m);
+  });
+  const b=new google.maps.Circle({center, radius:R}).getBounds(); pm.map.fitBounds(b);
+}
+function pmProvHtml(p, iw){
+  const img = p.photos&&p.photos[0] ? `<img src="${esc(p.photos[0])}" loading="lazy" alt="" onerror="this.remove()" style="width:100%;height:${iw?110:130}px;object-fit:cover;border-radius:10px;display:block;margin-bottom:6px">` : "";
+  return `<div dir="rtl" style="font-family:Heebo,Arial;${iw?"max-width:230px":""}">${img}<b>${esc(p.name)}</b><div style="font-size:12px;color:#777">${esc(p.type||"")}${p.address?" · "+esc(p.address):""}</div>
+    ${p.rating?`<div style="font-size:13px">⭐ ${p.rating} (${p.reviews})</div>`:""}${p.maps?`<a href="${esc(p.maps)}" target="_blank" rel="noopener" style="font-size:13px">פתח במפה ↗</a>`:""}</div>`;
+}
+function pmHoodHtml(h,i){
+  const W=+$("#pmWalk").value, L=pmLabel(), dot=h.pct>=50?"🔴":h.pct>=25?"🟠":h.pct>0?"🟡":"🟢";
+  const lr="https://shaharprod.github.io/leads-niche-hub/leads-radar/?kw="+encodeURIComponent(L)+"&opp="+encodeURIComponent("חוסר ב"+L+" ב"+h.name);
+  return `<div class="pm-hood" data-i="${i}">
+    <div class="pm-h"><b>${dot} ${i+1}. ${esc(h.name)}</b><span class="opp">כאב ${h.pain}</span></div>
+    <div class="note">${h.pct}% מהמגורים רחוקים יותר מ-${pmFmtD(W)} מ${esc(L)}${h.under?` · מרחק ממוצע אצלם ${pmFmtD(h.avgD)} · הכי רחוק ${pmFmtD(h.dMax)}`:""} · ${h.provs} ספקים בשכונה</div>
+    <div class="pm-bar"><i style="width:${h.pct}%"></i></div>
+    <div class="pm-btns"><button class="btn btn-ghost btn-sm" data-pm="zoom">🔍 הצג במפה</button><button class="btn btn-ghost btn-sm" data-pm="demand">🔎 האם מחפשים את זה?</button><a class="btn btn-ghost btn-sm" href="${esc(lr)}">📍 ספקים קרובים ב-Leads Radar</a></div>
+    <div class="pm-sugg"></div></div>`;
+}
+function pmFocus(i){ const h=pm.res&&pm.res.hoods[i]; if(!h||!pm.map) return; pm.map.panTo(h.loc); pm.map.setZoom(15);
+  const el=document.querySelector(`.pm-hood[data-i="${i}"]`); if(el){ el.scrollIntoView({behavior:"smooth",block:"nearest"}); el.classList.add("pm-flash"); setTimeout(()=>el.classList.remove("pm-flash"),1200); } }
+async function pmDemandCheck(i, box){
+  const h=pm.res.hoods[i], L=pmLabel();
+  box.innerHTML='<span class="spin"></span> בודק השלמות אוטומטיות בגוגל…';
+  const qs=[`${L} ב${h.name}`, `${L} ${h.name}`, `${L} ליד ${h.name}`, `${L} קרוב ל${h.name}`];
+  const seen=new Map();
+  await pool(qs,4,async q=>{ const d=await jsonp(`https://suggestqueries.google.com/complete/search?client=firefox&hl=he&gl=il&q=${encodeURIComponent(q)}`); (d?.[1]||[]).forEach(s=>{ s=String(Array.isArray(s)?s[0]:s).trim(); if(s) seen.set(s,(seen.get(s)||0)+1); }); });
+  const name=h.name.replace(/[()]/g,"").split(/\s+/)[0];
+  const rel=[...seen.keys()].filter(s=>s.includes(name));
+  box.innerHTML = rel.length
+    ? `<div class="note">גוגל משלים ${rel.length} חיפושים עם שם השכונה, כלומר אנשים מחפשים את זה:</div><div class="qlist" style="margin-top:6px">${rel.slice(0,12).map(s=>`<span class="q" dir="auto">${esc(s)}</span>`).join("")}</div>`
+    : `<div class="note">לא נמצאו השלמות אוטומטיות עם שם השכונה. זה לא אומר שאין צורך, רק שאין מספיק חיפושים בניסוח הזה.</div>`;
+}
+async function pmRun(){
+  const btn=$("#pmGo"); if(btn.disabled) return;
+  pmErr(""); btn.disabled=true; btn.innerHTML='<span class="spin"></span> ממפה…';
+  const src=$("#pmSrc").value, svc=pmSvc(), kw=$("#pmKw").value.trim(), R=+$("#pmRad").value, W=+$("#pmWalk").value;
+  pmStepsInit([["maps","טוען מפה ומאתר את הכתובת"],["demand","אוסף אזורי מגורים (OpenStreetMap)"],["supply",`אוסף ספקים: ${esc(kw||svc.he)} (${src==="google"?"Google":"OpenStreetMap"})`],["calc","מחשב מרחקים ומדרג שכונות"]]);
+  try{
+    if(src==="osm" && kw) throw new Error("חיפוש חופשי עובד רק עם Google. בחרו שירות מהרשימה, או החליפו מקור ל-Google.");
+    pmStep("maps","run");
+    try{ await pmLoadMaps(); }catch(e){ if(e.message==="NOKEY") throw new Error('חסר מפתח Google Maps. המפה משתמשת באותו מפתח של Leads Radar: <a href="https://shaharprod.github.io/leads-niche-hub/leads-radar/">פתחו את Leads Radar</a> → ⚙️ הגדרות → Google Maps API Key.'); throw e; }
+    const {results}=await new google.maps.Geocoder().geocode({address:$("#pmAddr").value.trim()||"ירושלים", region:"IL"});
+    if(!results||!results.length) throw new Error("הכתובת לא נמצאה. נסו ניסוח אחר.");
+    const center={lat:results[0].geometry.location.lat(), lng:results[0].geometry.location.lng()};
+    pmStep("maps","ok", results[0].formatted_address);
+    pmStep("demand","run"); pmStep("supply","run");
+    const [dem, sup] = await Promise.all([
+      pmDemand(center,R).then(d=>{ pmStep("demand","ok",`${d.homes.length.toLocaleString("he-IL")} מבני מגורים · ${d.hoods.length} שכונות`); return d; }),
+      (src==="google" ? pmGoogleProviders(center,R,W,svc,kw,(a,b)=>pmStep("supply","run",`${a}/${b}`)) : pmOsmProviders(center,R,W,svc))
+        .then(s=>{ pmStep("supply","ok",`${s.list.length} ספקים${s.saturated?` · ${s.saturated} נקודות מלאות (ייתכנו עוד)`:""}`); return s; })
+    ]);
+    if(!dem.homes.length) throw new Error("לא נמצאו מבני מגורים ב-OpenStreetMap באזור הזה. נסו רדיוס גדול יותר או אזור אחר.");
+    pmStep("calc","run");
+    const res=pmAnalyze(center,R,W,dem.homes,dem.hoods,sup.list);
+    pm.res={...res, center, R, W, provs:sup.list, src:sup.source, label:kw||svc.he};
+    $("#pmOut").classList.remove("hidden");
+    pmDraw(center,R,W,res,sup.list);
+    const L=kw||svc.he, top=res.hoods.filter(h=>h.under>0);
+    $("#pmSum").textContent = `${res.totPct}% ממבני המגורים ברדיוס ${pmFmtD(R)} רחוקים יותר מ-${pmFmtD(W)} מ${L}. ${top.length?`הכאב הגדול ביותר: ${top[0].name}.`:"לא נמצאה שכונה עם כאב משמעותי."}`;
+    $("#pmList").innerHTML = res.hoods.slice(0,15).map(pmHoodHtml).join("") || '<div class="note">לא נמצאו שכונות עם שם באזור.</div>';
+    $("#pmProvN").textContent=sup.list.length;
+    const pv=[...sup.list].sort((a,b)=>(b.reviews||0)-(a.reviews||0));
+    $("#pmProvs").innerHTML = pv.slice(0,60).map(p=>`<div class="pm-prov">${pmProvHtml(p,false)}</div>`).join("") + (pv.length>60?`<div class="note">מוצגים 60 מתוך ${pv.length}.</div>`:"");
+    pmStep("calc","ok",`${res.cells.length} משבצות של ${res.cellSize} מ׳`);
+    $("#pmOut").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(e){
+    console.error(e); $$("#pmSteps li.run").forEach(li=>{ li.className="err"; li.querySelector(".ic").textContent="!"; });
+    pmErr("שגיאה: "+(e.message||e));
+  }finally{ btn.disabled=false; btn.textContent="🗺️ מפה את הכאב"; }
+}
+(function pmInit(){
+  $("#pmSvc").innerHTML = PM_SVC.map(s=>`<option value="${s.id}">${esc(s.he)}</option>`).join("");
+  const setW=()=>{ $("#pmWalkLbl").textContent=pmFmtD(+$("#pmWalk").value); pmUpdateCost(); };
+  $("#pmSvc").addEventListener("change",()=>{ $("#pmWalk").value=pmSvc().w; setW(); });
+  ["pmRad","pmSrc"].forEach(id=>$("#"+id).addEventListener("change",pmUpdateCost));
+  $("#pmWalk").addEventListener("input",setW);
+  $("#pmGo").addEventListener("click",pmRun);
+  $("#pmAddr").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); pmRun(); } });
+  $("#pmWalk").value=pmSvc().w; setW();
+  if(!pmMapsKey()) $("#pmKeyNote").innerHTML='⚠️ לא נמצא מפתח Google Maps. המפה משתמשת באותו מפתח של <a href="https://shaharprod.github.io/leads-niche-hub/leads-radar/">Leads Radar</a> (⚙️ הגדרות → Google Maps API Key).';
+  $("#pmList").addEventListener("click",e=>{ const b=e.target.closest("[data-pm]"); if(!b) return; const card=b.closest(".pm-hood"), i=+card.dataset.i;
+    if(b.dataset.pm==="zoom") pmFocus(i);
+    if(b.dataset.pm==="demand") pmDemandCheck(i, card.querySelector(".pm-sugg")); });
+  $("#pmCsv").addEventListener("click",()=>{ if(!pm.res) return;
+    const rows=[["שכונה","ציון כאב","% מגורים רחוקים","מרחק ממוצע (מ׳)","מרחק מקסימלי (מ׳)","ספקים בשכונה","מדד מגורים","שירות","מרחק הליכה (מ׳)"]];
+    pm.res.hoods.forEach(h=>rows.push([h.name,h.pain,h.pct,Math.round(h.avgD),Math.round(h.dMax),h.provs,Math.round(h.demand),pm.res.label,pm.res.W]));
+    download(`pain-map-${new Date().toISOString().slice(0,10)}.csv`, "﻿"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n"), "text/csv;charset=utf-8"); });
+})();
 
 /* ---------------- init ---------------- */
 (function init(){
