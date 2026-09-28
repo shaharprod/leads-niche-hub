@@ -1220,12 +1220,12 @@ async function pmOsmProviders(center, R, W, svc){
 }
 async function pmDemand(center, R){
   const a=`(around:${Math.round(R)},${center.lat},${center.lng})`;
-  const q=`[out:json][timeout:120];way["building"]${a};out center tags;node["place"~"^(neighbourhood|suburb|quarter)$"](around:${Math.round(R+1200)},${center.lat},${center.lng});out tags;`;
+  const q=`[out:json][timeout:120];way["building"]${a};out center tags;node["place"~"^(neighbourhood|suburb|quarter)$"](around:${Math.round(R+1200)},${center.lat},${center.lng});out body;`;
   const j=await pmOverpass(q, n=>pmStep("demand","run","ניסיון "+n));
   const homes=[], hoods=[];
   (j.elements||[]).forEach(e=>{
     const t=e.tags||{};
-    if(e.type==="node" && t.place){ const n=t["name:he"]||t.name; if(n) hoods.push({name:n, loc:{lat:e.lat,lng:e.lon}, kind:t.place}); return; }
+    if(e.type==="node" && t.place){ const n=t["name:he"]||t.name; if(n && isFinite(e.lat)) hoods.push({name:n, loc:{lat:e.lat,lng:e.lon}, kind:t.place}); return; }
     if(e.type!=="way" || !e.center) return;
     const b=String(t.building||"yes");
     if(PM_NONRES.test(b)) return;
