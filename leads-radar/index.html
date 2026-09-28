@@ -1517,7 +1517,7 @@ function regHtml(b){
 }
 
 /* ---------- 🔎 HUB: deep dig — reviews on other sites, strengths, pains, where to help (inside the card) ---------- */
-const deepRunning = {};
+const deepRunning = {}, deepErr = {};
 const DEEP_SITES = [['midrag.co.il','מידרג'],['easy.co.il','איזי'],['b144.co.il','B144'],['d.co.il','דפי זהב'],['zap.co.il','זאפ'],['rest.co.il','רסט'],['2eat.co.il','2eat'],
   ['facebook.com','פייסבוק'],['instagram.com','אינסטגרם'],['tripadvisor','TripAdvisor'],['wolt.com','Wolt'],['10bis','10ביס'],['google','גוגל'],['yad2.co.il','יד2']];
 function deepSiteName(s, url){ const t=String(s||'')+' '+String(url||''); const m=DEEP_SITES.find(([d])=>t.toLowerCase().includes(d)); return m?m[1]:(s||'אתר'); }
@@ -1527,7 +1527,7 @@ function deepParse(txt){
   s=s.slice(a,z+1);
   try{ return JSON.parse(s); }catch(e){ return JSON.parse(s.replace(/([֐-׿])"(?=[֐-׿])/g,'$1״')); }
 }
-function deepPrompt(b){
+function deepPrompt(b, noQuotes){
   const sc=scoreBiz(b), pr=presenceOf(b), city=(b.address||'').split(',').slice(-2,-1)[0]||'';
   const gr=(b.rev&&!b.rev.error&&b.rev.list||[]).map((r,i)=>`[${i+1}] ${r.rating}★ ${r.when}: ${r.text}`).join('\n');
   const pk=pkgList().map(p=>p.name).join(' | ');
@@ -1547,7 +1547,7 @@ ${gr?`- ביקורות גוגל אחרונות:\n${gr}`:''}
 שלב 1: חפש ב-Google Search את העסק הזה בדיוק (ודא התאמה לפי שם + עיר/כתובת/טלפון) באתרי ביקורות ואינדקסים: מידרג (midrag.co.il), איזי (easy.co.il), B144 (b144.co.il), דפי זהב (d.co.il), זאפ (zap.co.il), רסט ו-2eat (לעסקי אוכל), פייסבוק (דף העסק והמלצות), אינסטגרם, TripAdvisor, Wolt / 10ביס אם רלוונטי, ואתרי ביקורות של התחום. פתח את העמודים שמצאת וקרא את הביקורות עצמן.
 שלב 2: החזר JSON בלבד, בלי markdown ובלי טקסט נוסף, במבנה:
 {"identity":{"confidence":"high|medium|low","note":"איך וידאת שזה אותו עסק"},
- "sources":[{"site":"שם האתר","url":"כתובת העמוד שקראת","found":true,"rating":null,"scale":5,"count":null,"positive":null,"negative":null,"last":"מתי הביקורת האחרונה","highlights":["מה משבחים"],"complaints":["על מה מתלוננים"],"quotes":[{"text":"ציטוט מילה במילה","positive":true}],"note":""}],
+ "sources":[{"site":"שם האתר","url":"כתובת העמוד שקראת","found":true,"rating":null,"scale":5,"count":null,"positive":null,"negative":null,"last":"מתי הביקורת האחרונה","highlights":["מה משבחים"],"complaints":["על מה מתלוננים"],"quotes":[{"text":"תמצית קצרה של ביקורת, במילים שלך","positive":true}],"note":""}],
  "owner_replies":"האם בעל העסק עונה לביקורות, איפה ואיך",
  "strengths":["הסגולות של העסק — מבוסס ראיות"],
  "pains":["הכאבים של העסק — גם מה שהלקוחות אומרים וגם חולשות בנוכחות הדיגיטלית"],
@@ -1556,23 +1556,31 @@ ${gr?`- ביקורות גוגל אחרונות:\n${gr}`:''}
  "facts":["עובדות נוספות: שנות פעילות, שם בעלים אם פורסם, מחירים שפורסמו, התמחויות, סניפים"]}
 כללים:
 - מספרים (rating, count, positive, negative) רק כפי שראית בעמוד. לא ראית או לא ניתן לספור: null. אל תמציא.
-- ציטוטים מילה במילה, עד 200 תווים כל אחד, עד 3 לכל אתר.
+${noQuotes?'- quotes: החזר רשימה ריקה []. אל תעתיק טקסט מהעמודים; כתוב הכל במילים שלך.':'- quotes: תמצית במילים שלך (לא העתקה מילולית), עד 90 תווים כל אחת, עד 3 לכל אתר. אל תעתיק קטעים ארוכים מהעמודים.'}
 - אתר שבדקת ולא מצאת בו את העסק: found:false. אם לא בטוח שזה אותו עסק: found:false והסבר ב-note.
 - opportunities: בין 3 ל-6, קונקרטיים ומבוססי ראיות. השירותים האפשריים: ${pk||'בניית אתר, SEO, ניהול מוניטין, רשתות חברתיות, אוטומציה ובוט'}.
 - הכל בעברית. בראשי תיבות השתמש בגרשיים ״ (למשל ש״ח), לא במירכאות רגילות.`;
 }
 window.deepDig = async id=>{
   const b=findBiz(id); if(!b||deepRunning[id]) return;
-  if(!settings.gemini){ alert('לחפירה צריך מפתח Gemini: ⚙️ הגדרות → Gemini API Key.'); return; }
+  delete deepErr[id];
+  if(!settings.gemini){ deepErr[id]='לחפירה צריך מפתח Gemini: ⚙️ הגדרות → Gemini API Key.'; reopen(id); return; }
   deepRunning[id]=Date.now(); reopen(id);
   try{
     if(!b.rev && typeof fetchReviews==='function'){ try{ b.rev=await fetchReviews(b); }catch(e){} }
-    const r=await fetchT('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(settings.model||'gemini-2.5-flash')+':generateContent?key='+encodeURIComponent(settings.gemini),
-      {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:deepPrompt(b)}]}],
-        tools:[{google_search:{}},{url_context:{}}], generationConfig:{temperature:0.2, maxOutputTokens:20000}})}, 180000);
-    const j=await r.json(); if(j.error) throw new Error(j.error.message);
-    const c=j.candidates&&j.candidates[0]; if(!c) throw new Error('לא התקבלה תשובה');
-    const d=deepParse((c.content&&c.content.parts||[]).map(p=>p.thought?'':(p.text||'')).join(''));
+    // Gemini may refuse text it would copy from web pages (RECITATION) -> second try without quotes
+    const call=async noQ=>{
+      const r=await fetchT('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(settings.model||'gemini-2.5-flash')+':generateContent?key='+encodeURIComponent(settings.gemini),
+        {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:deepPrompt(b,noQ)}]}],
+          tools:[{google_search:{}},{url_context:{}}], generationConfig:{temperature:0.2, maxOutputTokens:20000}})}, 170000);
+      const j=await r.json(); if(j.error) throw new Error(j.error.message);
+      const c=j.candidates&&j.candidates[0]; if(!c) throw new Error('לא התקבלה תשובה');
+      if(c.finishReason==='RECITATION') throw Object.assign(new Error('RECITATION'),{retry:true});
+      try{ return {c, d:deepParse((c.content&&c.content.parts||[]).map(p=>p.thought?'':(p.text||'')).join(''))}; }
+      catch(e){ throw Object.assign(e,{retry:true}); }
+    };
+    let res; try{ res=await call(false); }catch(e){ if(!e.retry) throw e; log('🔎 ניסיון שני (בלי ציטוטים)…'); res=await call(true); }
+    const c=res.c, d=res.d;
     const gm=c.groundingMetadata||{};
     d.refs=(gm.groundingChunks||[]).map(x=>x.web).filter(Boolean).map(w=>({title:w.title||'', uri:w.uri||''}));
     d.queries=gm.webSearchQueries||[];
@@ -1586,7 +1594,7 @@ window.deepDig = async id=>{
     DIRS.forEach(([n,site],i)=>{ const dom=site.split(' ')[0].toLowerCase(), hn=n.split(' ')[0];
       if(b.cites[i]===undefined && d.sources.some(s=>{ if(s.found===false) return false; const t=(String(s.site)+' '+String(s.url)).toLowerCase(); return t.includes(dom)||String(s.site).includes(hn); })) b.cites[i]=true; });
     persistBiz(b); log('🔎 חפירה הושלמה: '+b.name+' · '+d.sources.filter(s=>s.found!==false).length+' אתרים');
-  }catch(e){ alert('החפירה נכשלה: '+(e.name==='AbortError'?'לקח יותר מ-3 דקות':e.message)); }
+  }catch(e){ console.error('deepDig',e); deepErr[id]='החפירה נכשלה: '+(e.name==='AbortError'?'לקח יותר מ-3 דקות. נסו שוב.':e.message); }
   delete deepRunning[id]; reopen(id);
 };
 function deepTotals(d){ const f=(d.sources||[]).filter(s=>s.found!==false && !(/גוגל|google/i.test(String(s.site)+' '+String(s.url||'')) && !/facebook|פייסבוק/i.test(String(s.site))));
@@ -1597,7 +1605,8 @@ function deepHtml(b){
   const manual=(()=>{ const city=(b.address||'').split(',').slice(-2,-1)[0]||'', n='"'+b.name+'"';
     const links=[['📰 חדשות',gSearch(n+' '+city)],['⭐ ביקורות',gSearch(n+' ביקורות OR חוות דעת')],['📘 פייסבוק',gSearch(n+' '+city+' site:facebook.com')],['💼 לינקדאין',gSearch(n+' site:linkedin.com/company')],['🛒 דרושים',gSearch(n+' דרושים OR משרה')]];
     return `<details style="margin-top:8px"><summary class="hint" style="cursor:pointer">חיפושים ידניים בגוגל (נפתחים בלשונית חדשה)</summary><div class="chips" style="margin-top:6px">${links.map(([t,u])=>`<a class="chip" href="${u}" target="_blank" style="text-decoration:none">${t}</a>`).join('')}</div></details>`; })();
-  const btn=`<button class="primary" ${run?'disabled':''} onclick="deepDig('${b.id}')">${run?'<span class="sp"></span> חופר ברשת…':'🔎 '+(d?'חפור שוב':'חפור עכשיו ברשת')}</button>`;
+  const errH=deepErr[b.id]?`<div class="err" style="margin:8px 0">${esc(deepErr[b.id])}</div>`:'';
+  const btn=errH+`<button class="primary" ${run?'disabled':''} onclick="deepDig('${b.id}')">${run?'<span class="sp"></span> חופר ברשת…':'🔎 '+(d?'חפור שוב':'חפור עכשיו ברשת')}</button>`;
   if(!d) return `<div class="sec deep"><h5>🔎 חפירה מעמיקה ברשת</h5>
     <div class="hint" style="margin-bottom:8px">AI מחפש את העסק במידרג, איזי, B144, דפי זהב, זאפ, רסט, פייסבוק ועוד. הוא קורא את הביקורות ומביא לכאן את הדירוגים, כמה ביקורות טובות וכמה רעות, ציטוטים, סגולות, כאבים ואיפה בדיוק אפשר לעזור. בלי לצאת מהכרטיס.${run?'<br><b>זה לוקח בדרך כלל 40 עד 90 שניות. אפשר להמשיך לעבוד, התוצאה תישמר בכרטיס.</b>':''}</div>${btn}${manual}</div>`;
   const T=deepTotals(d), fnum=v=>(v===null||v===undefined||v==='')?'—':esc(v);
