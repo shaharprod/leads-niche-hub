@@ -1089,6 +1089,18 @@ $("#impJson").addEventListener("change",async e=>{
    supply  = service providers from Google Places (or OSM, free)
    pain    = homes farther than a walking distance from the nearest provider
    ================================================================ */
+/* HUB: keep only photos uploaded by the business itself (photo author name matches the business name) */
+function ownerPhotoUrls(p, name, max){
+  const N=s=>String(s||"").toLowerCase().replace(/["'׳״`]/g,"").replace(/[^\p{L}\p{N}]+/gu," ").trim();
+  const STOP=new Set(["של","the","and","shop","salon","hair","barber","store","ltd","בעמ","סניף","מספרה","מספרת","סלון","חנות","קפה","cafe","coffee","מסעדה","restaurant","סופר","super","market","מרכז","center","israel","ישראל","jerusalem","ירושלים","בירושלים","tel","aviv","תל","אביב","לגברים","לנשים","עיצוב","שיער","beauty","studio","סטודיו"]);
+  const toks=s=>new Set(N(s).split(" ").filter(w=>w.length>=2&&!STOP.has(w)));
+  const bn=N(name), bt=toks(name);
+  const isOwner=a=>{ const an=N(a&&a.displayName); if(an.length<3) return false; if(an===bn) return true;
+    if(an.length>=6&&bn.length>=6&&(bn.includes(an)||an.includes(bn))) return true;
+    let k=0; toks(an).forEach(w=>{ if(bt.has(w)) k++; }); return k>=2; };
+  return (p.photos||[]).filter(ph=>(ph.authorAttributions||[]).some(isOwner)).slice(0,max||8)
+    .map(ph=>{ try{ return ph.getURI({maxWidth:800}); }catch(e){ return ""; } }).filter(Boolean);
+}
 const PM_SVC = [
   {id:"supermarket", he:"סופרמרקט", g:["supermarket"], osm:['"shop"="supermarket"'], w:600},
   {id:"grocery", he:"מכולת / סופר שכונתי", g:["grocery_store","convenience_store","supermarket"], osm:['"shop"="supermarket"','"shop"="convenience"','"shop"="greengrocer"'], w:400},
@@ -1130,16 +1142,23 @@ function pmLoadMaps(){
   });
   return pm.mapsReady;
 }
-async function pmOverpass(q){
+const pmCache=new Map();
+async function pmOverpass(q, onTry){
+  if(pmCache.has(q)) return pmCache.get(q);
+  const plan=[[PM_OVERPASS[0],0],[PM_OVERPASS[0],3000],[PM_OVERPASS[1],0],[PM_OVERPASS[0],8000],[PM_OVERPASS[2],0]];
   let last;
-  for(const ep of PM_OVERPASS){
+  for(let k=0;k<plan.length;k++){
+    const [ep,wait]=plan[k]; if(wait) await sleep(wait);
+    onTry && k && onTry(k+1);
+    const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),60000);
     try{
-      const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)});
-      if(!r.ok) throw new Error("Overpass "+r.status);
-      return await r.json();
-    }catch(e){ last=e; }
+      const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q),signal:ctl.signal});
+      if(!r.ok) throw new Error("שרת OpenStreetMap עמוס ("+r.status+")");
+      const j=await r.json(); pmCache.set(q,j); return j;
+    }catch(e){ last = e.name==="AbortError" ? new Error("שרת OpenStreetMap לא ענה בזמן") : e; }
+    finally{ clearTimeout(tm); }
   }
-  throw last||new Error("Overpass לא זמין");
+  throw new Error((last&&last.message||"OpenStreetMap לא זמין")+". נסו שוב בעוד דקה.");
 }
 /* local planar projection (meters) around the scan center */
 function pmProj(c){ const kx=111320*Math.cos(c.lat*Math.PI/180), ky=110540;
@@ -1183,7 +1202,7 @@ async function pmGoogleProviders(center, R, W, svc, kw, onTick){
         if(Math.hypot(xy.x,xy.y) > R+W) return;
         if(!found.has(p.id)) found.set(p.id,{id:p.id, name:p.displayName||"", address:p.formattedAddress||"", loc, rating:p.rating||null, reviews:p.userRatingCount||0,
           type:p.primaryTypeDisplayName||"", maps:p.googleMapsURI||"",
-          photos:(p.photos||[]).slice(0,4).map(ph=>{ try{ return ph.getURI({maxWidth:600}); }catch(e){ return ""; } }).filter(Boolean)});
+          photos:ownerPhotoUrls(p, p.displayName, 4)});
       });
     }catch(e){ fails++; console.warn("pm google", e); }
     done++; onTick && onTick(done, pts.length);
@@ -1202,7 +1221,7 @@ async function pmOsmProviders(center, R, W, svc){
 async function pmDemand(center, R){
   const a=`(around:${Math.round(R)},${center.lat},${center.lng})`;
   const q=`[out:json][timeout:120];way["building"]${a};out center tags;node["place"~"^(neighbourhood|suburb|quarter)$"](around:${Math.round(R+1200)},${center.lat},${center.lng});out tags;`;
-  const j=await pmOverpass(q);
+  const j=await pmOverpass(q, n=>pmStep("demand","run","ניסיון "+n));
   const homes=[], hoods=[];
   (j.elements||[]).forEach(e=>{
     const t=e.tags||{};
@@ -1311,11 +1330,11 @@ async function pmRun(){
     const center={lat:results[0].geometry.location.lat(), lng:results[0].geometry.location.lng()};
     pmStep("maps","ok", results[0].formatted_address);
     pmStep("demand","run"); pmStep("supply","run");
-    const [dem, sup] = await Promise.all([
-      pmDemand(center,R).then(d=>{ pmStep("demand","ok",`${d.homes.length.toLocaleString("he-IL")} מבני מגורים · ${d.hoods.length} שכונות`); return d; }),
-      (src==="google" ? pmGoogleProviders(center,R,W,svc,kw,(a,b)=>pmStep("supply","run",`${a}/${b}`)) : pmOsmProviders(center,R,W,svc))
-        .then(s=>{ pmStep("supply","ok",`${s.list.length} ספקים${s.saturated?` · ${s.saturated} נקודות מלאות (ייתכנו עוד)`:""}`); return s; })
-    ]);
+    const demP = pmDemand(center,R).then(d=>{ pmStep("demand","ok",`${d.homes.length.toLocaleString("he-IL")} מבני מגורים · ${d.hoods.length} שכונות`); return d; });
+    const supF = ()=> (src==="google" ? pmGoogleProviders(center,R,W,svc,kw,(a,b)=>pmStep("supply","run",`${a}/${b}`)) : pmOsmProviders(center,R,W,svc))
+        .then(s=>{ pmStep("supply","ok",`${s.list.length} ספקים${s.saturated?` · ${s.saturated} נקודות מלאות (ייתכנו עוד)`:""}`); return s; });
+    // OpenStreetMap limits parallel requests, so the OSM supply query waits for the demand query
+    const [dem, sup] = src==="google" ? await Promise.all([demP, supF()]) : [await demP, await supF()];
     if(!dem.homes.length) throw new Error("לא נמצאו מבני מגורים ב-OpenStreetMap באזור הזה. נסו רדיוס גדול יותר או אזור אחר.");
     pmStep("calc","run");
     const res=pmAnalyze(center,R,W,dem.homes,dem.hoods,sup.list);
