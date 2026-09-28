@@ -158,6 +158,7 @@ table.cmp tr.me{background:rgba(79,124,255,.12)}table.cmp th{color:var(--mut);fo
   <div class="spacer"></div>
   <a class="ghost hubnav" href="https://shaharprod.github.io/leads-niche-hub/">🏠 מרכז</a>
   <a class="ghost hubnav" href="https://shaharprod.github.io/leads-niche-hub/niche-hunter/">💡 צייד הנישות</a>
+  <button class="ghost" onclick="hubDriveOpen()" title="גיבוי ושחזור בגוגל דרייב">☁️ גיבוי</button>
   <button class="ghost" id="btnSettings">⚙️ הגדרות</button>
   <button class="ghost" id="btnHelp">❓ עזרה</button>
 </header>
@@ -2020,6 +2021,119 @@ $('rad').dispatchEvent(new Event('input'));
 results.forEach(b=>{ if(b.astate==='run') b.astate=''; });
 render(); updateLeadsCount(); boot(); setTimeout(()=>{ refreshViews(); loadNewCount(); loadHist(results); },2500);
 if(results.length) log('נטענו '+results.length+' תוצאות מהסריקה הקודמת.');
+</script>
+<script>
+/* ================================================================
+   HUB: ☁️ backup & restore to Google Drive (both apps share one backup)
+   Everything the two connected apps keep in this browser (keys starting with "hub_")
+   goes into one JSON file in your Drive folder "Leads Hub – גיבויים".
+   Scope drive.file: the app sees only the files it created itself.
+   ================================================================ */
+(function(){
+  const CLIENT_ID="420433257258-lvae4dd9fn43sg9n7vaeukvn0i1bphmq.apps.googleusercontent.com";
+  const SCOPE="https://www.googleapis.com/auth/drive.file", FOLDER="Leads Hub – גיבויים", PREFIX="hub_";
+  let token=null, tokenExp=0, gisP=null;
+  const E=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  function gis(){ if(window.google&&google.accounts&&google.accounts.oauth2) return Promise.resolve();
+    if(gisP) return gisP; gisP=new Promise((res,rej)=>{ const s=document.createElement("script"); s.src="https://accounts.google.com/gsi/client"; s.onload=()=>res(); s.onerror=()=>{gisP=null; rej(new Error("טעינת התחברות Google נכשלה"));}; document.head.appendChild(s); }); return gisP; }
+  async function getToken(){
+    if(token && Date.now()<tokenExp-60000) return token;
+    await gis();
+    return new Promise((res,rej)=>{
+      const tc=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID, scope:SCOPE, callback:r=>{ if(r.error) return rej(new Error(r.error_description||r.error)); token=r.access_token; tokenExp=Date.now()+(r.expires_in||3600)*1000; res(token); }, error_callback:e=>rej(new Error(e&&e.type==="popup_closed"?"חלון ההתחברות נסגר":(e&&e.message)||"ההתחברות בוטלה"))});
+      tc.requestAccessToken({prompt: token?"":"consent"});
+    });
+  }
+  async function api(url, opts={}){
+    const t=await getToken();
+    const r=await fetch(url, Object.assign({}, opts, {headers:Object.assign({Authorization:"Bearer "+t}, opts.headers||{})}));
+    if(!r.ok){ let m=r.status+""; try{ const j=await r.json(); m=j.error&&j.error.message||m; }catch(e){} throw new Error("Drive: "+m); }
+    return r;
+  }
+  async function folderId(create){
+    const q=encodeURIComponent(`mimeType='application/vnd.google-apps.folder' and name='${FOLDER}' and trashed=false`);
+    const j=await (await api(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`)).json();
+    if(j.files&&j.files.length) return j.files[0].id;
+    if(!create) return null;
+    const f=await (await api("https://www.googleapis.com/drive/v3/files",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:FOLDER,mimeType:"application/vnd.google-apps.folder"})})).json();
+    return f.id;
+  }
+  function snapshot(){ const data={}; for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(PREFIX)) data[k]=localStorage.getItem(k); }
+    return {app:"leads-niche-hub", version:1, created:new Date().toISOString(), from:location.pathname, data}; }
+  async function backup(){
+    const snap=snapshot(), n=Object.keys(snap.data).length;
+    if(!n) throw new Error("אין עדיין נתונים לגבות בדפדפן הזה");
+    const fid=await folderId(true), d=new Date(), pad=x=>String(x).padStart(2,"0");
+    const name=`leads-hub-backup-${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json`;
+    const b="hubdrive"+Math.random().toString(36).slice(2);
+    const body=`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name,parents:[fid],mimeType:"application/json"})}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(snap)}\r\n--${b}--`;
+    const f=await (await api("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,size",{method:"POST",headers:{"Content-Type":"multipart/related; boundary="+b},body})).json();
+    try{ localStorage.setItem("hubsys_lastBackup", JSON.stringify({at:Date.now(), name:f.name, link:f.webViewLink})); }catch(e){}
+    return {f, n, kb:Math.round(JSON.stringify(snap).length/1024)};
+  }
+  async function list(){
+    const fid=await folderId(false); if(!fid) return [];
+    const q=encodeURIComponent(`'${fid}' in parents and trashed=false and mimeType='application/json'`);
+    const j=await (await api(`https://www.googleapis.com/drive/v3/files?q=${q}&orderBy=createdTime desc&pageSize=15&fields=files(id,name,createdTime,size,webViewLink)`)).json();
+    return j.files||[];
+  }
+  async function restore(id){
+    const snap=await (await api(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`)).json();
+    if(!snap||snap.app!=="leads-niche-hub"||!snap.data) throw new Error("הקובץ הזה לא גיבוי של מרכז הלידים");
+    // keep a local safety copy of the current state first
+    try{ localStorage.setItem("hubsys_beforeRestore", JSON.stringify(snapshot())); }catch(e){}
+    Object.keys(localStorage).filter(k=>k.startsWith(PREFIX)).forEach(k=>localStorage.removeItem(k));
+    Object.entries(snap.data).forEach(([k,v])=>{ if(k.startsWith(PREFIX)) localStorage.setItem(k,v); });
+    return Object.keys(snap.data).length;
+  }
+  /* ---------- UI ---------- */
+  const css=`#hubDrive{border:0;border-radius:16px;padding:0;max-width:520px;width:calc(100% - 32px);background:#141a33;color:#e8ecf8;font-family:inherit;direction:rtl}
+#hubDrive::backdrop{background:rgba(0,0,0,.5)}#hubDrive .hd-h{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid #2a3358;font-weight:800}
+#hubDrive .hd-b{padding:14px 16px;line-height:1.7;font-size:14px}#hubDrive button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid #2a3358;background:#1d2547;color:#e8ecf8;padding:8px 12px}
+#hubDrive button.pr{background:#4f7cff;border-color:#4f7cff;color:#fff;font-weight:700}#hubDrive .hd-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+#hubDrive .hd-note{font-size:12.5px;color:#a3aecb}#hubDrive .hd-st{margin-top:8px;font-size:13.5px}#hubDrive .hd-ok{color:#34d399}#hubDrive .hd-err{color:#ff8a8a}
+#hubDrive .hd-list{max-height:220px;overflow:auto;margin-top:8px}#hubDrive .hd-it{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid #2a3358;padding:7px 0}
+#hubDrive a{color:#8fb0ff}#hubDrive .spin{width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;display:inline-block;animation:hdspin .8s linear infinite;vertical-align:-2px}@keyframes hdspin{to{transform:rotate(360deg)}}`;
+  function ui(){
+    if(document.getElementById("hubDrive")) return document.getElementById("hubDrive");
+    const st=document.createElement("style"); st.textContent=css; document.head.appendChild(st);
+    const d=document.createElement("dialog"); d.id="hubDrive";
+    d.innerHTML=`<div class="hd-h">☁️ גיבוי ושחזור בגוגל דרייב<span style="flex:1"></span><button data-x>סגור</button></div>
+      <div class="hd-b">
+        <div>גיבוי אחד לשתי האפליקציות (Leads Radar וצייד הנישות): לידים, תוצאות, שמורים והגדרות, כולל מפתחות ה-API.</div>
+        <div class="hd-note">נשמר בדרייב שלך בתיקייה «${E(FOLDER)}». הכלי רואה בדרייב רק את קבצי הגיבוי שהוא עצמו יצר.</div>
+        <div class="hd-row"><button class="pr" data-bk>⬆️ גבה עכשיו לדרייב</button><button data-ls>⬇️ שחזר מהדרייב</button></div>
+        <div class="hd-note" data-last></div>
+        <div class="hd-st" data-st></div><div class="hd-list" data-list></div>
+        <details style="margin-top:10px"><summary class="hd-note" style="cursor:pointer">בלי דרייב: קובץ במחשב</summary>
+          <div class="hd-row"><button data-dl>💾 הורד קובץ גיבוי</button><label style="border:1px solid #2a3358;border-radius:10px;padding:8px 12px;cursor:pointer">📂 טען קובץ גיבוי<input type="file" accept=".json,application/json" data-up hidden></label></div></details>
+      </div>`;
+    document.body.appendChild(d);
+    const $d=s=>d.querySelector(s), say=(h,c)=>{ $d("[data-st]").innerHTML=`<span class="${c||""}">${h}</span>`; };
+    const showLast=()=>{ try{ const l=JSON.parse(localStorage.getItem("hubsys_lastBackup")||"null"); $d("[data-last]").innerHTML=l?`גיבוי אחרון מהדפדפן הזה: ${new Date(l.at).toLocaleString("he-IL")}${l.link?` · <a href="${E(l.link)}" target="_blank" rel="noopener">פתח בדרייב</a>`:""}`:"עוד לא בוצע גיבוי מהדפדפן הזה."; }catch(e){} };
+    d.addEventListener("click",e=>{ if(e.target===d||e.target.closest("[data-x]")) d.close(); });
+    $d("[data-bk]").onclick=async()=>{ say('<span class="spin"></span> מגבה… (אם נפתח חלון של גוגל, בחרו את החשבון ואשרו)'); $d("[data-list]").innerHTML="";
+      try{ const r=await backup(); say(`✓ נשמר בדרייב: <a href="${E(r.f.webViewLink||"#")}" target="_blank" rel="noopener">${E(r.f.name)}</a> · ${r.n} פריטים · ${r.kb} KB`,"hd-ok"); showLast(); }
+      catch(e){ say("הגיבוי נכשל: "+E(e.message),"hd-err"); } };
+    $d("[data-ls]").onclick=async()=>{ say('<span class="spin"></span> טוען את רשימת הגיבויים…'); $d("[data-list]").innerHTML="";
+      try{ const fs=await list(); if(!fs.length){ say("לא נמצאו גיבויים בדרייב. קודם צריך «גבה עכשיו» (מכל מכשיר)."); return; }
+        say(`נמצאו ${fs.length} גיבויים. בחרו אחד לשחזור (החדש ביותר למעלה):`);
+        $d("[data-list]").innerHTML=fs.map(f=>`<div class="hd-it"><span>${new Date(f.createdTime).toLocaleString("he-IL")} · ${Math.round((+f.size||0)/1024)} KB</span><button data-rs="${E(f.id)}">שחזר</button></div>`).join("");
+      }catch(e){ say("טעינת הרשימה נכשלה: "+E(e.message),"hd-err"); } };
+    $d("[data-list]").addEventListener("click",async e=>{ const b=e.target.closest("[data-rs]"); if(!b) return;
+      if(b.dataset.sure!=="1"){ b.dataset.sure="1"; b.textContent="בטוח? לחצו שוב"; b.classList.add("pr"); say("השחזור מחליף את הנתונים של שתי האפליקציות בדפדפן הזה בנתונים מהגיבוי. עותק של המצב הנוכחי נשמר בצד."); return; }
+      say('<span class="spin"></span> משחזר…');
+      try{ const n=await restore(b.dataset.rs); say(`✓ שוחזרו ${n} פריטים. טוען מחדש…`,"hd-ok"); setTimeout(()=>location.reload(),900); }
+      catch(e){ say("השחזור נכשל: "+E(e.message),"hd-err"); } });
+    $d("[data-dl]").onclick=()=>{ const s=JSON.stringify(snapshot(),null,1), a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([s],{type:"application/json"})); a.download=`leads-hub-backup-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500); say("✓ הקובץ ירד למחשב","hd-ok"); };
+    $d("[data-up]").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ const snap=JSON.parse(await f.text()); if(!snap||snap.app!=="leads-niche-hub") throw new Error("זה לא קובץ גיבוי של מרכז הלידים");
+        try{ localStorage.setItem("hubsys_beforeRestore", JSON.stringify(snapshot())); }catch(x){}
+        Object.keys(localStorage).filter(k=>k.startsWith(PREFIX)).forEach(k=>localStorage.removeItem(k)); Object.entries(snap.data).forEach(([k,v])=>{ if(k.startsWith(PREFIX)) localStorage.setItem(k,v); });
+        say("✓ שוחזר מהקובץ. טוען מחדש…","hd-ok"); setTimeout(()=>location.reload(),900); }catch(err){ say("טעינה נכשלה: "+E(err.message),"hd-err"); } e.target.value=""; };
+    d._showLast=showLast; return d;
+  }
+  window.hubDriveOpen=()=>{ const d=ui(); d._showLast(); d.querySelector("[data-st]").innerHTML=""; d.querySelector("[data-list]").innerHTML=""; d.showModal(); };
+})();
 </script>
 </body>
 </html>
