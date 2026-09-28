@@ -1150,7 +1150,7 @@ async function pmOverpass(q, onTry){
   for(let k=0;k<plan.length;k++){
     const [ep,wait]=plan[k]; if(wait) await sleep(wait);
     onTry && k && onTry(k+1);
-    const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),60000);
+    const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),45000);
     try{
       const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q),signal:ctl.signal});
       if(!r.ok) throw new Error("שרת OpenStreetMap עמוס ("+r.status+")");
@@ -1218,13 +1218,21 @@ async function pmOsmProviders(center, R, W, svc){
     const t=e.tags||{}; return {id:"osm-"+e.type+e.id, name:t["name:he"]||t.name||"(ללא שם)", address:[t["addr:street"],t["addr:housenumber"]].filter(Boolean).join(" "), loc, rating:null, reviews:0, type:"", maps:`https://www.openstreetmap.org/${e.type}/${e.id}`, photos:[]}; }).filter(Boolean);
   return {list, calls:0, saturated:0, source:"osm"};
 }
-async function pmDemand(center, R){
+async function pmDemand(center, R, W, osmSvc){
   const a=`(around:${Math.round(R)},${center.lat},${center.lng})`;
-  const q=`[out:json][timeout:120];way["building"]${a};out center tags;node["place"~"^(neighbourhood|suburb|quarter)$"](around:${Math.round(R+1200)},${center.lat},${center.lng});out body;`;
-  const j=await pmOverpass(q, n=>pmStep("demand","run","ניסיון "+n));
-  const homes=[], hoods=[];
+  // one request to OpenStreetMap: homes + neighbourhood names (+ providers when OSM is the supply source)
+  const sup = osmSvc ? `(${osmSvc.osm.map(t=>`nwr[${t}](around:${Math.round(R+W)},${center.lat},${center.lng});`).join("")});out center tags;` : "";
+  const q=`[out:json][timeout:120];way["building"]${a};out center tags;node["place"~"^(neighbourhood|suburb|quarter)$"](around:${Math.round(R+1200)},${center.lat},${center.lng});out body;${sup}`;
+  const j=await pmOverpass(q, n=>{ pmStep("demand","run","ניסיון "+n); if(osmSvc) pmStep("supply","run","ניסיון "+n); });
+  const homes=[], hoods=[], provs=new Map();
+  const sels=(osmSvc?osmSvc.osm:[]).map(t=>t.replace(/"/g,"").split("="));
   (j.elements||[]).forEach(e=>{
     const t=e.tags||{};
+    if(sels.length && sels.some(([k,v])=>t[k]===v)){
+      const loc=e.type==="node"?{lat:e.lat,lng:e.lon}:(e.center?{lat:e.center.lat,lng:e.center.lon}:null);
+      if(loc && !provs.has(e.type+e.id)) provs.set(e.type+e.id,{id:"osm-"+e.type+e.id, name:t["name:he"]||t.name||"(ללא שם)", address:[t["addr:street"],t["addr:housenumber"]].filter(Boolean).join(" "), loc, rating:null, reviews:0, type:"", maps:`https://www.openstreetmap.org/${e.type}/${e.id}`, photos:[]});
+      return;
+    }
     if(e.type==="node" && t.place){ const n=t["name:he"]||t.name; if(n && isFinite(e.lat)) hoods.push({name:n, loc:{lat:e.lat,lng:e.lon}, kind:t.place}); return; }
     if(e.type!=="way" || !e.center) return;
     const b=String(t.building||"yes");
@@ -1235,7 +1243,7 @@ async function pmDemand(center, R){
     w=Math.max(1,Math.min(w,30));
     homes.push({loc:{lat:e.center.lat,lng:e.center.lon}, w});
   });
-  return {homes, hoods};
+  return {homes, hoods, provs: osmSvc ? {list:[...provs.values()], calls:0, saturated:0, source:"osm"} : null};
 }
 function pmAnalyze(center, R, W, homes, hoods, provs){
   const P=pmProj(center), s=Math.max(200, Math.min(450, Math.round(R/11/10)*10));
@@ -1330,11 +1338,11 @@ async function pmRun(){
     const center={lat:results[0].geometry.location.lat(), lng:results[0].geometry.location.lng()};
     pmStep("maps","ok", results[0].formatted_address);
     pmStep("demand","run"); pmStep("supply","run");
-    const demP = pmDemand(center,R).then(d=>{ pmStep("demand","ok",`${d.homes.length.toLocaleString("he-IL")} מבני מגורים · ${d.hoods.length} שכונות`); return d; });
-    const supF = ()=> (src==="google" ? pmGoogleProviders(center,R,W,svc,kw,(a,b)=>pmStep("supply","run",`${a}/${b}`)) : pmOsmProviders(center,R,W,svc))
-        .then(s=>{ pmStep("supply","ok",`${s.list.length} ספקים${s.saturated?` · ${s.saturated} נקודות מלאות (ייתכנו עוד)`:""}`); return s; });
-    // OpenStreetMap limits parallel requests, so the OSM supply query waits for the demand query
-    const [dem, sup] = src==="google" ? await Promise.all([demP, supF()]) : [await demP, await supF()];
+    const supOk = s=>{ pmStep("supply","ok",`${s.list.length} ספקים${s.saturated?` · ${s.saturated} נקודות מלאות (ייתכנו עוד)`:""}`); return s; };
+    const demP = pmDemand(center,R,W, src==="osm"?svc:null).then(d=>{ pmStep("demand","ok",`${d.homes.length.toLocaleString("he-IL")} מבני מגורים · ${d.hoods.length} שכונות`); return d; });
+    let dem, sup;
+    if(src==="google"){ [dem, sup] = await Promise.all([demP, pmGoogleProviders(center,R,W,svc,kw,(a,b)=>pmStep("supply","run",`${a}/${b}`)).then(supOk)]); }
+    else { dem = await demP; sup = supOk(dem.provs); }  // OSM: homes and providers arrive in the same single request
     if(!dem.homes.length) throw new Error("לא נמצאו מבני מגורים ב-OpenStreetMap באזור הזה. נסו רדיוס גדול יותר או אזור אחר.");
     pmStep("calc","run");
     const res=pmAnalyze(center,R,W,dem.homes,dem.hoods,sup.list);
