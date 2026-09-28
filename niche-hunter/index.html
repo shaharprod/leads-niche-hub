@@ -189,6 +189,12 @@ details.prompt pre{white-space:pre-wrap;word-break:break-word;font-family:inheri
 .pm-side{max-height:640px;overflow:auto}
 .pm-hood{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;transition:box-shadow .3s}
 .pm-hood.pm-flash{box-shadow:0 0 0 3px var(--accent)}
+.pm-mode{display:flex;flex-direction:column;gap:4px;margin-bottom:6px}
+.pm-mode label{display:flex;gap:6px;align-items:flex-start;font-weight:400;margin:0}
+.pm-need{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
+.pm-q{display:block;color:var(--ink-2);font-size:13px}
+.pm-chip{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:7px;padding:0 7px;margin:2px 0 2px 4px;font-size:12.5px}
+.pm-rank{margin:6px 0;padding-inline-start:20px}.pm-rank li{margin-bottom:8px}
 .pm-insight{margin-top:8px;background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:14px;line-height:1.6}
 .pm-insight ol{margin:4px 0;padding-inline-start:20px}
 .pm-warn{background:var(--hot-soft);color:var(--hot);border-radius:8px;padding:6px 8px;margin-bottom:6px;font-weight:500}
@@ -346,6 +352,11 @@ footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 30px;colo
         <div class="pm-ctl">
           <label for="pmAddr">כתובת / עיר / אזור</label>
           <div class="pm-addr"><input id="pmAddr" value="ירושלים"><button class="btn btn-ghost btn-sm" id="pmFind" type="button">📍 מצא על המפה</button></div>
+          <label>מה מודדים</label>
+          <div class="pm-mode">
+            <label><input type="radio" name="pmMeasure" value="need" checked> 🔥 <b>צורך</b>: מה אנשים מתלוננים עליו ומחפשים, ואיזה פתרון חסר</label>
+            <label><input type="radio" name="pmMeasure" value="dist"> 📏 מרחק לשירות (המדד הקודם)</label>
+          </div>
           <label for="pmRad">רדיוס סריקה: <b id="pmRadLbl"></b></label>
           <input type="range" id="pmRad" min="0" max="1000" step="1">
           <div class="pm-ticks"><span>500 מ׳</span><span>3 ק״מ</span><span>20 ק״מ</span><span>100 ק״מ</span></div>
@@ -1474,7 +1485,238 @@ async function pmDemandCheck(i, box){
     ? `<div class="note">גוגל משלים ${rel.length} חיפושים עם שם השכונה, כלומר אנשים מחפשים את זה:</div><div class="qlist" style="margin-top:6px">${rel.slice(0,12).map(s=>`<span class="q" dir="auto">${esc(s)}</span>`).join("")}</div>`
     : `<div class="note">לא נמצאו השלמות אוטומטיות עם שם השכונה. זה לא אומר שאין צורך, רק שאין מספיק חיפושים בניסוח הזה.</div>`;
 }
+/* HUB: shared need classifier (same rules as the needs map) */
+/* phrase-level rules: a need is counted only when the phrase itself is a complaint (or praise) about that need */
+const NM_PAIN_RULES=[
+  ["attitude",3,/(מגעיל|גס(ה|ות)?(?![\u0590-\u05FF])|חצו(ף|פה|פים)|זלזול|מזלזל|צעק|צועק|לא אדיב|לא נחמד|יחס (רע|גרוע|מחפיר|מזלזל|מבזה|לא נעים|על הפנים)|התייחס(ו|ה)? .{0,8}(רע|בזלזול|בגסות)|אדיש|התעלמ|שירות (ה)?לקוחות (גרוע|מחפיר|על הפנים|רע)|שירות (גרוע|מחפיר|על הפנים|רע)|רמא(ות|י|ים)|עקצו|עוקצים|שיקר|שקרנ)/],
+  ["avail",2,/(לא עונ|לא ענ|אין מענה|אף אחד לא עונה|לא חוזר|לא חזר(ו)?(?![\u0590-\u05FF])|אי אפשר להשיג|לא (מצליח|הצלחתי|הצלחנו)(ה)? להשיג|אין תור(ים)?(?![\u0590-\u05FF])|אין זמינות|לא זמינ|שעות (ה)?פתיחה (לא|מוזרות|קצרות)|סגור(ים)? (ב|כש|ביום|בשבת|בערב|בשעות)|נסגר(ים)? מוקדם|לא פתוח|פתוח(ים)? רק)/],
+  ["speed",2,/(חיכיתי|חיכינו|המתנ(ה|ו|תי) (של|ארוכה|מעל)|מחכים (המון|הרבה|שעה|שעות)|לחכות (המון|הרבה|שעה|שעות)|איטי(ים|ה)?(?![\u0590-\u05FF])|לאט מאוד|עיכוב|באיחור|איחר(ו)?(?![\u0590-\u05FF])|איחור|לקח(ו)? .{0,12}(שעה|שעות|ימים|שבוע|שבועות|חודש)|תור(ים)? ארוכ|עומס (רב|כבד|מטורף))/],
+  ["price",2,/(יקר(ים|ה|ות)?(?![\u0590-\u05FF])|מחיר(ים)? (גבוה|גבוהים|מופקע|מוגזם|מטורף|לא הוגן|מנופח)|מופקע|גבו (ממני|מאיתנו|ממנו)|חייבו (אותי|אותנו)|חיוב (כפול|יתר)|לא שווה (את )?(ה)?כסף|הפתעה בחשבון|תוספת (מחיר|תשלום) (לא|בלי)|מחיר כפול)/],
+  ["quality",2,/(לא מקצועי|חובבני|טעו ב|טעות ב|הרסו|הרס את|לא עבד|לא תיקנו|לא תוקן|אותה תקלה|שוב ושוב|מלוכלך|מטונף|לא נקי|לא מתוחזק|מוזנח|סתימה|שבור(ה|ים)?(?![\u0590-\u05FF])|לא טרי|הגיע קר|לא טעים|תפל|איכות (ירודה|גרועה|נמוכה)|חסר(ים)? (הרבה |המון )?מוצרים|מבחר (דל|קטן|מצומצם)|סחורה (בינונית|גרועה|לא טובה)|(תוצאה|עבודה|אוכל|מוצר) (גרוע|גרועה|לא טוב|לא טובה))/],
+  ["access",2,/(אין חני|בעיית חני|חניה (קשה|בעייתית|יקרה)|אין איפה לחנות|קשה להגיע|קשה למצוא את|רחוק מדי|לא נגיש|אין נגישות|אין מעלית|משלוח .{0,8}(לא הגיע|איחר|התעכב)|המשלוח לא הגיע|אין משלוחים|לא (מבצעים|עושים) משלוחים)/],
+  ["online",2,/(אתר (לא (עובד|מעודכן|נוח))|אין אתר|אין אפשרות להזמין (אונליין|באתר|ברשת)|אי אפשר לקבוע (תור )?(אונליין|באתר)|אפליקציה (לא עובדת|תקועה)|לא עונים (ב|ל)?וואטסאפ|אין מענה (ב|ל)?וואטסאפ|(שעות|מידע) לא מעודכנ(ות|ים) (ב)?גוגל|לא מעודכן בגוגל)/]
+];
+const NM_PRAISE_RULES=[
+  ["attitude",/(אדיב|נחמד(ים|ה)?(?![\u0590-\u05FF])|יחס (חם|מעולה|אישי|טוב|מדהים)|סבלנ|שירות (מעולה|אדיב|מצוין|מדהים))/],
+  ["avail",/(תמיד עונ|עונים מהר|זמינ(ים|ה) (תמיד|מאוד)|פתוח(ים)? (עד מאוחר|גם בערב|גם בשבת)|גם בערב|קל (לקבוע|להשיג))/],
+  ["speed",/(מהיר(ים|ה)?(?![\u0590-\u05FF])|בלי המתנה|ללא המתנה|בזמן(?![\u0590-\u05FF])|יעיל(ים|ה)?(?![\u0590-\u05FF]))/],
+  ["price",/(מחיר(ים)? (הוגן|הוגנים|טוב|טובים|שווה)|זול(ים|ה)?(?![\u0590-\u05FF])|שווה את (ה)?כסף|תמורה טובה)/],
+  ["quality",/(מקצועי(ים|ת)?(?![\u0590-\u05FF])|איכות(י|ית)?(?![\u0590-\u05FF]) מעולה|מעולה|נקי(ה|ים)?(?![\u0590-\u05FF])|טרי(ה|ים)?(?![\u0590-\u05FF])|טעים)/],
+  ["access",/(חניה (נוחה|בשפע|חינם)|חניון (חינם|צמוד)|קל להגיע|נגיש(ה|ים)?(?![\u0590-\u05FF])|משלוח מהיר)/],
+  ["online",/(קביעת תור (באתר|אונליין)|להזמין (באתר|אונליין)|אתר נוח|מענה (מהיר )?בוואטסאפ)/]
+];
+const NM_NEG_NEAR=/(לא|אין|בלי|ממש לא)\s+\S*$/;
+/* a phrase must start at the beginning of a word (optional ו/ה/ב/ל/ש/מ/כ prefix), so "בעיקר" is not "יקר" */
+const NM_WB="(?<![\u0590-\u05FF])(?:[והבלשמכ]{0,2})";
+const NM_NEG_WORDS=/(לא |אין |אי |בלי |חסר|בעיה|בעייתי|חבל|מאכזב|לצערי|למרבה הצער|רק ש|חוץ מ|הבעיה)/;
+function nmRuleClassify(reviews){
+  reviews.forEach(r=>{ r.m=[]; const t=r.text||""; if(!t) return;
+    const parts=t.split(/[.!?\n;,]+|\s(?:אבל|אך|לעומת זאת|מצד שני)\s/).map(s=>s.trim()).filter(s=>s.length>3);
+    const seen=new Set();
+    parts.forEach(s=>{
+      let hits=NM_PAIN_RULES.flatMap(([n,w,rx])=>[...s.matchAll(new RegExp(NM_WB+"(?:"+rx.source+")","g"))].map(m=>({n,w,a:m.index,z:m.index+m[0].length,len:m[0].length})));
+      // "לא יקר" / "לא איטי": a negated complaint word is not a complaint
+      hits=hits.filter(h=>!(NM_NEG_NEAR.test(s.slice(0,h.a)) && !/^(לא|אין|אי )/.test(s.slice(h.a,h.z))));
+      // overlapping matches: keep the longer, more specific phrase ("לא עונים בוואטסאפ" = online, not avail)
+      hits=hits.filter(h=>!hits.some(o=>o!==h && o.a<h.z && h.a<o.z && (o.len>h.len || (o.len===h.len && o.w>h.w))));
+      const painN=new Set();
+      if(hits.length){
+        const top=Math.max(...hits.map(h=>h.w));
+        hits.filter(h=>h.w===top).forEach(h=>{ painN.add(h.n); if(seen.has("p"+h.n)) return;
+          if(r.rating>=4 && !NM_NEG_WORDS.test(s)) return; /* a happy review needs an explicit negative word to count as a complaint */
+          seen.add("p"+h.n);
+          r.m.push({n:h.n,side:"pain",x:r.rating<=1?3:r.rating===2?2:1,q:s.slice(0,110)}); });
+      }
+      if(r.rating>=4) NM_PRAISE_RULES.forEach(([n,rx])=>{ const m=s.match(rx); if(!m||painN.has(n)||seen.has("g"+n)) return;
+        if(NM_NEG_NEAR.test(s.slice(0,m.index))) return; seen.add("g"+n); r.m.push({n,side:"praise",x:1,q:s.slice(0,110)}); });
+      if(r.rating>=4){ const pn=s.match(/(לא|ממש לא)\s+(יקר|איטי)/); if(pn){ const n=pn[2]==="יקר"?"price":"speed"; if(!seen.has("g"+n)){ seen.add("g"+n); r.m.push({n,side:"praise",x:1,q:s.slice(0,110)}); } } }
+    });
+    r.tone=null; if(r.reply) r.tone=/(מצטערים|מתנצל|נשמח|תודה)/.test(r.reply)?"thankful":/(לא נכון|שקר|מעולם|לא היית|לא הגעת)/.test(r.reply)?"defensive":"generic";
+  });
+}
+/* a label must be supported by words in its own quote; otherwise the phrase rules decide */
+const NM_EVIDENCE={
+  online:/(אתר|אונליין|און ליין|אפליקצי|וואטסאפ|ווטסאפ|דיגיטל|גוגל|מייל|פייסבוק|אינסטגרם|באינטרנט|ברשת|הזמנה ב|קביעת תור ב|לינק|קישור)/,
+  access:/(חני|להגיע|הגעה|רחוק|נגיש|מדרג|מעלית|משלוח|תחבורה|אוטובוס|קומה|כניסה|כביש|רכב)/,
+  avail:/(עונ|ענו|ענה|מענה|להשיג|חוזר|חזרו|חזר |תור|פתוח|סגור|שעות|זמינ|טלפון|התקשר)/,
+  price:/(מחיר|יקר|כסף|שקל|₪|ש"ח|ש״ח|שח|קופה|חיוב|חייב|גבו|עלות|מבצע|זול|תשלום|החזר|הנחה|חשבון)/,
+  speed:/(חיכ|המתנ|מחכ|לחכות|איטי|לאט|עיכוב|איחור|איחר|באיחור|לקח|זמן|ימים|שעות|שבוע|דקות|עומס|תור)/
+};
+function nmVerifyLabel(n,q,rating){
+  const ev=NM_EVIDENCE[n]; if(!ev || ev.test(q)) return [n];
+  const tmp={rating,text:q}; nmRuleClassify([tmp]);
+  const alt=tmp.m.filter(m=>m.side==="pain").map(m=>m.n);
+  return alt.length?alt:[];
+}
+/* keeps an AI quote only if it really appears in the review (no invented quotes) */
+function nmQuoteInText(q,t){ const w=String(q||"").replace(/[^֐-׿a-zA-Z0-9 ]/g," ").split(/\s+/).filter(x=>x.length>1); if(!w.length) return false;
+  const T=String(t||""); return w.filter(x=>T.includes(x)).length/w.length>=0.7; }
+
+const NM_AI_SYS=`You classify Israeli customer reviews (Hebrew) of LOCAL BUSINESSES into a fixed set of customer needs. Each review line shows the business type in {braces}, the stars, and the text.
+Needs (use the exact id):
+- avail = the business cannot be reached or is not open when needed: phone/WhatsApp not answered, no one calls back, no appointments available, opening hours. NOT waiting in line (that is speed).
+- speed = waiting and delays: long wait in line, slow service, late delivery or late work.
+- price = cost: too expensive, overcharged, hidden fees, not worth the money. A neutral question about price is NOT a complaint.
+- quality = the product/work/place itself: mistakes in the work, broken, not fixed, dirty, poorly maintained, food not fresh, unprofessional result.
+- attitude = how staff treat people: rude, disrespectful, shouting, ignoring, dishonest, "מגעיל". If staff were rude about a mistake, it is attitude (the rudeness is the pain).
+- access = getting there: parking, distance, accessibility, stairs, delivery not arriving.
+- online = digital: website, online booking or payment, WhatsApp channel, wrong info on Google.
+Examples (Hebrew text -> need):
+- "הזמנו משלוח ולא הגיע, התקשרנו 4 פעמים ולא ענו" -> access ("משלוח ולא הגיע") AND avail ("התקשרנו 4 פעמים ולא ענו"). Not online.
+- "המחיר במדף 14 ובקופה 30" / "מבצעים מטעים, כיתוב קטן" -> price.
+- "הרצפה לא ישרה" / "המקום מוזנח" / "לא נקי" / "חסרים מוצרים, מבחר דל" -> quality.
+- "החזירו את הכסף רק אחרי שבוע" / "הגיע באיחור של 4 שעות" -> speed.
+- "הקופאית צעקה" / "המנהל זלזל" -> attitude.
+- "צריך לעלות קומה, אין מעלית" / "אין חניה" -> access.
+- "אי אפשר להזמין באתר" / "האפליקציה לא עובדת" -> online. online is ONLY about websites, apps, online ordering/booking/payment, WhatsApp or Google listing info.
+Rules: classify each distinct complaint once, under the ONE need that best describes it. Only return a need when the text clearly talks about it; do not guess. Ignore general statements ("bad experience", "not recommended") that name no specific need. side="pain" for a complaint or lack, side="praise" for explicit praise of that need. x = intensity 1-3 (3 = furious / deal-breaker). q = the exact words from the review that show THIS need (copy them, max 12 words, no names).
+If an owner reply is given, also return o: "thankful" (apologizes/constructive), "defensive" (argues/denies/attacks), "frustrated" (angry/tired), "generic" (copy-paste), or null.
+Answer ONLY JSON: {"r":[{"i":0,"m":[{"n":"avail","side":"pain","x":2,"q":"..."}],"o":null}]}. Skip reviews with no need (m:[]).`;
+const NM_DEMAND_RX=[
+  [/(פתוח|בערב|בשבת|24|תור|לילה|מוצאי)/,"avail"],[/(דחוף|מהיר|היום|עכשיו)/,"speed"],[/(זול|מחיר|עלות|כמה עולה|הנחה)/,"price"],
+  [/(מומלץ|הכי טוב|מקצועי|ביקורות|דירוג)/,"quality"],[/(ליד|קרוב|חניה|משלוח|עד הבית|נגיש)/,"access"],[/(אונליין|וואטסאפ|אתר|הזמנה|אפליקציה)/,"online"]
+];
+/* ================= HUB: NEED MODE — the pain map measures the NEED for a solution (what people complain about and search for), not distance ================= */
+const NM_NEEDS={avail:{he:"זמינות",ic:"⏰",d:"לא עונים, אין תורים, שעות פתיחה",seed:"זמינות ותורים"},speed:{he:"מהירות",ic:"⚡",d:"המתנה ועיכובים",seed:"זמן המתנה"},
+  price:{he:"מחיר",ic:"💰",d:"יקר, חיוב יתר, מחירים לא שקופים",seed:"מחיר"},quality:{he:"איכות",ic:"🎯",d:"טעויות, תקלות, ניקיון, מקצועיות",seed:"איכות ומקצועיות"},
+  attitude:{he:"יחס",ic:"🤝",d:"גסות, זלזול, תקשורת",seed:"שירות לקוחות"},access:{he:"נגישות",ic:"🚗",d:"חניה, הגעה, משלוחים",seed:"משלוחים והגעה"},
+  online:{he:"אונליין",ic:"🌐",d:"אתר, הזמנה, וואטסאפ",seed:"הזמנה אונליין"}};
+const NM_W=r=>r<=1?1.5:r===2?1.25:1;
+function pmMeasure(){ const r=document.querySelector('input[name="pmMeasure"]:checked'); return r?r.value:"need"; }
+function pmNeedDist(a,b){ const R=6371000,t=Math.PI/180,x=Math.sin((b.lat-a.lat)*t/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin((b.lng-a.lng)*t/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+async function pmNeedAI(reviews, byId){
+  const batches=[]; for(let i=0;i<reviews.length;i+=35) batches.push(reviews.slice(i,i+35));
+  let failed=0, lastErr="";
+  await pool(batches,2,async bt=>{
+    const user=bt.map((r,k)=>`[${k}] {${(byId[r.biz]&&byId[r.biz].type)||"עסק"}} ★${r.rating} ${String(r.text).replace(/\s+/g," ")}`).join("\n");
+    try{ let j; try{ j=parseJSON(await callAI(NM_AI_SYS,user,6000)); }catch(e1){ j=parseJSON(await callAI(NM_AI_SYS,user,6000)); }
+      bt.forEach(r=>r.m=[]);
+      (j.r||[]).forEach(o=>{ const r=bt[o.i]; if(!r) return; const seen=new Set(), out=[];
+        (o.m||[]).filter(x=>NM_NEEDS[x.n] && nmQuoteInText(x.q,r.text)).forEach(x=>{ const side=x.side==="praise"?"praise":"pain", q=String(x.q||"").slice(0,110);
+          (side==="pain"?nmVerifyLabel(x.n,q,r.rating):[x.n]).forEach(n=>{ if(seen.has(n+side)) return; seen.add(n+side); out.push({n,side,x:Math.max(1,Math.min(3,+x.x||1)),q}); }); });
+        r.m=out; });
+    }catch(e){ failed++; lastErr=String(e.message||e).slice(0,160); nmRuleClassify(bt); }
+  });
+  return {failed,lastErr};
+}
+async function pmNeedHoods(center,R){
+  const q=`[out:json][timeout:60];node["place"~"^(neighbourhood|suburb|quarter)$"](around:${Math.round(R+1500)},${center.lat},${center.lng});out body;`;
+  try{ const j=await pmOverpass(q); return (j.elements||[]).map(e=>({name:(e.tags&&(e.tags["name:he"]||e.tags.name))||"",loc:{lat:e.lat,lng:e.lon}})).filter(h=>h.name); }catch(e){ return []; }
+}
+async function pmNeedSearches(L, hoods, city, onTick){
+  const mods=[" בערב"," פתוח עכשיו"," בשבת"," זול"," מחיר"," דחוף"," מומלץ"," ליד"," עם חניה"," משלוח"," אונליין"," תור"];
+  const jobs=[]; hoods.slice(0,12).forEach(h=>{ jobs.push({q:`${L} ${h.name}`,hood:h.name}); jobs.push({q:`${L} ב${h.name}`,hood:h.name}); });
+  if(city){ jobs.push({q:`${L} ${city}`,hood:null}); jobs.push({q:`${L} ב${city}`,hood:null}); mods.forEach(m=>jobs.push({q:`${L}${m} ${city}`,hood:null})); }
+  const found=new Map(); let done=0;
+  await pool(jobs,4,async jb=>{
+    try{ const d=await jsonp(`https://suggestqueries.google.com/complete/search?client=firefox&hl=he&gl=il&q=${encodeURIComponent(jb.q)}`);
+      (d&&d[1]||[]).forEach(s=>{ s=String(Array.isArray(s)?s[0]:s).trim(); if(!s||found.has(s)) return;
+        let need=null; for(const [rx,n] of NM_DEMAND_RX){ if(rx.test(s)){ need=n; break; } }
+        const hn=hoods.find(h=>s.includes(h.name.replace(/[()]/g,"").split(/\s+/)[0]));
+        found.set(s,{s,need,hood:hn?hn.name:(jb.hood&&s.includes(jb.hood)?jb.hood:null)}); });
+    }catch(e){}
+    onTick&&onTick(++done,jobs.length);
+  });
+  return [...found.values()];
+}
+function pmNeedCard(h,i){
+  const L=pm.res.label, needs=Object.entries(h.needs).filter(([n,v])=>v.pain>0).sort((a,b)=>b[1].pain-a[1].pain);
+  const top=needs[0], dot=h.score>=66?"🔴":h.score>=33?"🟠":"🟡";
+  const needHtml=needs.length?needs.map(([n,v])=>`<div class="pm-need"><b>${NM_NEEDS[n].ic} ${NM_NEEDS[n].he}</b> · ${v.q.length} תלונות${v.q[0]?`<span class="pm-q">“${esc(v.q[0].q)}” <span class="note">(${esc(v.q[0].biz)}, ★${v.q[0].r})</span></span>`:""}${v.q[1]?`<span class="pm-q">“${esc(v.q[1].q)}” <span class="note">(${esc(v.q[1].biz)}, ★${v.q[1].r})</span></span>`:""}</div>`).join(""):'<div class="note">לא נמצאו תלונות בביקורות של העסקים בשכונה.</div>';
+  const srch=h.searches.length?`<div style="margin-top:6px"><b>מה מחפשים בגוגל על השכונה:</b> ${h.searches.slice(0,6).map(x=>`<span class="pm-chip">${esc(x.s)}</span>`).join(" ")}</div>`:"";
+  const biz=h.bizList.filter(b=>b.pain>0).sort((a,b)=>b.pain-a.pain).slice(0,4);
+  const bizHtml=biz.length?`<div style="margin-top:6px"><b>העסקים שהלקוחות שלהם מתלוננים:</b><ul>${biz.map(b=>`<li>${b.maps?`<a href="${esc(b.maps)}" target="_blank" rel="noopener">${esc(b.name)}</a>`:esc(b.name)} · ${b.pc} תלונות${b.rating?` · ⭐ ${b.rating} (${b.reviews})`:""}</li>`).join("")}</ul></div>`:"";
+  const solBtns=needs.slice(0,3).map(([n])=>`<button class="btn btn-primary btn-sm" type="button" data-need-sol="${esc(L+" "+NM_NEEDS[n].seed)}">💡 פתרון ל${NM_NEEDS[n].he}: מוצר, מדריך או אפליקציה</button>`).join("");
+  return `<div class="pm-hood" data-i="${i}">
+    <div class="pm-h"><b>${dot} ${i+1}. ${esc(h.name)}</b><span class="opp" title="ציון 0–100 ביחס לשכונה עם הצורך הגדול ביותר בסריקה">צורך ${h.score}</span></div>
+    <div class="note">מתוך ${h.revN} ביקורות על ${h.bizN} עסקים מסוג «${esc(L)}» בשכונה${h.searches.length?` ו-${h.searches.length} חיפושים בגוגל`:""}${top?` · הצורך המוביל: ${NM_NEEDS[top[0]].ic} ${NM_NEEDS[top[0]].he}`:""}</div>
+    <div class="pm-bar"><i style="width:${h.score}%"></i></div>
+    <div class="pm-insight"><b>מה אנשים צריכים כאן:</b>${needHtml}${srch}${bizHtml}
+      <div class="pm-btns" style="margin-top:8px">${solBtns}</div></div>
+    <div class="pm-btns"><button class="btn btn-ghost btn-sm" data-pm="zoom">🔍 הצג במפה</button><button class="btn btn-ghost btn-sm" data-pm="demand">🔎 האם מחפשים את זה?</button></div>
+    <div class="pm-sugg"></div></div>`;
+}
+async function pmNeedRun(){
+  const btn=$("#pmGo"); if(btn.disabled) return;
+  pmErr("");
+  const svc=pmSvc(), kw=$("#pmKw").value.trim(), L=kw||svc.he, R=Math.min(pmR(),15000);
+  const n=pmGoogleCalls(R,0), revMax=30, usd=n*0.035+revMax*0.025;
+  if(usd>2 && !confirm(`מדידת הצורך תבצע כ-${n} חיפושים ועוד עד ${revMax} בקשות ביקורות ב-Google, בערך $${usd.toFixed(2)} (לפני המכסה החינמית החודשית). להמשיך?`)) return;
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> מודד צורך…';
+  pmStepsInit([["maps","מרכז הסריקה"],["supply",`מאתר עסקים מסוג «${esc(L)}»`],["hoods","שכונות (OpenStreetMap)"],["rev","קורא ביקורות של הלקוחות"],["ai","מזהה על מה מתלוננים"],["srch","מה מחפשים בגוגל"]]);
+  try{
+    pmStep("maps","run");
+    try{ await pmLoadMaps(); }catch(e){ if(e.message==="NOKEY") throw new Error('חסר מפתח Google Maps. המפה משתמשת באותו מפתח של <a href="https://shaharprod.github.io/leads-niche-hub/leads-radar/" target="_blank" rel="noopener">Leads Radar</a> (⚙️ הגדרות).'); throw e; }
+    let where=""; if(pm.addrDirty || !pm.center) where=await pmGeocode();
+    const center=pm.center; pmStep("maps","ok", where || `${center.lat.toFixed(4)}, ${center.lng.toFixed(4)} · רדיוס ${pmFmtD(R)}`);
+    pmStep("supply","run");
+    const sup=await pmGoogleProviders(center,R,0,svc,kw,(a,b)=>pmStep("supply","run",`${a}/${b}`));
+    const provs=sup.list; pmStep("supply","ok",`${provs.length} עסקים`);
+    if(!provs.length) throw new Error(`לא נמצאו עסקים מסוג «${esc(L)}» באזור. נסו מילה אחרת או רדיוס גדול יותר.`);
+    pmStep("hoods","run"); const hoods=await pmNeedHoods(center,R); pmStep("hoods",hoods.length?"ok":"err",hoods.length?`${hoods.length} שכונות`:"לא נמצאו שמות שכונות");
+    provs.forEach(p=>{ let best=null,bd=Infinity; hoods.forEach(h=>{ const d=pmNeedDist(p.loc,h.loc); if(d<bd){bd=d;best=h;} }); p.hood=(best&&bd<=2000)?best.name:"אזור ללא שם שכונה"; });
+    pmStep("rev","run");
+    const {Place}=await google.maps.importLibrary("places"); const sel=[...provs].sort((a,b)=>(b.reviews||0)-(a.reviews||0)).slice(0,revMax); const reviews=[]; let dn=0;
+    await pool(sel,4,async p=>{ try{ const pl=new Place({id:p.id}); await pl.fetchFields({fields:["reviews"]});
+      (pl.reviews||[]).forEach(x=>reviews.push({biz:p.id,rating:x.rating||0,text:String(x.text||"").slice(0,600)})); }catch(e){} pmStep("rev","run",`${++dn}/${sel.length}`); });
+    pmStep("rev","ok",`${reviews.length} ביקורות מ-${sel.length} עסקים`);
+    pmStep("ai","run"); const byId=Object.fromEntries(provs.map(p=>[p.id,p]));
+    let aiNote="לפי מילות מפתח";
+    if(settings.provider==="gemini"||settings.provider==="claude"){ const r=await pmNeedAI(reviews,byId); aiNote=r.failed?`AI (${r.failed} קבוצות לפי מילות מפתח${r.lastErr?": "+r.lastErr.slice(0,60):""})`:"AI"; }
+    else nmRuleClassify(reviews);
+    pmStep("ai","ok",aiNote);
+    pmStep("srch","run"); const cityGuess=($("#pmAddr").value||"").split(",").pop().trim()||"ירושלים";
+    const hoodsWith=hoods.filter(h=>provs.some(p=>p.hood===h.name));
+    const searches=await pmNeedSearches(L,hoodsWith,cityGuess,(a,b)=>pmStep("srch","run",`${a}/${b}`)); pmStep("srch","ok",`${searches.length} ביטויים`);
+    // aggregate per neighbourhood
+    const H=new Map(); const hoodOf=name=>{ if(!H.has(name)){ const hh=hoods.find(x=>x.name===name); H.set(name,{name,loc:hh?hh.loc:null,needs:Object.fromEntries(Object.keys(NM_NEEDS).map(k=>[k,{pain:0,praise:0,q:[]}])),bizList:[],revN:0,bizN:0,searches:[],pain:0}); } return H.get(name); };
+    provs.forEach(p=>{ const h=hoodOf(p.hood); h.bizN++; p.pain=0; p.pc=0; h.bizList.push(p); });
+    reviews.forEach(r=>{ const p=byId[r.biz]; if(!p) return; const h=hoodOf(p.hood); h.revN++;
+      (r.m||[]).forEach(m=>{ const v=h.needs[m.n]; if(!v) return; if(m.side==="pain"){ const x=m.x*NM_W(r.rating); v.pain+=x; h.pain+=x; p.pain+=x; p.pc++; v.q.push({q:m.q,r:r.rating,biz:p.name,x}); } else v.praise++; }); });
+    searches.forEach(s=>{ if(s.hood && H.has(s.hood)) H.get(s.hood).searches.push(s); });
+    const list=[...H.values()].map(h=>{ h.needs&&Object.values(h.needs).forEach(v=>v.q.sort((a,b)=>b.x-a.x)); h.raw=h.pain+2*h.searches.length;
+      if(!h.loc){ const ps=h.bizList.filter(p=>p.loc); if(ps.length) h.loc={lat:ps.reduce((s,p)=>s+p.loc.lat,0)/ps.length,lng:ps.reduce((s,p)=>s+p.loc.lng,0)/ps.length}; } return h; })
+      .filter(h=>h.raw>0).sort((a,b)=>b.raw-a.raw);
+    const mx=Math.max(1,...list.map(h=>h.raw)); list.forEach(h=>h.score=Math.max(1,Math.round(100*h.raw/mx)));
+    pm.res={mode:"need",hoods:list,provs,label:L,center,R,W:0,reviews,searches};
+    // area summary
+    const tot={}; list.forEach(h=>Object.entries(h.needs).forEach(([n,v])=>tot[n]=(tot[n]||0)+v.pain));
+    const citySrch=searches.filter(s=>!s.hood&&s.need);
+    Object.keys(NM_NEEDS).forEach(n=>tot[n]=(tot[n]||0)+2*citySrch.filter(s=>s.need===n).length);
+    const ranked=Object.entries(tot).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+    $("#pmSum").innerHTML = ranked.length
+      ? `<b>מה אנשים צריכים מ«${esc(L)}» באזור</b> (מ-${reviews.length} ביקורות ו-${searches.length} חיפושים בגוגל), מהצורך הגדול לקטן:<ol class="pm-rank">${ranked.map(([n,v])=>{ const ex=citySrch.filter(s=>s.need===n).slice(0,3).map(s=>`<span class="pm-chip">${esc(s.s)}</span>`).join(" ");
+          return `<li><b>${NM_NEEDS[n].ic} ${NM_NEEDS[n].he}</b> <span class="note">(${esc(NM_NEEDS[n].d)})</span> · ציון ${Math.round(v)} ${ex?`<div>${ex}</div>`:""}<button class="btn btn-ghost btn-sm" type="button" data-need-sol="${esc(L+" "+NM_NEEDS[n].seed)}">💡 פתרון לצורך הזה</button></li>`; }).join("")}</ol>`
+      : `לא נמצאו תלונות או חיפושים על «${esc(L)}» באזור הזה. נסו רדיוס גדול יותר או מילה אחרת.`;
+    $("#pmList").innerHTML = list.slice(0,20).map(pmNeedCard).join("") || '<div class="note">לא נמצאה שכונה עם צורך מובהק.</div>';
+    // providers panel
+    $("#pmProvN").textContent=provs.length;
+    $("#pmProvs").innerHTML=[...provs].sort((a,b)=>(b.pc||0)-(a.pc||0)).slice(0,40).map(p=>`<div class="pm-prov">${pmProvHtml(p,false)}${p.pc?`<div class="note">😤 ${p.pc} תלונות בביקורות · ${esc(p.hood)}</div>`:`<div class="note">${esc(p.hood)}</div>`}</div>`).join("");
+    // map
+    if(!pm.map){ pm.map=new google.maps.Map($("#pmMap"),{center, zoom:13, mapTypeControl:false, streetViewControl:false, fullscreenControl:true, gestureHandling:"greedy"}); pm.iw=new google.maps.InfoWindow(); }
+    pm.overlays.forEach(o=>o.setMap(null)); pm.overlays=[];
+    list.forEach((h,i)=>{ if(!h.loc) return; const c=new google.maps.Circle({map:pm.map,center:h.loc,radius:Math.max(120,R/14*Math.sqrt(h.score/100)),strokeColor:"#e5383b",strokeWeight:1,fillColor:h.score>=66?"#e5383b":h.score>=33?"#ff8a3d":"#f2b632",fillOpacity:.35,clickable:true});
+      const top=Object.entries(h.needs).filter(([,v])=>v.pain>0).sort((a,b)=>b[1].pain-a[1].pain).slice(0,3);
+      c.addListener("click",()=>{ pm.iw.setContent(`<div dir="rtl" style="font-family:Heebo,Arial;min-width:180px"><b>${esc(h.name)}</b> · צורך ${h.score}<br>${top.map(([n,v])=>`${NM_NEEDS[n].ic} ${NM_NEEDS[n].he}: ${v.q.length} תלונות`).join("<br>")||"חיפושים בגוגל בלבד"}</div>`); pm.iw.setPosition(h.loc); pm.iw.open(pm.map); pmFocus(i); });
+      pm.overlays.push(c); });
+    provs.forEach(p=>{ if(!p.loc) return; const m=new google.maps.Circle({map:pm.map,center:p.loc,radius:Math.max(25,R/180),strokeWeight:0,fillColor:p.pc?"#6d4aff":"#8a84a6",fillOpacity:.9,clickable:true});
+      m.addListener("click",()=>{ pm.iw.setContent(pmProvHtml(p,true)+(p.pc?`<div dir="rtl" style="font-family:Heebo,Arial">😤 ${p.pc} תלונות</div>`:"")); pm.iw.setPosition(p.loc); pm.iw.open(pm.map); }); pm.overlays.push(m); });
+    pm.overlays.push(new google.maps.Circle({map:pm.map,center,radius:R,fillOpacity:0,strokeColor:"#6d4aff",strokeWeight:2,strokeOpacity:.7,clickable:false}));
+    $("#pmResSide").classList.remove("hidden"); $("#pmOut").classList.remove("hidden");
+    $("#pmResSide").scrollIntoView({behavior:"smooth",block:"nearest"});
+  }catch(e){ pmErr(e.message||String(e)); }
+  finally{ btn.disabled=false; btn.innerHTML="🔍 סרוק עכשיו"; }
+}
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-need-sol]"); if(!b) return; e.preventDefault();
+  const seed=b.dataset.needSol; $("#seed").value=seed; try{ if($("#market")) $("#market").value="il"; }catch(x){}
+  window.scrollTo({top:0,behavior:"smooth"}); setTimeout(()=>$("#goBtn").click(),350); });
+document.addEventListener("click",e=>{ const b=e.target.closest("#pmCsv"); if(!b || !(pm.res&&pm.res.mode==="need")) return; e.stopImmediatePropagation(); e.preventDefault();
+  const rows=[["שכונה","ציון צורך","צורך","תלונות","ציטוט","עסק","חיפושים בגוגל"]];
+  pm.res.hoods.forEach(h=>Object.entries(h.needs).filter(([,v])=>v.pain>0).forEach(([n,v])=>rows.push([h.name,h.score,NM_NEEDS[n].he,v.q.length,v.q[0]?v.q[0].q:"",v.q[0]?v.q[0].biz:"",h.searches.map(s=>s.s).join(" | ")])));
+  download(`need-map-${new Date().toISOString().slice(0,10)}.csv`,"﻿"+rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\r\n"),"text/csv;charset=utf-8"); },true);
+
 async function pmRun(){
+  if(pmMeasure()==="need") return pmNeedRun();
   const btn=$("#pmGo"); if(btn.disabled) return;
   pmErr(""); 
   const src=$("#pmSrc").value, svc=pmSvc(), kw=$("#pmKw").value.trim(), R=pmR(), W=pmW(), big=R>PM_BIG;
