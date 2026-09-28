@@ -165,7 +165,7 @@ footer{margin-top:40px;color:var(--ink-3);font-size:.85rem;text-align:center}
       <div class="err" id="err"></div>
       <ol class="steps" id="steps"></ol>
     </div>
-    <div class="panel" style="padding:10px"><div id="map">המפה תופיע כאן אחרי שמירת מפתח Google ב-Leads Radar.</div></div>
+    <div class="panel" style="padding:10px"><div id="map"><div style="max-width:440px;line-height:1.8">אין עדיין מפתח Google בדפדפן הזה, ולכן המפה לא מוצגת.<br>1. פותחים את <b>⚙️ הגדרות</b> (למעלה משמאל) ומדביקים שם את מפתח Google Maps.<br>או: 2. שומרים אותו ב-<a href="https://shaharprod.github.io/leads-niche-hub/leads-radar/" target="_blank" rel="noopener">Leads Radar של ה-Hub</a> › ⚙️ הגדרות.<br>אפשר גם לנסות עכשיו «🧪 הדגמה עם נתוני דוגמה».</div></div></div>
   </div>
 
   <div id="out" style="display:none">
@@ -215,6 +215,9 @@ footer{margin-top:40px;color:var(--ink-3);font-size:.85rem;text-align:center}
   <h2>⚙️ הגדרות מפת הצרכים</h2>
   <p class="note" style="margin-top:0">מפתח Google ומפתח ה-AI נלקחים אוטומטית מ-Leads Radar ומצייד הנישות. כאן רואים אם הם נמצאו.</p>
   <div id="keyStatus"></div>
+  <label for="gkey">מפתח Google Maps (רק אם לא נמצא אוטומטית)</label>
+  <input type="password" id="gkey" autocomplete="off" placeholder="AIza...">
+  <p class="note">אותו מפתח שמשמש את Leads Radar. נוצר ב-<a href="https://console.cloud.google.com/google/maps-apis/credentials" target="_blank" rel="noopener">Google Cloud › Google Maps Platform › Keys &amp; Credentials</a>. נשמר רק בדפדפן הזה.</p>
   <label for="apify">טוקן Apify (לסריקה עמוקה, לא חובה)</label>
   <input type="password" id="apify" autocomplete="off" placeholder="apify_api_...">
   <p class="note">הטוקן נשמר רק בדפדפן הזה. משיגים אותו ב-<a href="https://console.apify.com/settings/integrations" target="_blank" rel="noopener">Apify › Settings › API & Integrations</a>. עלות לפי Apify: כ-0.30$ לכל 1,000 ביקורות.</p>
@@ -278,9 +281,11 @@ const DEMAND_RX=[
 ];
 
 /* ---------- settings ---------- */
+const NOKEY_HTML="<div style=\"max-width:440px;line-height:1.8\">אין עדיין מפתח Google בדפדפן הזה, ולכן המפה לא מוצגת.<br>1. פותחים את <b>⚙️ הגדרות</b> (למעלה משמאל) ומדביקים שם את מפתח Google Maps.<br>או: 2. שומרים אותו ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/leads-radar/\" target=\"_blank\" rel=\"noopener\">Leads Radar של ה-Hub</a> › ⚙️ הגדרות.<br>אפשר גם לנסות עכשיו «🧪 הדגמה עם נתוני דוגמה».</div>";
 const NM=Object.assign({apify:"",maxRev:30,sign:"שמוליק שחר, יועץ ומטמיע בינה מלאכותית לעסקים ולבעלי מקצוע"}, LS.get("hub_nm_settings",{}));
 function saveNM(){ LS.set("hub_nm_settings",NM); }
 function mapsKey(){
+  if(NM.gkey) return NM.gkey;
   const s=LS.get("hub_lr_settings",null)||LS.get("lr_settings",null)||{};
   if(s.key) return s.key;
   for(const k of ["hub_lr_apikey","lr_apikey"]){ try{ const v=localStorage.getItem(k); if(v) return v.replace(/^"|"$/g,""); }catch(e){} }
@@ -295,7 +300,7 @@ function aiCfg(){
 }
 function updateModeNote(){
   const ai=aiCfg(), mk=mapsKey();
-  $("#modeNote").innerHTML=(mk?"✅ מפתח Google נמצא":"⚠️ אין מפתח Google. שומרים אותו ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/leads-radar/\">Leads Radar</a> › ⚙️ הגדרות")
+  $("#modeNote").innerHTML=(mk?"✅ מפתח Google נמצא":"⚠️ אין מפתח Google: מדביקים אותו ב-⚙️ הגדרות למעלה")
     +" · "+(ai?"✅ AI: "+E(ai.provider==="gemini"?"Gemini":"Claude"):"⚠️ אין מפתח AI, הסיווג יהיה לפי מילות מפתח")
     +" · "+(NM.apify?"✅ Apify מוגדר":"סריקה עמוקה כבויה (אין טוקן Apify)");
   $("#useDeep").disabled=!NM.apify; if(!NM.apify) $("#useDeep").checked=false;
@@ -365,7 +370,7 @@ async function initMap(){
   $("#rad").addEventListener("input",()=>radCircle.setRadius(+$("#rad").value));
 }
 $("#btnFind").onclick=async()=>{
-  showErr(""); try{ await loadMaps(); }catch(e){ showErr("צריך מפתח Google. שומרים אותו ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/leads-radar/\">Leads Radar</a> › ⚙️ הגדרות."); return; }
+  showErr(""); try{ await loadMaps(); }catch(e){ showErr("צריך מפתח Google Maps: לוחצים על ⚙️ הגדרות (למעלה) ומדביקים אותו שם."); return; }
   const {Geocoder}=await google.maps.importLibrary("geocoding");
   new Geocoder().geocode({address:$("#addr").value,region:"IL",language:"iw"},(res,st)=>{
     if(st!=="OK"||!res[0]){ showErr("הכתובת לא נמצאה."); return; }
@@ -435,7 +440,8 @@ const OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.kumi
 async function fetchHoods(c,R){
   const q=`[out:json][timeout:60];node["place"~"^(neighbourhood|suburb|quarter)$"](around:${Math.round(R+1500)},${c.lat},${c.lng});out body;`;
   for(const ep of OVERPASS){
-    try{ const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)});
+    const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),25000);
+    try{ const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q),signal:ctl.signal}); clearTimeout(tm);
       if(!r.ok) continue; const j=await r.json();
       return (j.elements||[]).map(e=>({name:(e.tags&&(e.tags["name:he"]||e.tags.name))||"",loc:{lat:e.lat,lng:e.lon}})).filter(h=>h.name);
     }catch(e){}
@@ -686,7 +692,7 @@ async function classifyAndDemand(){
 }
 $("#btnRun").onclick=async()=>{
   showErr("");
-  try{ await loadMaps(); }catch(e){ showErr("צריך מפתח Google. שומרים אותו ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/leads-radar/\">Leads Radar</a> › ⚙️ הגדרות, ואז חוזרים לכאן."); return; }
+  try{ await loadMaps(); }catch(e){ showErr("צריך מפתח Google Maps: לוחצים על ⚙️ הגדרות (למעלה) ומדביקים אותו שם."); return; }
   if(!gmap) await initMap();
   const deep=$("#useDeep").checked && !!NM.apify;
   S={demo:false,center:{...center},R:+$("#rad").value,kw:$("#kw").value.trim(),city:$("#city").value.trim()||"ירושלים",biz:[],reviews:[],demand:[]};
@@ -756,12 +762,12 @@ $("#btnSettings").onclick=()=>{
   const ai=aiCfg(), mk=mapsKey();
   $("#keyStatus").innerHTML=`<div>${mk?"<span class='ok'>✔ מפתח Google נמצא</span>":"<span class='no'>✖ אין מפתח Google</span>"} (מ-<a href="https://shaharprod.github.io/leads-niche-hub/leads-radar/">Leads Radar</a>)</div>
     <div>${ai?`<span class='ok'>✔ AI: ${ai.provider==="gemini"?"Gemini":"Claude"} · ${E(ai.model)}</span>`:"<span class='no'>✖ אין מפתח AI</span>"} (מ-<a href="https://shaharprod.github.io/leads-niche-hub/niche-hunter/">צייד הנישות</a> או Leads Radar)</div>`;
-  $("#apify").value=NM.apify; $("#maxRev").value=NM.maxRev; $("#maxRevLbl").textContent=NM.maxRev; $("#signName").value=NM.sign;
+  $("#apify").value=NM.apify; $("#gkey").value=NM.gkey||""; $("#maxRev").value=NM.maxRev; $("#maxRevLbl").textContent=NM.maxRev; $("#signName").value=NM.sign;
   $("#dlg").showModal();
 };
 $("#maxRev").oninput=()=>$("#maxRevLbl").textContent=$("#maxRev").value;
 $("#dlgClose").onclick=()=>$("#dlg").close();
-$("#dlgSave").onclick=()=>{ NM.apify=$("#apify").value.trim(); NM.maxRev=+$("#maxRev").value; NM.sign=$("#signName").value.trim()||NM.sign; saveNM(); updateModeNote(); updateCost(); $("#dlg").close(); };
+$("#dlgSave").onclick=()=>{ const hadKey=!!mapsKey(); NM.gkey=$("#gkey").value.trim(); NM.apify=$("#apify").value.trim(); NM.maxRev=+$("#maxRev").value; NM.sign=$("#signName").value.trim()||NM.sign; saveNM(); updateModeNote(); updateCost(); $("#dlg").close(); if(!hadKey && mapsKey()) initMap(); };
 
 /* ---------- init ---------- */
 (function init(){
@@ -771,7 +777,7 @@ $("#dlgSave").onclick=()=>{ NM.apify=$("#apify").value.trim(); NM.maxRev=+$("#ma
   if(q.get("kw")) $("#kw").value=q.get("kw");
   if(q.get("addr")) $("#addr").value=q.get("addr");
   radLbl(); bizLbl(); updateModeNote(); updateCost();
-  if(mapsKey()) initMap(); else $("#map").innerHTML="המפה תופיע כאן אחרי שמירת מפתח Google ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/leads-radar/\">&nbsp;Leads Radar&nbsp;</a>. אפשר לנסות עכשיו את «🧪 הדגמה».";
+  if(mapsKey()) initMap(); else $("#map").innerHTML=NOKEY_HTML;
   if(q.get("demo")==="1") $("#btnDemo").click();
 })();
 </script>
