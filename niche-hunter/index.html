@@ -334,7 +334,7 @@ footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 30px;colo
   <section class="block" id="pmHome">
     <div class="panel">
       <h2>🗺️ מפת כאבים · איפה חסר שירות</h2>
-      <p class="lead">גוררים את הסיכה או לוחצים על המפה, בוחרים רדיוס (500 מ׳ עד 100 ק״מ) ושירות, ולוחצים <b>«סרוק עכשיו»</b>. הכלי מסמן אזורי מגורים שרחוקים מהשירות ומדרג את השכונות לפי גודל הכאב. ב-Leads Radar רואים את הספקים, וכאן רואים איפה אין.<br>המפה הזו מודדת <b>מרחק</b>. כדי לראות מה אנשים <b>כותבים ומחפשים</b> בפועל, ומה בעלי העסקים צריכים, פותחים את <a href="https://shaharprod.github.io/leads-niche-hub/needs-map/">🧭 מפת הצרכים</a>.</p>
+      <p class="lead">גוררים את הסיכה או לוחצים על המפה, בוחרים רדיוס (500 מ׳ עד 100 ק״מ) ושירות, ולוחצים <b>«סרוק עכשיו»</b>. הכלי מסמן אזורי מגורים שרחוקים מהשירות ומדרג את השכונות לפי גודל הכאב. ב-Leads Radar רואים את הספקים, וכאן רואים איפה אין.</p>
     </div>
     <div class="pm-layout" style="margin-top:12px">
       <div class="panel pm-mapwrap"><div id="pmMap"><div class="pm-mapmsg" id="pmMapMsg"><span><span class="spin"></span> טוען מפה…</span></div></div>
@@ -354,7 +354,6 @@ footer{border-top:1px solid var(--line);margin-top:40px;padding:22px 0 30px;colo
           <label for="pmSrc">מקור הספקים</label><select id="pmSrc"><option value="google">Google Places (מדויק, לפי שימוש)</option><option value="osm">OpenStreetMap (חינם, פחות מלא)</option></select>
         </div>
         <div class="pm-go"><button class="btn btn-primary" id="pmGo" type="button">🔍 סרוק עכשיו</button></div>
-        <div class="pm-go" style="margin-top:8px"><button class="btn btn-ghost" id="pmNeeds" type="button" title="מפה לפי מה שלקוחות כתבו בביקורות ומה שהם מחפשים בגוגל, לא לפי מרחק">🧭 מה אנשים כותבים ומחפשים כאן? מפת צרכים</button></div>
         <div class="note" id="pmCost" style="margin-top:6px"></div>
         <div class="note" id="pmModeNote"></div>
         <div class="progress" id="pmProg" style="max-width:none"><ol id="pmSteps"></ol></div>
@@ -1634,9 +1633,6 @@ async function pmRun(){
   }
   window.hubDriveOpen=()=>{ gis().catch(()=>{}); const d=ui(); d._showLast(); d.querySelector("[data-st]").innerHTML=""; d.querySelector("[data-list]").innerHTML=""; d.showModal(); };
 })();
-</script>
-<script>
-(function(){ const b=document.getElementById("pmNeeds"); if(!b) return; b.onclick=()=>{ const c=(typeof pm!=="undefined"&&pm.center)||{lat:31.7683,lng:35.2137}; const q=new URLSearchParams({lat:c.lat,lng:c.lng,r:Math.min(5000,Math.round(pmR()))}); const kw=(document.getElementById("pmKw").value||"").trim(); if(kw) q.set("kw",kw); location.href="https://shaharprod.github.io/leads-niche-hub/needs-map/?"+q; }; })();
 </script>
 </body>
 </html>
