@@ -348,16 +348,23 @@ async function callAI(system,user,maxTokens){
     if(!r.ok) throw new Error(await errText(r));
     const j=await r.json(); return (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
   }
-  const models=[...new Set([window.__nmGemModel||c.model,c.model,"gemini-2.5-flash-lite","gemini-2.0-flash"])];
-  let last;
-  for(const model of models){
+  const dead=window.__nmGemDead||(window.__nmGemDead=new Set());
+  const models=[...new Set([window.__nmGemModel||c.model,c.model,"gemini-2.5-flash-lite"])].filter(m=>!dead.has(m));
+  let last, discovered=false;
+  for(let mi=0; ; mi++){
+    if(mi>=models.length){ if(discovered) break; discovered=true;
+      try{ const lr=await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key="+encodeURIComponent(c.key)); const lj=await lr.json();
+        (lj.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent") && /flash/i.test(m.name) && !/image|tts|audio|live|embedding|exp/i.test(m.name))
+          .map(m=>m.name.replace(/^models\//,"")).filter(n=>!models.includes(n)&&!dead.has(n)).sort().reverse().slice(0,6).forEach(n=>models.push(n)); }catch(e){}
+      if(mi>=models.length) break; }
+    const model=models[mi];
     const cfg={responseMimeType:"application/json",maxOutputTokens:/2\.5|-[3-9]/.test(model)?Math.max(maxTokens,12000)+4096:maxTokens};
     if(/2\.5-flash/.test(model)) cfg.thinkingConfig={thinkingBudget:0};
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(c.key)}`,{method:"POST",headers:{"content-type":"application/json"},
       body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:user}]}],generationConfig:cfg})});
     if(!r.ok){ last=new Error(await errText(r));
-      if(r.status===503||/high demand|overloaded|unavailable/i.test(last.message)){ await sleep(4000); models.push(model); if(models.length>8) throw last; continue; }
-      if(r.status===429||r.status===404||/quota|exceeded|not found/i.test(last.message)) continue; throw last; }
+      if((r.status===503||/high demand|overloaded|unavailable/i.test(last.message)) && models.length<14){ await sleep(4000); models.splice(mi+1,0,model); continue; }
+      if(r.status===429||r.status===404||/quota|exceeded|not found|no longer/i.test(last.message)){ dead.add(model); continue; } throw last; }
     window.__nmGemModel=model;
     const j=await r.json(); return (j.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
   }
