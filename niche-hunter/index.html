@@ -195,6 +195,9 @@ details.prompt pre{white-space:pre-wrap;word-break:break-word;font-family:inheri
 .pm-q{display:block;color:var(--ink-2);font-size:13px}
 .pm-chip{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:7px;padding:0 7px;margin:2px 0 2px 4px;font-size:12.5px}
 .pm-rank{margin:6px 0;padding-inline-start:20px}.pm-rank li{margin-bottom:8px}
+.pm-bizl{list-style:none;padding:0;margin:4px 0}.pm-bizl li{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px}
+.pm-thumb{width:56px;height:56px;object-fit:cover;border-radius:10px;flex:0 0 56px;display:block}
+.pm-gal{display:flex;gap:4px;margin-top:4px}.pm-gal img{width:40px;height:40px;object-fit:cover;border-radius:7px}
 .pm-insight{margin-top:8px;background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:14px;line-height:1.6}
 .pm-insight ol{margin:4px 0;padding-inline-start:20px}
 .pm-warn{background:var(--hot-soft);color:var(--hot);border-radius:8px;padding:6px 8px;margin-bottom:6px;font-weight:500}
@@ -1657,7 +1660,7 @@ function pmNeedCard(h,i){
   const needHtml=needs.length?needs.map(([n,v])=>`<div class="pm-need"><b>${NM_NEEDS[n].ic} ${NM_NEEDS[n].he}</b> · ${v.q.length} תלונות${v.q[0]?`<span class="pm-q">“${esc(v.q[0].q)}” <span class="note">(${esc(v.q[0].biz)}, ★${v.q[0].r})</span></span>`:""}${v.q[1]?`<span class="pm-q">“${esc(v.q[1].q)}” <span class="note">(${esc(v.q[1].biz)}, ★${v.q[1].r})</span></span>`:""}</div>`).join(""):'<div class="note">לא נמצאו תלונות בביקורות של העסקים בשכונה.</div>';
   const srch=h.searches.length?`<div style="margin-top:6px"><b>מה מחפשים בגוגל על השכונה:</b> ${h.searches.slice(0,6).map(x=>`<span class="pm-chip">${esc(x.s)}</span>`).join(" ")}</div>`:"";
   const biz=h.bizList.filter(b=>b.pain>0).sort((a,b)=>b.pain-a.pain).slice(0,4);
-  const bizHtml=biz.length?`<div style="margin-top:6px"><b>העסקים שהלקוחות שלהם מתלוננים:</b><ul>${biz.map(b=>`<li>${b.maps?`<a href="${esc(b.maps)}" target="_blank" rel="noopener">${esc(b.name)}</a>`:esc(b.name)} · ${b.pc} תלונות${b.rating?` · ⭐ ${b.rating} (${b.reviews})`:""}</li>`).join("")}</ul></div>`:"";
+  const bizHtml=biz.length?`<div style="margin-top:6px"><b>העסקים שהלקוחות שלהם מתלוננים:</b><ul class="pm-bizl">${biz.map(b=>`<li>${(b.photos&&b.photos[0])?`<a href="${esc(b.maps||b.photos[0])}" target="_blank" rel="noopener"><img class="pm-thumb" src="${esc(b.photos[0])}" loading="lazy" alt="" title="תמונה מבעל העסק" onerror="this.remove()"></a>`:""}<span>${b.maps?`<a href="${esc(b.maps)}" target="_blank" rel="noopener">${esc(b.name)}</a>`:esc(b.name)} · ${b.pc} תלונות${b.rating?` · ⭐ ${b.rating} (${b.reviews})`:""}${(b.photos||[]).length>1?`<span class="pm-gal">${b.photos.slice(1,4).map(u=>`<img src="${esc(u)}" loading="lazy" alt="" onerror="this.remove()">`).join("")}</span>`:""}</span></li>`).join("")}</ul></div>`:"";
   const solBtns=needs.slice(0,3).map(([n])=>`<button class="btn btn-primary btn-sm" type="button" data-need-sol="${esc(L+" "+NM_NEEDS[n].seed)}">💡 פתרון ל${NM_NEEDS[n].he}: מוצר, מדריך או אפליקציה</button>`).join("");
   return `<div class="pm-hood" data-i="${i}">
     <div class="pm-h"><b>${dot} ${i+1}. ${esc(h.name)}</b><span class="opp" title="ציון 0–100 ביחס לשכונה עם הצורך הגדול ביותר בסריקה">צורך ${h.score}</span></div>
