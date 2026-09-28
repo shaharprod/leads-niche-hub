@@ -584,14 +584,23 @@ async function callAI(system, user, maxTokens){
     const j = await r.json(); return (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
   }
   if(provider==="gemini"){
-    /* HUB: when the free quota of the chosen model runs out (429) or the model is overloaded (503), try the next Gemini model instead of failing */
-    const models=[...new Set([window.__nhGemModel||model, model, "gemini-2.5-flash-lite", "gemini-2.0-flash"])]; let last, tries=0;
-    for(let mi=0; mi<models.length; mi++){ const model=models[mi];
+    /* HUB: when the free quota of the chosen model runs out (429), the model is retired (404) or overloaded (503), try the next Gemini Flash model instead of failing */
+    const dead=window.__nhGemDead||(window.__nhGemDead=new Set());
+    const models=[...new Set([window.__nhGemModel||model, model, "gemini-2.5-flash-lite"])].filter(m=>!dead.has(m)); let last, tries=0, discovered=false;
+    for(let mi=0; ; mi++){
+      if(mi>=models.length){
+        if(discovered) break; discovered=true;
+        try{ const lr=await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key="+encodeURIComponent(key)); const lj=await lr.json();
+          (lj.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent") && /flash/i.test(m.name) && !/image|tts|audio|live|embedding|exp/i.test(m.name))
+            .map(m=>m.name.replace(/^models\//,"")).filter(n=>!models.includes(n)&&!dead.has(n)).sort().reverse().slice(0,6).forEach(n=>models.push(n)); }catch(e){}
+        if(mi>=models.length) break;
+      }
+      const model=models[mi];
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,{method:"POST",headers:{"content-type":"application/json"},
         body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:user}]}],generationConfig:{responseMimeType:"application/json",maxOutputTokens:(/2\.5|-[3-9]/.test(model)?Math.max(maxTokens,16000)+4096:maxTokens),...(/2\.5-flash/.test(model)?{thinkingConfig:{thinkingBudget:2048}}:{}),temperature:0.7}})});
       if(!r.ok){ last=new Error(await errText(r));
         if((r.status===503||/high demand|overloaded|unavailable/i.test(last.message)) && ++tries<4){ await new Promise(z=>setTimeout(z,4000)); mi--; continue; }
-        if(r.status===429||r.status===404||/quota|exceeded|not found/i.test(last.message)) continue;
+        if(r.status===429||r.status===404||/quota|exceeded|not found|no longer/i.test(last.message)){ dead.add(model); continue; }
         throw last; }
       window.__nhGemModel=model; if(model!==settings.model) console.warn("Gemini: used fallback model "+model);
       const j = await r.json(); const c0=j.candidates?.[0]; if(c0?.finishReason==="MAX_TOKENS") console.warn("Gemini: answer hit MAX_TOKENS"); return (c0?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
@@ -1608,6 +1617,13 @@ async function pmNeedHoods(center,R){
     return (j.elements||[]).map(e=>({name:(e.tags&&(e.tags["name:he"]||e.tags.name))||"",loc:{lat:e.lat,lng:e.lon}})).filter(h=>h.name); }
   catch(e){ return []; }
 }
+/* last fallback: group the businesses into small areas and name each area by its main street */
+function pmNeedClusters(provs,R,center){
+  const cell=Math.max(450,Math.min(1500,R/3)), kx=111320*Math.cos(center.lat*Math.PI/180), ky=110540, g=new Map();
+  provs.filter(p=>p.loc).forEach(p=>{ const k=Math.floor((p.loc.lng-center.lng)*kx/cell)+","+Math.floor((p.loc.lat-center.lat)*ky/cell); const a=g.get(k)||[]; a.push(p); g.set(k,a); });
+  return [...g.values()].map(ps=>{ const st={}; ps.forEach(p=>{ const m=String(p.address||"").split(",")[0].replace(/\s*\d+[א-ת]?\s*$/,"").trim(); if(m) st[m]=(st[m]||0)+1; });
+    const top=Object.entries(st).sort((a,b)=>b[1]-a[1])[0]; return {name:top?`סביב ${top[0]}`:"אזור ללא שם",loc:{lat:ps.reduce((s,p)=>s+p.loc.lat,0)/ps.length,lng:ps.reduce((s,p)=>s+p.loc.lng,0)/ps.length}}; });
+}
 /* fallback when OpenStreetMap is slow: Google tells the neighbourhood of each business */
 async function pmNeedHoodsFromGoogle(provs){
   const geo=new google.maps.Geocoder(), acc=new Map();
@@ -1668,6 +1684,7 @@ async function pmNeedRun(){
     if(!provs.length) throw new Error(`לא נמצאו עסקים מסוג «${esc(L)}» באזור. נסו מילה אחרת או רדיוס גדול יותר.`);
     pmStep("hoods","run"); let hoods=await pmNeedHoods(center,R), hsrc="OpenStreetMap";
     if(!hoods.length){ pmStep("hoods","run","OpenStreetMap איטי, לוקח שכונות מגוגל"); hoods=await pmNeedHoodsFromGoogle(provs); hsrc="Google"; }
+    if(hoods.length<3 && provs.length>=6){ hoods=pmNeedClusters(provs,R,center); hsrc="אזורים לפי רחוב"; }
     pmStep("hoods",hoods.length?"ok":"err",hoods.length?`${hoods.length} שכונות (${hsrc})`:"לא נמצאו שמות שכונות");
     provs.forEach(p=>{ let best=null,bd=Infinity; hoods.forEach(h=>{ const d=pmNeedDist(p.loc,h.loc); if(d<bd){bd=d;best=h;} }); p.hood=(best&&bd<=2000)?best.name:"אזור ללא שם שכונה"; });
     pmStep("rev","run");
