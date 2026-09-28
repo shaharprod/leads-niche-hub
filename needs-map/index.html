@@ -90,8 +90,11 @@ tr.need-row:hover td{background:var(--surface-2)}
 .q{display:block;color:var(--ink-2);font-size:.88rem}
 .q::before{content:"“"}.q::after{content:"”"}
 .quotes{background:var(--surface-2);border-radius:10px;padding:10px 12px}
-.quotes div{padding:4px 0;border-bottom:1px dashed var(--line)}
-.quotes div:last-child{border:0}
+.quotes>div{padding:6px 0;border-bottom:1px dashed var(--line)}
+.quotes>div:last-child{border:0}
+.qrow .qtools{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.qrow .qtools select{width:auto;padding:4px 8px;font-size:.82rem}
+.qrow .ctx{margin-top:6px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:.88rem;color:var(--ink-2)}
 .pill{display:inline-block;border-radius:7px;padding:1px 8px;font-size:.8rem;font-weight:700;margin:2px 0 2px 4px;white-space:nowrap}
 .p-pain{background:var(--cust-soft);color:var(--cust)}
 .p-good{background:var(--good-soft);color:var(--good)}
@@ -183,11 +186,13 @@ footer{margin-top:40px;color:var(--ink-3);font-size:.85rem;text-align:center}
       <div class="panel">
         <div class="filters">
           <div><label for="fHood">שכונה</label><select id="fHood"></select></div>
+          <div><label for="fType">סוג עסק</label><select id="fType"></select></div>
           <div><label for="fSide">מה להציג</label><select id="fSide"><option value="all">כאבי לקוחות + חיפושים</option><option value="pain">רק כאבי לקוחות</option><option value="search">רק חיפושים</option></select></div>
           <button class="btn ghost sm" id="btnCsv" type="button">⬇️ ייצוא CSV</button>
           <button class="btn ghost sm" id="btnJson" type="button">💾 שמירת הסריקה (JSON)</button>
         </div>
         <div class="scroll"><table id="rankTbl"></table></div>
+        <div class="note" id="fixInfo"></div>
         <p class="note">ציון צורך = סכום עוצמת התלונות (תלונה בביקורת של כוכב אחד שוקלת יותר) + נקודה אחת לכל ביטוי חיפוש מקומי שמתאים לצורך. לחיצה על שורה פותחת את הציטוטים.</p>
       </div>
     </div>
@@ -339,12 +344,18 @@ async function callAI(system,user,maxTokens){
     if(!r.ok) throw new Error(await errText(r));
     const j=await r.json(); return (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
   }
-  const cfg={responseMimeType:"application/json",maxOutputTokens:/2\.5|-[3-9]/.test(c.model)?Math.max(maxTokens,12000)+4096:maxTokens};
-  if(/2\.5-flash/.test(c.model)) cfg.thinkingConfig={thinkingBudget:0};
-  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(c.model)}:generateContent?key=${encodeURIComponent(c.key)}`,{method:"POST",headers:{"content-type":"application/json"},
-    body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:user}]}],generationConfig:cfg})});
-  if(!r.ok) throw new Error(await errText(r));
-  const j=await r.json(); return (j.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
+  const models=[...new Set([window.__nmGemModel||c.model,c.model,"gemini-2.5-flash-lite","gemini-2.0-flash"])];
+  let last;
+  for(const model of models){
+    const cfg={responseMimeType:"application/json",maxOutputTokens:/2\.5|-[3-9]/.test(model)?Math.max(maxTokens,12000)+4096:maxTokens};
+    if(/2\.5-flash/.test(model)) cfg.thinkingConfig={thinkingBudget:0};
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(c.key)}`,{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:user}]}],generationConfig:cfg})});
+    if(!r.ok){ last=new Error(await errText(r)); if(r.status===429||r.status===404||/quota|exceeded|not found/i.test(last.message)) continue; throw last; }
+    window.__nmGemModel=model;
+    const j=await r.json(); return (j.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
+  }
+  throw last||new Error("Gemini לא זמין");
 }
 function parseJSON(txt){
   let s=String(txt||"").trim().replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
@@ -482,30 +493,76 @@ async function localDemand(seeds,city){
 }
 
 /* ---------- classification ---------- */
+/* phrase-level rules: a need is counted only when the phrase itself is a complaint (or praise) about that need */
+const PAIN_RULES=[
+  ["attitude",3,/(מגעיל|גס(ה|ות)?(?![\u0590-\u05FF])|חצו(ף|פה|פים)|זלזול|מזלזל|צעק|צועק|לא אדיב|לא נחמד|יחס (רע|גרוע|מחפיר|מזלזל|מבזה|לא נעים|על הפנים)|התייחס(ו|ה)? .{0,8}(רע|בזלזול|בגסות)|אדיש|התעלמ|שירות (ה)?לקוחות (גרוע|מחפיר|על הפנים|רע)|שירות (גרוע|מחפיר|על הפנים|רע)|רמא(ות|י|ים)|עקצו|עוקצים|שיקר|שקרנ)/],
+  ["avail",2,/(לא עונ|לא ענ|אין מענה|אף אחד לא עונה|לא חוזר|לא חזר(ו)?(?![\u0590-\u05FF])|אי אפשר להשיג|לא (מצליח|הצלחתי|הצלחנו)(ה)? להשיג|אין תור(ים)?(?![\u0590-\u05FF])|אין זמינות|לא זמינ|שעות (ה)?פתיחה (לא|מוזרות|קצרות)|סגור(ים)? (ב|כש|ביום|בשבת|בערב|בשעות)|נסגר(ים)? מוקדם|לא פתוח|פתוח(ים)? רק)/],
+  ["speed",2,/(חיכיתי|חיכינו|המתנ(ה|ו|תי) (של|ארוכה|מעל)|מחכים (המון|הרבה|שעה|שעות)|לחכות (המון|הרבה|שעה|שעות)|איטי(ים|ה)?(?![\u0590-\u05FF])|לאט מאוד|עיכוב|באיחור|איחר(ו)?(?![\u0590-\u05FF])|איחור|לקח(ו)? .{0,12}(שעה|שעות|ימים|שבוע|שבועות|חודש)|תור(ים)? ארוכ|עומס (רב|כבד|מטורף))/],
+  ["price",2,/(יקר(ים|ה|ות)?(?![\u0590-\u05FF])|מחיר(ים)? (גבוה|גבוהים|מופקע|מוגזם|מטורף|לא הוגן|מנופח)|מופקע|גבו (ממני|מאיתנו|ממנו)|חייבו (אותי|אותנו)|חיוב (כפול|יתר)|לא שווה (את )?(ה)?כסף|הפתעה בחשבון|תוספת (מחיר|תשלום) (לא|בלי)|מחיר כפול)/],
+  ["quality",2,/(לא מקצועי|חובבני|טעו ב|טעות ב|הרסו|הרס את|לא עבד|לא תיקנו|לא תוקן|אותה תקלה|שוב ושוב|מלוכלך|מטונף|לא נקי|לא מתוחזק|מוזנח|סתימה|שבור(ה|ים)?(?![\u0590-\u05FF])|לא טרי|הגיע קר|לא טעים|תפל|איכות (ירודה|גרועה|נמוכה)|(תוצאה|עבודה|אוכל|מוצר) (גרוע|גרועה|לא טוב|לא טובה))/],
+  ["access",2,/(אין חני|בעיית חני|חניה (קשה|בעייתית|יקרה)|אין איפה לחנות|קשה להגיע|קשה למצוא את|רחוק מדי|לא נגיש|אין נגישות|אין מעלית|משלוח .{0,8}(לא הגיע|איחר|התעכב)|המשלוח לא הגיע|אין משלוחים|לא (מבצעים|עושים) משלוחים)/],
+  ["online",2,/(אתר (לא (עובד|מעודכן|נוח))|אין אתר|אין אפשרות להזמין (אונליין|באתר|ברשת)|אי אפשר לקבוע (תור )?(אונליין|באתר)|אפליקציה (לא עובדת|תקועה)|לא עונים (ב|ל)?וואטסאפ|אין מענה (ב|ל)?וואטסאפ|(שעות|מידע) לא מעודכנ(ות|ים) (ב)?גוגל|לא מעודכן בגוגל)/]
+];
+const PRAISE_RULES=[
+  ["attitude",/(אדיב|נחמד(ים|ה)?(?![\u0590-\u05FF])|יחס (חם|מעולה|אישי|טוב|מדהים)|סבלנ|שירות (מעולה|אדיב|מצוין|מדהים))/],
+  ["avail",/(תמיד עונ|עונים מהר|זמינ(ים|ה) (תמיד|מאוד)|פתוח(ים)? (עד מאוחר|גם בערב|גם בשבת)|גם בערב|קל (לקבוע|להשיג))/],
+  ["speed",/(מהיר(ים|ה)?(?![\u0590-\u05FF])|בלי המתנה|ללא המתנה|בזמן(?![\u0590-\u05FF])|יעיל(ים|ה)?(?![\u0590-\u05FF]))/],
+  ["price",/(מחיר(ים)? (הוגן|הוגנים|טוב|טובים|שווה)|זול(ים|ה)?(?![\u0590-\u05FF])|שווה את (ה)?כסף|תמורה טובה)/],
+  ["quality",/(מקצועי(ים|ת)?(?![\u0590-\u05FF])|איכות(י|ית)?(?![\u0590-\u05FF]) מעולה|מעולה|נקי(ה|ים)?(?![\u0590-\u05FF])|טרי(ה|ים)?(?![\u0590-\u05FF])|טעים)/],
+  ["access",/(חניה (נוחה|בשפע|חינם)|חניון (חינם|צמוד)|קל להגיע|נגיש(ה|ים)?(?![\u0590-\u05FF])|משלוח מהיר)/],
+  ["online",/(קביעת תור (באתר|אונליין)|להזמין (באתר|אונליין)|אתר נוח|מענה (מהיר )?בוואטסאפ)/]
+];
+const NEG_NEAR=/(לא|אין|בלי|ממש לא)\s+\S*$/;
 function ruleClassify(reviews){
   reviews.forEach(r=>{ r.m=[]; const t=r.text||""; if(!t) return;
-    const sents=t.split(/[.!?\n]+/).map(s=>s.trim()).filter(s=>s.length>3);
-    CUST_NEEDS.forEach(n=>{ const s=sents.find(x=>n.kw.test(x)); if(!s) return;
-      const neg=/(^|\s)(לא|אין|בלי|אי אפשר)\s/.test(s);
-      if(r.rating<=3) r.m.push({n:n.id,side:"pain",x:r.rating<=1?3:r.rating===2?2:1,q:s.slice(0,90)});
-      else if(neg) r.m.push({n:n.id,side:"pain",x:1,q:s.slice(0,90)});
-      else r.m.push({n:n.id,side:"praise",x:1,q:s.slice(0,90)}); });
+    const parts=t.split(/[.!?\n;,]+|\s(?:אבל|אך|לעומת זאת|מצד שני)\s/).map(s=>s.trim()).filter(s=>s.length>3);
+    const seen=new Set();
+    parts.forEach(s=>{
+      let hits=PAIN_RULES.flatMap(([n,w,rx])=>[...s.matchAll(new RegExp(rx.source,"g"))].map(m=>({n,w,a:m.index,z:m.index+m[0].length,len:m[0].length})));
+      // "לא יקר" / "לא איטי": a negated complaint word is not a complaint
+      hits=hits.filter(h=>!(NEG_NEAR.test(s.slice(0,h.a)) && !/^(לא|אין|אי )/.test(s.slice(h.a,h.z))));
+      // overlapping matches: keep the longer, more specific phrase ("לא עונים בוואטסאפ" = online, not avail)
+      hits=hits.filter(h=>!hits.some(o=>o!==h && o.a<h.z && h.a<o.z && (o.len>h.len || (o.len===h.len && o.w>h.w))));
+      const painN=new Set();
+      if(hits.length){
+        const top=Math.max(...hits.map(h=>h.w));
+        hits.filter(h=>h.w===top).forEach(h=>{ painN.add(h.n); if(seen.has("p"+h.n)) return; seen.add("p"+h.n);
+          r.m.push({n:h.n,side:"pain",x:r.rating<=1?3:r.rating===2?2:1,q:s.slice(0,110)}); });
+      }
+      if(r.rating>=4) PRAISE_RULES.forEach(([n,rx])=>{ const m=s.match(rx); if(!m||painN.has(n)||seen.has("g"+n)) return;
+        if(NEG_NEAR.test(s.slice(0,m.index))) return; seen.add("g"+n); r.m.push({n,side:"praise",x:1,q:s.slice(0,110)}); });
+      if(r.rating>=4){ const pn=s.match(/(לא|ממש לא)\s+(יקר|איטי)/); if(pn){ const n=pn[2]==="יקר"?"price":"speed"; if(!seen.has("g"+n)){ seen.add("g"+n); r.m.push({n,side:"praise",x:1,q:s.slice(0,110)}); } } }
+    });
     r.tone=null; if(r.reply) r.tone=/(מצטערים|מתנצל|נשמח|תודה)/.test(r.reply)?"thankful":/(לא נכון|שקר|מעולם|לא היית|לא הגעת)/.test(r.reply)?"defensive":"generic";
   });
 }
+/* keeps an AI quote only if it really appears in the review (no invented quotes) */
+function quoteInText(q,t){ const w=String(q||"").replace(/[^֐-׿a-zA-Z0-9 ]/g," ").split(/\s+/).filter(x=>x.length>1); if(!w.length) return false;
+  const T=String(t||""); return w.filter(x=>T.includes(x)).length/w.length>=0.7; }
 async function aiClassify(reviews,biz){
-  const sys=`You classify Israeli customer reviews (Hebrew) into a fixed set of needs. Needs: avail (availability: hours, appointments, answering phone), speed (waiting, delays), price (cost, fairness, surprises), quality (professional result, mistakes), attitude (courtesy, trust, communication), access (parking, distance, getting there, delivery), online (website, online booking/payment, WhatsApp, digital).
-For each review return the needs it mentions. side="pain" when the customer complains or lacks it, side="praise" when the customer praises it. x = intensity 1-3 (3 = furious / deal-breaker). q = a short exact quote from the review, max 12 words, Hebrew, no names.
+  const sys=`You classify Israeli customer reviews (Hebrew) of LOCAL BUSINESSES into a fixed set of customer needs. Each review line shows the business type in {braces}, the stars, and the text.
+Needs (use the exact id):
+- avail = the business cannot be reached or is not open when needed: phone/WhatsApp not answered, no one calls back, no appointments available, opening hours. NOT waiting in line (that is speed).
+- speed = waiting and delays: long wait in line, slow service, late delivery or late work.
+- price = cost: too expensive, overcharged, hidden fees, not worth the money. A neutral question about price is NOT a complaint.
+- quality = the product/work/place itself: mistakes in the work, broken, not fixed, dirty, poorly maintained, food not fresh, unprofessional result.
+- attitude = how staff treat people: rude, disrespectful, shouting, ignoring, dishonest, "מגעיל". If staff were rude about a mistake, it is attitude (the rudeness is the pain).
+- access = getting there: parking, distance, accessibility, stairs, delivery not arriving.
+- online = digital: website, online booking or payment, WhatsApp channel, wrong info on Google.
+Rules: classify each distinct complaint once, under the ONE need that best describes it. Only return a need when the text clearly talks about it; do not guess. Ignore general statements ("bad experience", "not recommended") that name no specific need. side="pain" for a complaint or lack, side="praise" for explicit praise of that need. x = intensity 1-3 (3 = furious / deal-breaker). q = the exact words from the review that show THIS need (copy them, max 12 words, no names).
 If an owner reply is given, also return o: "thankful" (apologizes/constructive), "defensive" (argues/denies/attacks), "frustrated" (angry/tired), "generic" (copy-paste), or null.
 Answer ONLY JSON: {"r":[{"i":0,"m":[{"n":"avail","side":"pain","x":2,"q":"..."}],"o":null}]}. Skip reviews with no need (m:[]).`;
   const batches=[]; for(let i=0;i<reviews.length;i+=35) batches.push(reviews.slice(i,i+35));
   let done=0, failed=0; S.aiErr="";
   await pool(batches,2,async (bt)=>{
-    const user=bt.map((r,k)=>`[${k}] ★${r.rating} ${r.text.replace(/\s+/g," ")}${r.reply?` || OWNER REPLY: ${r.reply.replace(/\s+/g," ")}`:""}`).join("\n");
+    const bmap=Object.fromEntries((S.biz||[]).map(b=>[b.id,b]));
+    const user=bt.map((r,k)=>`[${k}] {${(bmap[r.biz]&&bmap[r.biz].type)||"עסק"}} ★${r.rating} ${r.text.replace(/\s+/g," ")}${r.reply?` || OWNER REPLY: ${r.reply.replace(/\s+/g," ")}`:""}`).join("\n");
     try{ const j=parseJSON(await callAI(sys,user,6000));
       bt.forEach(r=>{ r.m=[]; r.tone=null; });
       (j.r||[]).forEach(o=>{ const r=bt[o.i]; if(!r) return;
-        r.m=(o.m||[]).filter(x=>NEED[x.n] && x.n!=="growth").map(x=>({n:x.n,side:x.side==="praise"?"praise":"pain",x:Math.max(1,Math.min(3,+x.x||1)),q:String(x.q||"").slice(0,100)}));
+        const seen=new Set();
+        r.m=(o.m||[]).filter(x=>NEED[x.n] && x.n!=="growth" && quoteInText(x.q,r.text) && !seen.has(x.n+x.side) && seen.add(x.n+x.side))
+          .map(x=>({n:x.n,side:x.side==="praise"?"praise":"pain",x:Math.max(1,Math.min(3,+x.x||1)),q:String(x.q||"").slice(0,110)}));
         r.tone=o.o||null; });
     }catch(e){ failed++; S.aiErr=String(e.message||e).slice(0,160); console.warn("AI batch failed, rules fallback",e); ruleClassify(bt); }
     step("ai","run",`${++done}/${batches.length} קבוצות`+(failed?` · ${failed} לפי מילות מפתח`:""));
@@ -516,6 +573,9 @@ Answer ONLY JSON: {"r":[{"i":0,"m":[{"n":"avail","side":"pain","x":2,"q":"..."}]
 /* ---------- analysis ---------- */
 let S=null;
 const W=r=>r<=1?1.5:r===2?1.25:1;
+const FIX=LS.get("hub_nm_fix",{});
+function rkey(r){ let h=0; const t=r.biz+"|"+(r.text||"").slice(0,120); for(let i=0;i<t.length;i++){ h=(h*31+t.charCodeAt(i))|0; } return "r"+(h>>>0).toString(36); }
+function applyFixes(r){ const k=rkey(r); r.k=k; return (r.m||[]).map(m=>{ const f=FIX[k+"|"+m.n+"|"+m.side]; if(!f) return {...m,o:m.n}; if(f==="none") return null; return {...m,o:m.n,n:f,fixed:true}; }).filter(Boolean); }
 function analyze(){
   const biz=S.biz, byId=Object.fromEntries(biz.map(b=>[b.id,b]));
   biz.forEach(b=>{ b.cn={}; CUST_NEEDS.forEach(n=>b.cn[n.id]={pain:0,praise:0,q:[]}); b.own=[]; b.asp=[]; b.revN=0; b.replied=0; b.negUn=0; b.tones={}; });
@@ -523,9 +583,9 @@ function analyze(){
   S.reviews.forEach(r=>{ const b=byId[r.biz]; if(!b) return; b.revN++;
     if(r.src==="apify"){ if(r.reply) b.replied++; else if(r.rating<=3) b.negUn++; }
     if(r.tone) b.tones[r.tone]=(b.tones[r.tone]||0)+1;
-    (r.m||[]).forEach(m=>{ const c=b.cn[m.n]; if(!c) return;
+    applyFixes(r).forEach(m=>{ const c=b.cn[m.n]; if(!c) return;
       if(m.side==="pain"){ c.pain+=m.x*W(r.rating); if(m.q) c.q.push({q:m.q,r:r.rating}); } else c.praise++;
-      S.mentions.push({biz:b.id,hood:b.hood,n:m.n,side:m.side,x:m.x*W(r.rating),q:m.q,rating:r.rating}); }); });
+      S.mentions.push({biz:b.id,hood:b.hood,type:b.type,n:m.n,orig:m.o,side:m.side,x:m.x*W(r.rating),q:m.q,rating:r.rating,k:r.k,full:r.text,fixed:!!m.fixed}); }); });
   biz.forEach(b=>{
     const own=(n,t)=>b.own.push({n,t}), asp=t=>b.asp.push(t);
     if(!b.website) own("online","אין אתר");
@@ -548,8 +608,8 @@ function analyze(){
   });
   S.hoodList=[...new Set(biz.map(b=>b.hood))];
 }
-function needRows(hood,side){
-  const ms=S.mentions.filter(m=>!hood||m.hood===hood), bz=S.biz.filter(b=>!hood||b.hood===hood);
+function needRows(hood,side,type){
+  const ms=S.mentions.filter(m=>(!hood||m.hood===hood)&&(!type||m.type===type)), bz=S.biz.filter(b=>(!hood||b.hood===hood)&&(!type||b.type===type));
   return CUST_NEEDS.map(n=>{
     const pain=ms.filter(m=>m.n===n.id&&m.side==="pain"), praise=ms.filter(m=>m.n===n.id&&m.side==="praise");
     const painScore=pain.reduce((s,m)=>s+m.x,0), search=(S.demand||[]).filter(d=>d.need===n.id).length;
@@ -557,7 +617,7 @@ function needRows(hood,side){
     return {n, score, painScore, painN:pain.length, praiseN:praise.length, search,
       suffer:bz.filter(b=>b.cn[n.id].pain>0).length, solve:bz.filter(b=>b.cn[n.id].praise>=1&&b.cn[n.id].pain===0).length,
       own:bz.filter(b=>b.own.some(o=>o.n===n.id)).length,
-      quotes:pain.slice().sort((a,b)=>b.x-a.x).slice(0,8).map(m=>({q:m.q,r:m.rating,b:S.biz.find(z=>z.id===m.biz)}))};
+      quotes:pain.slice().sort((a,b)=>b.x-a.x).slice(0,12).map(m=>({...m,r:m.rating,b:S.biz.find(z=>z.id===m.biz)}))};
   }).sort((a,b)=>b.score-a.score);
 }
 
@@ -571,14 +631,27 @@ function renderSummary(){
   $("#demoBanner").classList.toggle("on",!!S.demo);
 }
 function renderRank(){
-  const hood=$("#fHood").value, side=$("#fSide").value, rows=needRows(hood,side), max=Math.max(1,...rows.map(r=>r.score));
+  const hood=$("#fHood").value, side=$("#fSide").value, type=$("#fType").value, rows=needRows(hood,side,type), max=Math.max(1,...rows.map(r=>r.score));
+  const opts=cur=>`<option value="">— להעביר לצורך אחר —</option>`+CUST_NEEDS.filter(n=>n.id!==cur).map(n=>`<option value="${n.id}">${n.ic} ${n.he}</option>`).join("")+`<option value="none">✖ לא שייך / לא תלונה</option>`;
+  const qline=x=>`<div class="qrow">${stars(x.r)} <span class="q" style="display:inline">${E(x.q)}</span>${x.fixed?' <span class="pill p-good">תוקן ידנית</span>':""}
+      <small> · ${E(x.b?x.b.name:"")}${x.b&&x.b.type?" ("+E(x.b.type)+")":""}${x.b?" · "+E(x.b.hood):""}</small>
+      <div class="qtools"><button class="btn ghost sm" type="button" data-ctx>📄 הביקורת המלאה</button>
+      <select class="fixsel" data-k="${E(x.k)}" data-o="${E(x.orig||x.n)}" data-side="${x.side}">${opts(x.n)}</select></div>
+      <div class="ctx" style="display:none">${E(x.full||"")}</div></div>`;
   $("#rankTbl").innerHTML=`<tr><th>#</th><th>צורך</th><th>ציון</th><th>תלונות לקוחות</th><th>חיפושים</th><th>עסקים שסובלים</th><th>עסקים שפותרים</th><th>כאבי בעלי עסק</th><th>ציטוט בולט</th></tr>`+
     rows.map((r,i)=>`<tr class="need-row" data-i="${i}"><td>${i+1}</td><td><b>${r.n.ic} ${r.n.he}</b><span class="q" style="font-size:.78rem">${E(r.n.d)}</span></td>
       <td><div class="barwrap"><div class="bar" style="width:${Math.round(100*r.score/max)}%"></div></div><small>${Math.round(r.score)}</small></td>
       <td>${r.painN}</td><td>${r.search}</td><td>${r.suffer}</td><td>${r.solve}</td><td>${r.own}</td><td>${r.quotes[0]?`<span class="q">${E(r.quotes[0].q)}</span>`:"—"}</td></tr>
-      <tr id="qx-${i}" style="display:none"><td colspan="9"><div class="quotes">${r.quotes.length?r.quotes.map(x=>`<div>${stars(x.r)} <span class="q" style="display:inline">${E(x.q)}</span> · <small>${E(x.b?x.b.name:"")}${x.b?" · "+E(x.b.hood):""}</small></div>`).join(""):"אין ציטוטים"}</div></td></tr>`).join("");
-  $$("#rankTbl .need-row").forEach(tr=>tr.onclick=()=>{ const x=$("#qx-"+tr.dataset.i); x.style.display=x.style.display==="none"?"":"none"; });
+      <tr id="qx-${i}" style="display:${openRows.has(r.n.id)?"":"none"}" data-n="${r.n.id}"><td colspan="9"><div class="quotes">${r.quotes.length?r.quotes.map(qline).join(""):"אין ציטוטים"}
+        <p class="note" style="margin:6px 0 0">תלונה לא במקום? בוחרים לאיזה צורך היא שייכת, או «לא שייך». התיקון נשמר בדפדפן הזה ומעדכן את כל המפה.</p></div></td></tr>`).join("");
+  $$("#rankTbl .need-row").forEach(tr=>tr.onclick=()=>{ const x=$("#qx-"+tr.dataset.i); const open=x.style.display==="none"; x.style.display=open?"":"none"; open?openRows.add(x.dataset.n):openRows.delete(x.dataset.n); });
+  $$("#rankTbl [data-ctx]").forEach(bt=>bt.onclick=e=>{ e.stopPropagation(); const c=bt.closest(".qrow").querySelector(".ctx"); c.style.display=c.style.display==="none"?"":"none"; });
+  $$("#rankTbl .fixsel").forEach(sel=>{ sel.onclick=e=>e.stopPropagation(); sel.onchange=()=>{ if(!sel.value) return; FIX[sel.dataset.k+"|"+sel.dataset.o+"|"+sel.dataset.side]=sel.value; LS.set("hub_nm_fix",FIX); refresh(); }; });
+  const nFix=Object.keys(FIX).length; $("#fixInfo").innerHTML=nFix?`${nFix} תיקונים ידניים פעילים · <a href="#" id="fixReset">איפוס התיקונים</a>`:"";
+  const fr=$("#fixReset"); if(fr) fr.onclick=e=>{ e.preventDefault(); Object.keys(FIX).forEach(k=>delete FIX[k]); LS.set("hub_nm_fix",FIX); refresh(); };
 }
+const openRows=new Set();
+function refresh(){ analyze(); renderSummary(); renderRank(); renderOpps(); renderHoods(); renderBiz(); renderMap(); }
 function renderHoods(){
   const rows=S.hoodList.map(h=>({h,v:CUST_NEEDS.map(n=>S.mentions.filter(m=>m.hood===h&&m.n===n.id&&m.side==="pain").reduce((s,m)=>s+m.x,0)),biz:S.biz.filter(b=>b.hood===h).length}))
     .map(r=>({...r,t:r.v.reduce((a,b)=>a+b,0)})).sort((a,b)=>b.t-a.t);
@@ -661,9 +734,11 @@ function renderMap(){
 function renderAll(){
   $("#out").style.display="block";
   $("#fHood").innerHTML=`<option value="">כל האזור</option>`+S.hoodList.map(h=>`<option>${E(h)}</option>`).join("");
+  const types={}; S.biz.forEach(b=>{ if(b.type) types[b.type]=(types[b.type]||0)+1; });
+  $("#fType").innerHTML=`<option value="">כל סוגי העסקים</option>`+Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<option value="${E(t)}">${E(t)} (${n})</option>`).join("");
   renderSummary(); renderRank(); renderOpps(); renderHoods(); renderBiz(); renderDemand(); renderMap();
 }
-$("#fHood").onchange=renderRank; $("#fSide").onchange=renderRank; $("#fBizSort").onchange=renderBiz;
+$("#fHood").onchange=renderRank; $("#fSide").onchange=renderRank; $("#fType").onchange=renderRank; $("#fBizSort").onchange=renderBiz;
 $$(".tab").forEach(t=>t.onclick=()=>{ $$(".tab").forEach(x=>x.classList.toggle("on",x===t)); $$(".pane").forEach(p=>p.classList.toggle("on",p.id==="p-"+t.dataset.p)); });
 
 /* ---------- export ---------- */
