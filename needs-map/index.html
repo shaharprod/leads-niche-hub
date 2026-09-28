@@ -536,6 +536,20 @@ function ruleClassify(reviews){
     r.tone=null; if(r.reply) r.tone=/(מצטערים|מתנצל|נשמח|תודה)/.test(r.reply)?"thankful":/(לא נכון|שקר|מעולם|לא היית|לא הגעת)/.test(r.reply)?"defensive":"generic";
   });
 }
+/* a label must be supported by words in its own quote; otherwise the phrase rules decide */
+const EVIDENCE={
+  online:/(אתר|אונליין|און ליין|אפליקצי|וואטסאפ|ווטסאפ|דיגיטל|גוגל|מייל|פייסבוק|אינסטגרם|באינטרנט|ברשת|הזמנה ב|קביעת תור ב|לינק|קישור)/,
+  access:/(חני|להגיע|הגעה|רחוק|נגיש|מדרג|מעלית|משלוח|תחבורה|אוטובוס|קומה|כניסה|כביש|רכב)/,
+  avail:/(עונ|ענו|ענה|מענה|להשיג|חוזר|חזרו|חזר |תור|פתוח|סגור|שעות|זמינ|טלפון|התקשר)/,
+  price:/(מחיר|יקר|כסף|שקל|₪|ש"ח|ש״ח|שח|קופה|חיוב|חייב|גבו|עלות|מבצע|זול|תשלום|החזר|הנחה|חשבון)/,
+  speed:/(חיכ|המתנ|מחכ|לחכות|איטי|לאט|עיכוב|איחור|איחר|באיחור|לקח|זמן|ימים|שעות|שבוע|דקות|עומס|תור)/
+};
+function verifyLabel(n,q,rating){
+  const ev=EVIDENCE[n]; if(!ev || ev.test(q)) return [n];
+  const tmp={rating,text:q}; ruleClassify([tmp]);
+  const alt=tmp.m.filter(m=>m.side==="pain").map(m=>m.n);
+  return alt.length?alt:[];
+}
 /* keeps an AI quote only if it really appears in the review (no invented quotes) */
 function quoteInText(q,t){ const w=String(q||"").replace(/[^֐-׿a-zA-Z0-9 ]/g," ").split(/\s+/).filter(x=>x.length>1); if(!w.length) return false;
   const T=String(t||""); return w.filter(x=>T.includes(x)).length/w.length>=0.7; }
@@ -549,6 +563,14 @@ Needs (use the exact id):
 - attitude = how staff treat people: rude, disrespectful, shouting, ignoring, dishonest, "מגעיל". If staff were rude about a mistake, it is attitude (the rudeness is the pain).
 - access = getting there: parking, distance, accessibility, stairs, delivery not arriving.
 - online = digital: website, online booking or payment, WhatsApp channel, wrong info on Google.
+Examples (Hebrew text -> need):
+- "הזמנו משלוח ולא הגיע, התקשרנו 4 פעמים ולא ענו" -> access ("משלוח ולא הגיע") AND avail ("התקשרנו 4 פעמים ולא ענו"). Not online.
+- "המחיר במדף 14 ובקופה 30" / "מבצעים מטעים, כיתוב קטן" -> price.
+- "הרצפה לא ישרה" / "המקום מוזנח" / "לא נקי" / "חסרים מוצרים, מבחר דל" -> quality.
+- "החזירו את הכסף רק אחרי שבוע" / "הגיע באיחור של 4 שעות" -> speed.
+- "הקופאית צעקה" / "המנהל זלזל" -> attitude.
+- "צריך לעלות קומה, אין מעלית" / "אין חניה" -> access.
+- "אי אפשר להזמין באתר" / "האפליקציה לא עובדת" -> online. online is ONLY about websites, apps, online ordering/booking/payment, WhatsApp or Google listing info.
 Rules: classify each distinct complaint once, under the ONE need that best describes it. Only return a need when the text clearly talks about it; do not guess. Ignore general statements ("bad experience", "not recommended") that name no specific need. side="pain" for a complaint or lack, side="praise" for explicit praise of that need. x = intensity 1-3 (3 = furious / deal-breaker). q = the exact words from the review that show THIS need (copy them, max 12 words, no names).
 If an owner reply is given, also return o: "thankful" (apologizes/constructive), "defensive" (argues/denies/attacks), "frustrated" (angry/tired), "generic" (copy-paste), or null.
 Answer ONLY JSON: {"r":[{"i":0,"m":[{"n":"avail","side":"pain","x":2,"q":"..."}],"o":null}]}. Skip reviews with no need (m:[]).`;
@@ -560,9 +582,12 @@ Answer ONLY JSON: {"r":[{"i":0,"m":[{"n":"avail","side":"pain","x":2,"q":"..."}]
     try{ const j=parseJSON(await callAI(sys,user,6000));
       bt.forEach(r=>{ r.m=[]; r.tone=null; });
       (j.r||[]).forEach(o=>{ const r=bt[o.i]; if(!r) return;
-        const seen=new Set();
-        r.m=(o.m||[]).filter(x=>NEED[x.n] && x.n!=="growth" && quoteInText(x.q,r.text) && !seen.has(x.n+x.side) && seen.add(x.n+x.side))
-          .map(x=>({n:x.n,side:x.side==="praise"?"praise":"pain",x:Math.max(1,Math.min(3,+x.x||1)),q:String(x.q||"").slice(0,110)}));
+        const seen=new Set(), out=[];
+        (o.m||[]).filter(x=>NEED[x.n] && x.n!=="growth" && quoteInText(x.q,r.text)).forEach(x=>{
+          const side=x.side==="praise"?"praise":"pain", q=String(x.q||"").slice(0,110);
+          const needs=side==="pain"?verifyLabel(x.n,q,r.rating):[x.n];
+          needs.forEach(n=>{ if(seen.has(n+side)) return; seen.add(n+side); out.push({n,side,x:Math.max(1,Math.min(3,+x.x||1)),q,chk:n!==x.n}); }); });
+        r.m=out;
         r.tone=o.o||null; });
     }catch(e){ failed++; S.aiErr=String(e.message||e).slice(0,160); console.warn("AI batch failed, rules fallback",e); ruleClassify(bt); }
     step("ai","run",`${++done}/${batches.length} קבוצות`+(failed?` · ${failed} לפי מילות מפתח`:""));
