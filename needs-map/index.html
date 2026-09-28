@@ -188,7 +188,7 @@ footer{margin-top:40px;color:var(--ink-3);font-size:.85rem;text-align:center}
           <button class="btn ghost sm" id="btnJson" type="button">💾 שמירת הסריקה (JSON)</button>
         </div>
         <div class="scroll"><table id="rankTbl"></table></div>
-        <p class="note">ציון צורך = סכום עוצמת התלונות (תלונה בביקורת של כוכב אחד שוקלת יותר) + 2 נקודות לכל חיפוש מקומי שמתאים לצורך. לחיצה על שורה פותחת את הציטוטים.</p>
+        <p class="note">ציון צורך = סכום עוצמת התלונות (תלונה בביקורת של כוכב אחד שוקלת יותר) + נקודה אחת לכל ביטוי חיפוש מקומי שמתאים לצורך. לחיצה על שורה פותחת את הציטוטים.</p>
       </div>
     </div>
 
@@ -492,7 +492,7 @@ For each review return the needs it mentions. side="pain" when the customer comp
 If an owner reply is given, also return o: "thankful" (apologizes/constructive), "defensive" (argues/denies/attacks), "frustrated" (angry/tired), "generic" (copy-paste), or null.
 Answer ONLY JSON: {"r":[{"i":0,"m":[{"n":"avail","side":"pain","x":2,"q":"..."}],"o":null}]}. Skip reviews with no need (m:[]).`;
   const batches=[]; for(let i=0;i<reviews.length;i+=35) batches.push(reviews.slice(i,i+35));
-  let done=0, failed=0;
+  let done=0, failed=0; S.aiErr="";
   await pool(batches,2,async (bt)=>{
     const user=bt.map((r,k)=>`[${k}] ★${r.rating} ${r.text.replace(/\s+/g," ")}${r.reply?` || OWNER REPLY: ${r.reply.replace(/\s+/g," ")}`:""}`).join("\n");
     try{ const j=parseJSON(await callAI(sys,user,6000));
@@ -500,7 +500,7 @@ Answer ONLY JSON: {"r":[{"i":0,"m":[{"n":"avail","side":"pain","x":2,"q":"..."}]
       (j.r||[]).forEach(o=>{ const r=bt[o.i]; if(!r) return;
         r.m=(o.m||[]).filter(x=>NEED[x.n] && x.n!=="growth").map(x=>({n:x.n,side:x.side==="praise"?"praise":"pain",x:Math.max(1,Math.min(3,+x.x||1)),q:String(x.q||"").slice(0,100)}));
         r.tone=o.o||null; });
-    }catch(e){ failed++; console.warn("AI batch failed, rules fallback",e); ruleClassify(bt); }
+    }catch(e){ failed++; S.aiErr=String(e.message||e).slice(0,160); console.warn("AI batch failed, rules fallback",e); ruleClassify(bt); }
     step("ai","run",`${++done}/${batches.length} קבוצות`+(failed?` · ${failed} לפי מילות מפתח`:""));
   });
   return failed;
@@ -546,7 +546,7 @@ function needRows(hood,side){
   return CUST_NEEDS.map(n=>{
     const pain=ms.filter(m=>m.n===n.id&&m.side==="pain"), praise=ms.filter(m=>m.n===n.id&&m.side==="praise");
     const painScore=pain.reduce((s,m)=>s+m.x,0), search=(S.demand||[]).filter(d=>d.need===n.id).length;
-    const score=side==="pain"?painScore:side==="search"?search*2:painScore+search*2;
+    const score=side==="pain"?painScore:side==="search"?search:painScore+search;
     return {n, score, painScore, painN:pain.length, praiseN:praise.length, search,
       suffer:bz.filter(b=>b.cn[n.id].pain>0).length, solve:bz.filter(b=>b.cn[n.id].praise>=1&&b.cn[n.id].pain===0).length,
       own:bz.filter(b=>b.own.some(o=>o.n===n.id)).length,
@@ -681,7 +681,8 @@ async function classifyAndDemand(){
   const useAI=$("#useAI").checked && !!aiCfg();
   step("ai","run");
   if(!S.reviews.length) step("ai","skip","אין ביקורות");
-  else if(useAI){ const f=await aiClassify(S.reviews,S.biz); step("ai","ok",f?`${f} קבוצות סווגו לפי מילות מפתח`:"AI"); }
+  else if(useAI){ const f=await aiClassify(S.reviews,S.biz); step("ai","ok",f?`${f} קבוצות סווגו לפי מילות מפתח`:"AI");
+    if(f && S.aiErr) showErr("ה-AI לא ענה, ולכן הסיווג נעשה לפי מילות מפתח (פחות מדויק). הסיבה: "+E(S.aiErr)+(/quota|exceeded|429/i.test(S.aiErr)?"<br>זו מגבלת מכסה בחשבון Gemini. בודקים ב-<a href=\"https://aistudio.google.com/usage\" target=\"_blank\" rel=\"noopener\">Google AI Studio › Usage</a>, או מגדירים מפתח Claude ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/niche-hunter/\" target=\"_blank\" rel=\"noopener\">צייד הנישות › ⚙️ הגדרות</a>.":"")); }
   else { ruleClassify(S.reviews); step("ai","ok","לפי מילות מפתח"); }
   if($("#useDemand").checked){
     step("demand","run");
