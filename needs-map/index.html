@@ -351,7 +351,9 @@ async function callAI(system,user,maxTokens){
     if(/2\.5-flash/.test(model)) cfg.thinkingConfig={thinkingBudget:0};
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(c.key)}`,{method:"POST",headers:{"content-type":"application/json"},
       body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:user}]}],generationConfig:cfg})});
-    if(!r.ok){ last=new Error(await errText(r)); if(r.status===429||r.status===404||/quota|exceeded|not found/i.test(last.message)) continue; throw last; }
+    if(!r.ok){ last=new Error(await errText(r));
+      if(r.status===503||/high demand|overloaded|unavailable/i.test(last.message)){ await sleep(4000); models.push(model); if(models.length>8) throw last; continue; }
+      if(r.status===429||r.status===404||/quota|exceeded|not found/i.test(last.message)) continue; throw last; }
     window.__nmGemModel=model;
     const j=await r.json(); return (j.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
   }
@@ -499,7 +501,7 @@ const PAIN_RULES=[
   ["avail",2,/(לא עונ|לא ענ|אין מענה|אף אחד לא עונה|לא חוזר|לא חזר(ו)?(?![\u0590-\u05FF])|אי אפשר להשיג|לא (מצליח|הצלחתי|הצלחנו)(ה)? להשיג|אין תור(ים)?(?![\u0590-\u05FF])|אין זמינות|לא זמינ|שעות (ה)?פתיחה (לא|מוזרות|קצרות)|סגור(ים)? (ב|כש|ביום|בשבת|בערב|בשעות)|נסגר(ים)? מוקדם|לא פתוח|פתוח(ים)? רק)/],
   ["speed",2,/(חיכיתי|חיכינו|המתנ(ה|ו|תי) (של|ארוכה|מעל)|מחכים (המון|הרבה|שעה|שעות)|לחכות (המון|הרבה|שעה|שעות)|איטי(ים|ה)?(?![\u0590-\u05FF])|לאט מאוד|עיכוב|באיחור|איחר(ו)?(?![\u0590-\u05FF])|איחור|לקח(ו)? .{0,12}(שעה|שעות|ימים|שבוע|שבועות|חודש)|תור(ים)? ארוכ|עומס (רב|כבד|מטורף))/],
   ["price",2,/(יקר(ים|ה|ות)?(?![\u0590-\u05FF])|מחיר(ים)? (גבוה|גבוהים|מופקע|מוגזם|מטורף|לא הוגן|מנופח)|מופקע|גבו (ממני|מאיתנו|ממנו)|חייבו (אותי|אותנו)|חיוב (כפול|יתר)|לא שווה (את )?(ה)?כסף|הפתעה בחשבון|תוספת (מחיר|תשלום) (לא|בלי)|מחיר כפול)/],
-  ["quality",2,/(לא מקצועי|חובבני|טעו ב|טעות ב|הרסו|הרס את|לא עבד|לא תיקנו|לא תוקן|אותה תקלה|שוב ושוב|מלוכלך|מטונף|לא נקי|לא מתוחזק|מוזנח|סתימה|שבור(ה|ים)?(?![\u0590-\u05FF])|לא טרי|הגיע קר|לא טעים|תפל|איכות (ירודה|גרועה|נמוכה)|(תוצאה|עבודה|אוכל|מוצר) (גרוע|גרועה|לא טוב|לא טובה))/],
+  ["quality",2,/(לא מקצועי|חובבני|טעו ב|טעות ב|הרסו|הרס את|לא עבד|לא תיקנו|לא תוקן|אותה תקלה|שוב ושוב|מלוכלך|מטונף|לא נקי|לא מתוחזק|מוזנח|סתימה|שבור(ה|ים)?(?![\u0590-\u05FF])|לא טרי|הגיע קר|לא טעים|תפל|איכות (ירודה|גרועה|נמוכה)|חסר(ים)? (הרבה |המון )?מוצרים|מבחר (דל|קטן|מצומצם)|סחורה (בינונית|גרועה|לא טובה)|(תוצאה|עבודה|אוכל|מוצר) (גרוע|גרועה|לא טוב|לא טובה))/],
   ["access",2,/(אין חני|בעיית חני|חניה (קשה|בעייתית|יקרה)|אין איפה לחנות|קשה להגיע|קשה למצוא את|רחוק מדי|לא נגיש|אין נגישות|אין מעלית|משלוח .{0,8}(לא הגיע|איחר|התעכב)|המשלוח לא הגיע|אין משלוחים|לא (מבצעים|עושים) משלוחים)/],
   ["online",2,/(אתר (לא (עובד|מעודכן|נוח))|אין אתר|אין אפשרות להזמין (אונליין|באתר|ברשת)|אי אפשר לקבוע (תור )?(אונליין|באתר)|אפליקציה (לא עובדת|תקועה)|לא עונים (ב|ל)?וואטסאפ|אין מענה (ב|ל)?וואטסאפ|(שעות|מידע) לא מעודכנ(ות|ים) (ב)?גוגל|לא מעודכן בגוגל)/]
 ];
@@ -513,12 +515,15 @@ const PRAISE_RULES=[
   ["online",/(קביעת תור (באתר|אונליין)|להזמין (באתר|אונליין)|אתר נוח|מענה (מהיר )?בוואטסאפ)/]
 ];
 const NEG_NEAR=/(לא|אין|בלי|ממש לא)\s+\S*$/;
+/* a phrase must start at the beginning of a word (optional ו/ה/ב/ל/ש/מ/כ prefix), so "בעיקר" is not "יקר" */
+const WB="(?<![\u0590-\u05FF])(?:[והבלשמכ]{0,2})";
+const NEG_WORDS=/(לא |אין |אי |בלי |חסר|בעיה|בעייתי|חבל|מאכזב|לצערי|למרבה הצער|רק ש|חוץ מ|הבעיה)/;
 function ruleClassify(reviews){
   reviews.forEach(r=>{ r.m=[]; const t=r.text||""; if(!t) return;
     const parts=t.split(/[.!?\n;,]+|\s(?:אבל|אך|לעומת זאת|מצד שני)\s/).map(s=>s.trim()).filter(s=>s.length>3);
     const seen=new Set();
     parts.forEach(s=>{
-      let hits=PAIN_RULES.flatMap(([n,w,rx])=>[...s.matchAll(new RegExp(rx.source,"g"))].map(m=>({n,w,a:m.index,z:m.index+m[0].length,len:m[0].length})));
+      let hits=PAIN_RULES.flatMap(([n,w,rx])=>[...s.matchAll(new RegExp(WB+"(?:"+rx.source+")","g"))].map(m=>({n,w,a:m.index,z:m.index+m[0].length,len:m[0].length})));
       // "לא יקר" / "לא איטי": a negated complaint word is not a complaint
       hits=hits.filter(h=>!(NEG_NEAR.test(s.slice(0,h.a)) && !/^(לא|אין|אי )/.test(s.slice(h.a,h.z))));
       // overlapping matches: keep the longer, more specific phrase ("לא עונים בוואטסאפ" = online, not avail)
@@ -526,7 +531,9 @@ function ruleClassify(reviews){
       const painN=new Set();
       if(hits.length){
         const top=Math.max(...hits.map(h=>h.w));
-        hits.filter(h=>h.w===top).forEach(h=>{ painN.add(h.n); if(seen.has("p"+h.n)) return; seen.add("p"+h.n);
+        hits.filter(h=>h.w===top).forEach(h=>{ painN.add(h.n); if(seen.has("p"+h.n)) return;
+          if(r.rating>=4 && !NEG_WORDS.test(s)) return; /* a happy review needs an explicit negative word to count as a complaint */
+          seen.add("p"+h.n);
           r.m.push({n:h.n,side:"pain",x:r.rating<=1?3:r.rating===2?2:1,q:s.slice(0,110)}); });
       }
       if(r.rating>=4) PRAISE_RULES.forEach(([n,rx])=>{ const m=s.match(rx); if(!m||painN.has(n)||seen.has("g"+n)) return;
