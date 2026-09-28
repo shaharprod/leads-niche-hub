@@ -359,11 +359,18 @@ async function callAI(system,user,maxTokens){
   }
   throw last||new Error("Gemini לא זמין");
 }
+function firstJSON(s){ const a=s.indexOf("{"); if(a<0) return null; let d=0,inS=false,esc=false;
+  for(let i=a;i<s.length;i++){ const c=s[i]; if(inS){ if(esc) esc=false; else if(c==="\\") esc=true; else if(c==='"') inS=false; continue; }
+    if(c==='"') inS=true; else if(c==="{") d++; else if(c==="}"){ d--; if(d===0) return s.slice(a,i+1); } }
+  return null; }
 function parseJSON(txt){
   let s=String(txt||"").trim().replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
-  const a=s.indexOf("{"), b=s.lastIndexOf("}"); if(a<0||b<0) throw new Error("לא נמצא JSON");
-  const raw=s.slice(a,b+1);
-  try{ return JSON.parse(raw); }catch(e){ return JSON.parse(raw.replace(/([֐-׿])"(?=[֐-׿])/g,"$1״")); }
+  const tries=[firstJSON(s), s.slice(s.indexOf("{"), s.lastIndexOf("}")+1)].filter(Boolean);
+  for(const raw of tries){
+    try{ return JSON.parse(raw); }catch(e){}
+    try{ return JSON.parse(raw.replace(/([֐-׿])"(?=[֐-׿])/g,"$1״")); }catch(e){}
+  }
+  throw new Error("תשובת ה-AI לא הייתה JSON תקין");
 }
 
 /* ---------- google maps ---------- */
@@ -586,7 +593,7 @@ Answer ONLY JSON: {"r":[{"i":0,"m":[{"n":"avail","side":"pain","x":2,"q":"..."}]
   await pool(batches,2,async (bt)=>{
     const bmap=Object.fromEntries((S.biz||[]).map(b=>[b.id,b]));
     const user=bt.map((r,k)=>`[${k}] {${(bmap[r.biz]&&bmap[r.biz].type)||"עסק"}} ★${r.rating} ${r.text.replace(/\s+/g," ")}${r.reply?` || OWNER REPLY: ${r.reply.replace(/\s+/g," ")}`:""}`).join("\n");
-    try{ const j=parseJSON(await callAI(sys,user,6000));
+    try{ let j; try{ j=parseJSON(await callAI(sys,user,6000)); }catch(e1){ j=parseJSON(await callAI(sys,user,6000)); }
       bt.forEach(r=>{ r.m=[]; r.tone=null; });
       (j.r||[]).forEach(o=>{ const r=bt[o.i]; if(!r) return;
         const seen=new Set(), out=[];
