@@ -1643,8 +1643,9 @@ async function pmNeedSearches(L, hoods, city, onTick){
     try{ const d=await jsonp(`https://suggestqueries.google.com/complete/search?client=firefox&hl=he&gl=il&q=${encodeURIComponent(jb.q)}`);
       (d&&d[1]||[]).forEach(s=>{ s=String(Array.isArray(s)?s[0]:s).trim(); if(!s||found.has(s)) return;
         let need=null; for(const [rx,n] of NM_DEMAND_RX){ if(rx.test(s)){ need=n; break; } }
-        const hn=hoods.find(h=>s.includes(h.name.replace(/[()]/g,"").split(/\s+/)[0]));
-        found.set(s,{s,need,hood:hn?hn.name:(jb.hood&&s.includes(jb.hood)?jb.hood:null)}); });
+        const norm=t=>String(t).replace(/קריית/g,"קרית").replace(/[()\-–]/g," ").replace(/\s+/g," ").trim(), ns=norm(s);
+        const hn=hoods.find(h=>{ const n=norm(h.name); return n.length>2 && ns.includes(n); });
+        found.set(s,{s,need,hood:hn?hn.name:(jb.hood&&ns.includes(norm(jb.hood))?jb.hood:null)}); });
     }catch(e){}
     onTick&&onTick(++done,jobs.length);
   });
