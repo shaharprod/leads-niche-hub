@@ -1,0 +1,779 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מפת צרכים</title>
+<meta name="description" content="מפת צרכים דו-צדדית: מה הלקוחות כותבים ומחפשים, מה בעלי העסקים צריכים, ואיפה שני הצדדים נפגשים.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f5fb; --surface:#fff; --surface-2:#f0eef8; --line:#e2dff0;
+  --ink:#1b1830; --ink-2:#55506e; --ink-3:#8a84a6;
+  --acc:#4f5bff; --acc-soft:#e9ebff; --biz:#7a4fd6; --biz-soft:#f1ebff;
+  --cust:#e0663a; --cust-soft:#fdeee7; --good:#12a26b; --good-soft:#dcf5ea;
+  --warn:#b07a12; --warn-soft:#fff4dc; --shadow:0 1px 2px rgba(27,24,48,.06),0 6px 24px rgba(27,24,48,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f0d1a; --surface:#181527; --surface-2:#211d35; --line:#2e2946;
+    --ink:#f1eefc; --ink-2:#b7b0d4; --ink-3:#7f7899;
+    --acc:#8b93ff; --acc-soft:#262a55; --biz:#b196ff; --biz-soft:#2a2340;
+    --cust:#ff8a5c; --cust-soft:#35231b; --good:#34d399; --good-soft:#15352a;
+    --warn:#f2b632; --warn-soft:#33290f; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f0d1a; --surface:#181527; --surface-2:#211d35; --line:#2e2946;
+  --ink:#f1eefc; --ink-2:#b7b0d4; --ink-3:#7f7899;
+  --acc:#8b93ff; --acc-soft:#262a55; --biz:#b196ff; --biz-soft:#2a2340;
+  --cust:#ff8a5c; --cust-soft:#35231b; --good:#34d399; --good-soft:#15352a;
+  --warn:#f2b632; --warn-soft:#33290f; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,"Segoe UI",Arial,sans-serif;font-size:16px;line-height:1.6}
+a{color:var(--acc)}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 16px 60px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between}
+h1{margin:0;font-size:clamp(24px,4vw,34px);line-height:1.2}
+.sub{color:var(--ink-2);margin:4px 0 0;max-width:760px}
+.nav{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--acc-soft);color:var(--acc);border-radius:999px;padding:4px 12px;font-size:.86rem;font-weight:600;text-decoration:none;border:0;cursor:pointer;font-family:inherit}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:16px;margin-top:18px;align-items:start}
+label{display:block;font-weight:600;font-size:.92rem;margin:10px 0 4px}
+input[type=text],input[type=password],input[type=number],select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink);font:inherit}
+input[type=range]{width:100%}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+.check{display:flex;gap:8px;align-items:flex-start;font-weight:500;margin:8px 0}
+.check input{margin-top:5px}
+.check small{display:block;color:var(--ink-3);font-weight:400}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:12px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;background:var(--acc);color:#fff}
+.btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:6px 10px;font-size:.85rem;border-radius:9px}
+.btn:disabled{opacity:.55;cursor:wait}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.note{color:var(--ink-3);font-size:.85rem;margin-top:6px}
+.err{display:none;background:var(--cust-soft);color:var(--cust);border-radius:10px;padding:10px 12px;margin-top:10px;font-weight:500}
+.err.on{display:block}
+.steps{list-style:none;margin:12px 0 0;padding:0;display:none}
+.steps.on{display:block}
+.steps li{display:flex;gap:8px;align-items:center;font-size:.92rem;color:var(--ink-3);padding:2px 0}
+.steps li .ic{width:18px;text-align:center}
+.steps li.run{color:var(--ink)} .steps li.ok{color:var(--good)} .steps li.bad{color:var(--cust)} .steps li.skip{text-decoration:line-through}
+.steps li .tx small{color:var(--ink-3);margin-inline-start:6px}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#map{height:420px;border-radius:14px;background:var(--surface-2);display:grid;place-items:center;color:var(--ink-3);text-align:center;padding:10px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 12px}
+.tab{background:var(--surface);border:1px solid var(--line);color:var(--ink-2);border-radius:10px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
+.tab.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.pane{display:none}.pane.on{display:block}
+.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:6px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.kpi b{display:block;font-size:1.5rem;line-height:1.2}
+.kpi span{color:var(--ink-3);font-size:.82rem}
+.demo{display:none;background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:8px 12px;margin-top:10px;font-weight:600}
+.demo.on{display:block}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.93rem}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+th{color:var(--ink-3);font-weight:600;font-size:.82rem;white-space:nowrap}
+tr.need-row{cursor:pointer}
+tr.need-row:hover td{background:var(--surface-2)}
+.bar{height:8px;border-radius:5px;background:var(--cust);min-width:3px}
+.barwrap{background:var(--surface-2);border-radius:5px;width:120px}
+.q{display:block;color:var(--ink-2);font-size:.88rem}
+.q::before{content:"“"}.q::after{content:"”"}
+.quotes{background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.quotes div{padding:4px 0;border-bottom:1px dashed var(--line)}
+.quotes div:last-child{border:0}
+.pill{display:inline-block;border-radius:7px;padding:1px 8px;font-size:.8rem;font-weight:700;margin:2px 0 2px 4px;white-space:nowrap}
+.p-pain{background:var(--cust-soft);color:var(--cust)}
+.p-good{background:var(--good-soft);color:var(--good)}
+.p-biz{background:var(--biz-soft);color:var(--biz)}
+.p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-acc{background:var(--acc-soft);color:var(--acc)}
+.heat td.c{text-align:center;font-weight:700;min-width:56px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);min-width:0}
+.card h3{margin:0 0 4px;font-size:1.05rem}
+.card .meta{color:var(--ink-3);font-size:.85rem}
+.sec{margin-top:10px}
+.sec h4{margin:0 0 4px;font-size:.9rem}
+.opp{border-top:4px solid var(--acc)}
+.conn{border-radius:10px;padding:8px 10px;margin-top:8px;font-size:.92rem}
+.conn b{display:block}
+.c1{background:var(--good-soft)} .c2{background:var(--cust-soft)} .c3{background:var(--acc-soft)}
+.empty{color:var(--ink-3);padding:18px;text-align:center}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:10px}
+.filters>div{min-width:180px}
+dialog{border:0;border-radius:16px;padding:0;max-width:560px;width:calc(100% - 32px);background:var(--surface);color:var(--ink)}
+dialog::backdrop{background:rgba(10,8,20,.55)}
+.dlg{padding:20px 22px}
+.dlg h2{margin:0 0 6px}
+.ok{color:var(--good);font-weight:600}.no{color:var(--cust);font-weight:600}
+footer{margin-top:40px;color:var(--ink-3);font-size:.85rem;text-align:center}
+@media (max-width:900px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:420px){.cards{grid-template-columns:1fr}.barwrap{width:70px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>🧭 מפת צרכים</h1>
+      <p class="sub">מה הלקוחות <b>כותבים ומחפשים</b> באזור, מה <b>בעלי העסקים</b> צריכים, ואיפה שני הצדדים נפגשים. מדורג מהצורך הגדול לקטן.</p>
+    </div>
+    <div class="nav">
+      <a class="chip" href="https://shaharprod.github.io/leads-niche-hub/">🏠 ה-Hub</a>
+      <a class="chip" href="https://shaharprod.github.io/leads-niche-hub/niche-hunter/">💡 צייד הנישות</a>
+      <a class="chip" href="https://shaharprod.github.io/leads-niche-hub/leads-radar/">📍 Leads Radar</a>
+      <button class="chip" id="btnSettings" type="button">⚙️ הגדרות</button>
+      <button class="chip" id="btnTheme" type="button">🌓</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <label for="addr">אזור</label>
+      <div class="row"><input type="text" id="addr" value="קריית היובל, ירושלים"><button class="btn ghost sm" id="btnFind" type="button" style="flex:0 0 auto">📍 מצא</button></div>
+      <label for="rad">רדיוס: <b id="radLbl"></b></label>
+      <input type="range" id="rad" min="300" max="5000" step="100" value="1500">
+      <label for="kw">סוג עסקים (ריק = כל העסקים באזור)</label>
+      <input type="text" id="kw" placeholder="לדוגמה: קליניקה, מספרה, מוסך">
+      <label for="city">עיר לחיפושים המקומיים</label>
+      <input type="text" id="city" value="ירושלים">
+      <label for="maxBiz">כמה עסקים לסרוק: <b id="maxBizLbl"></b></label>
+      <input type="range" id="maxBiz" min="10" max="150" step="10" value="60">
+
+      <div class="check"><input type="checkbox" id="useDeep"><label for="useDeep" style="margin:0">סריקת ביקורות עמוקה + תשובות בעלי העסק<small>דרך Apify: עד <span id="deepN">30</span> ביקורות לעסק במקום 5, כולל תשובות הבעלים. דורש טוקן ב-⚙️ הגדרות.</small></label></div>
+      <div class="check"><input type="checkbox" id="useDemand" checked><label for="useDemand" style="margin:0">חיפושים מקומיים בגוגל<small>מה אנשים מקלידים בגוגל על השירות + שם העיר</small></label></div>
+      <div class="check"><input type="checkbox" id="useAI" checked><label for="useAI" style="margin:0">סיווג עם AI<small>מדויק יותר. בלי AI הסיווג לפי מילות מפתח.</small></label></div>
+
+      <div class="btns">
+        <button class="btn" id="btnRun" type="button">🔍 מפה את הצרכים</button>
+        <button class="btn ghost" id="btnImport" type="button" title="משתמש בעסקים ובביקורות מהסריקה האחרונה ב-Leads Radar, בלי עלות Google נוספת">📥 מהסריקה האחרונה ב-Leads Radar</button>
+        <button class="btn ghost sm" id="btnDemo" type="button">🧪 הדגמה עם נתוני דוגמה</button>
+      </div>
+      <div class="note" id="cost"></div>
+      <div class="note" id="modeNote"></div>
+      <div class="err" id="err"></div>
+      <ol class="steps" id="steps"></ol>
+    </div>
+    <div class="panel" style="padding:10px"><div id="map">המפה תופיע כאן אחרי שמירת מפתח Google ב-Leads Radar.</div></div>
+  </div>
+
+  <div id="out" style="display:none">
+    <div class="demo" id="demoBanner">🧪 אלה נתוני דוגמה להדגמת המערכת בלבד, לא נתונים אמיתיים.</div>
+    <div class="summary" id="summary" style="margin-top:18px"></div>
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-p="rank" type="button">📊 דירוג הצרכים</button>
+      <button class="tab" data-p="opps" type="button">🤝 הזדמנויות חיבור</button>
+      <button class="tab" data-p="hoods" type="button">🏘️ שכונות</button>
+      <button class="tab" data-p="biz" type="button">🏪 בעלי העסקים</button>
+      <button class="tab" data-p="demand" type="button">🔎 חיפושים מקומיים</button>
+    </div>
+
+    <div class="pane on" id="p-rank">
+      <div class="panel">
+        <div class="filters">
+          <div><label for="fHood">שכונה</label><select id="fHood"></select></div>
+          <div><label for="fSide">מה להציג</label><select id="fSide"><option value="all">כאבי לקוחות + חיפושים</option><option value="pain">רק כאבי לקוחות</option><option value="search">רק חיפושים</option></select></div>
+          <button class="btn ghost sm" id="btnCsv" type="button">⬇️ ייצוא CSV</button>
+          <button class="btn ghost sm" id="btnJson" type="button">💾 שמירת הסריקה (JSON)</button>
+        </div>
+        <div class="scroll"><table id="rankTbl"></table></div>
+        <p class="note">ציון צורך = סכום עוצמת התלונות (תלונה בביקורת של כוכב אחד שוקלת יותר) + 2 נקודות לכל חיפוש מקומי שמתאים לצורך. לחיצה על שורה פותחת את הציטוטים.</p>
+      </div>
+    </div>
+
+    <div class="pane" id="p-opps"><div class="cards" id="oppCards"></div></div>
+
+    <div class="pane" id="p-hoods">
+      <div class="panel"><div class="scroll"><table class="heat" id="heatTbl"></table></div>
+      <p class="note">כל תא = עוצמת התלונות של הלקוחות על הצורך בשכונה. השכונות מ-OpenStreetMap, וכל עסק משויך לשכונה הקרובה אליו.</p></div>
+    </div>
+
+    <div class="pane" id="p-biz">
+      <div class="filters"><div><label for="fBizSort">מיון</label><select id="fBizSort"><option value="pain">לפי כאבי הלקוחות שלהם</option><option value="owner">לפי כאבי בעל העסק</option><option value="rating">לפי דירוג (נמוך קודם)</option></select></div></div>
+      <div class="cards" id="bizCards"></div>
+    </div>
+
+    <div class="pane" id="p-demand"><div class="panel" id="demandBox"></div></div>
+  </div>
+
+  <footer>שמוליק שחר · יועץ ומטמיע בינה מלאכותית לעסקים ולבעלי מקצוע · SHAHAR AI PRODUCTIONS<br>
+  שמות הכותבים של הביקורות לא נשמרים. מוצגים ציטוטים קצרים ונתונים מצטברים בלבד.</footer>
+</div>
+
+<dialog id="dlg"><div class="dlg">
+  <h2>⚙️ הגדרות מפת הצרכים</h2>
+  <p class="note" style="margin-top:0">מפתח Google ומפתח ה-AI נלקחים אוטומטית מ-Leads Radar ומצייד הנישות. כאן רואים אם הם נמצאו.</p>
+  <div id="keyStatus"></div>
+  <label for="apify">טוקן Apify (לסריקה עמוקה, לא חובה)</label>
+  <input type="password" id="apify" autocomplete="off" placeholder="apify_api_...">
+  <p class="note">הטוקן נשמר רק בדפדפן הזה. משיגים אותו ב-<a href="https://console.apify.com/settings/integrations" target="_blank" rel="noopener">Apify › Settings › API & Integrations</a>. עלות לפי Apify: כ-0.30$ לכל 1,000 ביקורות.</p>
+  <label for="maxRev">ביקורות לעסק בסריקה עמוקה: <b id="maxRevLbl"></b></label>
+  <input type="range" id="maxRev" min="10" max="200" step="10" value="30">
+  <label for="signName">חתימה בהודעות לבעלי עסקים</label>
+  <input type="text" id="signName" value="שמוליק שחר, יועץ ומטמיע בינה מלאכותית לעסקים ולבעלי מקצוע">
+  <div class="btns"><button class="btn" id="dlgSave" type="button">שמירה</button><button class="btn ghost" id="dlgClose" type="button">סגירה</button></div>
+</div></dialog>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const E=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS={ get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- theme ---------- */
+(function(){ const t=LS.get("hub_nm_theme",null); if(t) document.documentElement.setAttribute("data-theme",t); })();
+$("#btnTheme").onclick=()=>{ const cur=document.documentElement.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+  const nx=cur==="dark"?"light":"dark"; document.documentElement.setAttribute("data-theme",nx); LS.set("hub_nm_theme",nx); };
+
+/* ---------- the shared needs language ---------- */
+const NEEDS=[
+  {id:"avail",  he:"זמינות",  ic:"⏰", d:"שעות, תורים, מענה בטלפון",
+   kw:/(לא עונ|אין מענה|לא חוזר|לא חזר|תור|תורים|המתנה לתור|שעות פתיחה|סגור|סגורים|לא זמין|בערב|בשבת|מוצ"ש|24\/7|אין מי ש|לא ניתן להשיג|טלפון)/,
+   svc:"מענה אוטומטי עם AI בטלפון ובוואטסאפ, וזימון תורים 24/7"},
+  {id:"speed",  he:"מהירות",  ic:"⚡", d:"המתנה, זמן טיפול, עיכובים",
+   kw:/(חיכיתי|המתנה|מחכים|איטי|לאט|עיכוב|באיחור|איחר|לקח .{0,10}(שעה|שעות|ימים|שבוע)|זמן רב|תור ארוך)/,
+   svc:"אוטומציה של תהליכים, תזכורות ועדכוני סטטוס אוטומטיים ללקוח"},
+  {id:"price",  he:"מחיר",    ic:"💰", d:"יקר, הפתעות במחיר, שקיפות",
+   kw:/(יקר|מחיר|מחירים|כסף|עלות|שקל|₪|גבו|חיוב|קנס|לא שווה|מופקע|הפתעה בחשבון)/,
+   svc:"הצעות מחיר אוטומטיות ומחירון שקוף באתר ובוואטסאפ"},
+  {id:"quality",he:"איכות",   ic:"🎯", d:"מקצועיות, תוצאה, טעויות",
+   kw:/(לא מקצועי|חובבני|טעות|טעו|הרסו|לא עבד|גרוע|איכות|לא תקין|תקלה|שוב ושוב|מלוכלך|לא נקי|הגיע קר|לא טרי)/,
+   svc:"הדרכת הצוות בכלי AI, בקרת איכות ותיעוד אוטומטי"},
+  {id:"attitude",he:"יחס",    ic:"🤝", d:"אדיבות, אמון, תקשורת",
+   kw:/(יחס|גס|גסות|חצוף|חצופה|צעק|לא אדיב|זלזול|התעלמ|לא נעים|אדיש|שירות לקוחות|לא מתחשב|רמאות|עקצו)/,
+   svc:"מערכת מענה לביקורות, סקרי שביעות רצון ומעקב אחרי לקוחות"},
+  {id:"access", he:"נגישות",  ic:"🚗", d:"חניה, מרחק, הגעה, משלוחים",
+   kw:/(חניה|חנייה|רחוק|קשה להגיע|הגעה|נגיש|מדרגות|משלוח|משלוחים|אין חני|תחבורה|לא מצאתי את)/,
+   svc:"מידע הגעה וחניה אוטומטי בוואטסאפ, משלוחים והזמנה מרחוק"},
+  {id:"online", he:"אונליין", ic:"🌐", d:"אתר, הזמנה, תשלום, וואטסאפ",
+   kw:/(אתר|אונליין|און ליין|אפליקציה|וואטסאפ|ווטסאפ|הזמנה ב|לקבוע תור ב|מייל|פייסבוק|אינטרנט|לא מעודכן|דיגיטלי)/,
+   svc:"אתר או דף נחיתה עם הזמנה ותשלום אונליין"},
+  {id:"growth", he:"צמיחה",   ic:"🚀", d:"לקוחות, חשיפה, התרחבות (צד העסק)",
+   kw:/(^$)/, svc:"קמפיינים ותוכן שיווקי עם AI"}
+];
+const NEED=Object.fromEntries(NEEDS.map(n=>[n.id,n]));
+const CUST_NEEDS=NEEDS.filter(n=>n.id!=="growth");
+const DEMAND_MODS=[
+  {m:" פתוח עכשיו",n:"avail"},{m:" בערב",n:"avail"},{m:" בשבת",n:"avail"},{m:" 24 שעות",n:"avail"},{m:" תור",n:"avail"},
+  {m:" דחוף",n:"speed"},{m:" מהיר",n:"speed"},{m:" זול",n:"price"},{m:" מחיר",n:"price"},
+  {m:" מומלץ",n:"quality"},{m:" הכי טוב",n:"quality"},{m:" ליד",n:"access"},{m:" עם חניה",n:"access"},{m:" משלוח",n:"access"},
+  {m:" אונליין",n:"online"},{m:" וואטסאפ",n:"online"}
+];
+const DEMAND_RX=[
+  [/(פתוח|בערב|בשבת|24|תור|לילה|מוצאי)/,"avail"],[/(דחוף|מהיר|היום|עכשיו)/,"speed"],[/(זול|מחיר|עלות|כמה עולה|הנחה)/,"price"],
+  [/(מומלץ|הכי טוב|מקצועי|ביקורות|דירוג)/,"quality"],[/(ליד|קרוב|חניה|משלוח|עד הבית|נגיש)/,"access"],[/(אונליין|וואטסאפ|אתר|הזמנה|אפליקציה)/,"online"]
+];
+
+/* ---------- settings ---------- */
+const NM=Object.assign({apify:"",maxRev:30,sign:"שמוליק שחר, יועץ ומטמיע בינה מלאכותית לעסקים ולבעלי מקצוע"}, LS.get("hub_nm_settings",{}));
+function saveNM(){ LS.set("hub_nm_settings",NM); }
+function mapsKey(){
+  const s=LS.get("hub_lr_settings",null)||LS.get("lr_settings",null)||{};
+  if(s.key) return s.key;
+  for(const k of ["hub_lr_apikey","lr_apikey"]){ try{ const v=localStorage.getItem(k); if(v) return v.replace(/^"|"$/g,""); }catch(e){} }
+  return "";
+}
+function aiCfg(){
+  const nh=LS.get("hub_nh_settings",null);
+  if(nh && (nh.provider==="claude"||nh.provider==="gemini") && nh.key) return {provider:nh.provider,key:nh.key,model:nh.model||(nh.provider==="gemini"?"gemini-2.5-flash":"claude-sonnet-4-5")};
+  const lr=LS.get("hub_lr_settings",null)||LS.get("lr_settings",null);
+  if(lr && lr.gemini) return {provider:"gemini",key:lr.gemini,model:lr.model||"gemini-2.5-flash"};
+  return null;
+}
+function updateModeNote(){
+  const ai=aiCfg(), mk=mapsKey();
+  $("#modeNote").innerHTML=(mk?"✅ מפתח Google נמצא":"⚠️ אין מפתח Google. שומרים אותו ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/leads-radar/\">Leads Radar</a> › ⚙️ הגדרות")
+    +" · "+(ai?"✅ AI: "+E(ai.provider==="gemini"?"Gemini":"Claude"):"⚠️ אין מפתח AI, הסיווג יהיה לפי מילות מפתח")
+    +" · "+(NM.apify?"✅ Apify מוגדר":"סריקה עמוקה כבויה (אין טוקן Apify)");
+  $("#useDeep").disabled=!NM.apify; if(!NM.apify) $("#useDeep").checked=false;
+  $("#useAI").disabled=!ai; if(!ai) $("#useAI").checked=false;
+  $("#deepN").textContent=NM.maxRev;
+}
+
+/* ---------- ui basics ---------- */
+const radLbl=()=>{ const r=+$("#rad").value; $("#radLbl").textContent=r>=1000?(r/1000).toFixed(1)+" ק״מ":r+" מ׳"; updateCost(); };
+const bizLbl=()=>{ $("#maxBizLbl").textContent=$("#maxBiz").value; updateCost(); };
+function updateCost(){
+  const n=+$("#maxBiz").value, R=+$("#rad").value, pts=R<=800?1:R<=2000?7:19;
+  const g=pts*0.035+n*0.025, ap=$("#useDeep").checked? n*NM.maxRev*0.0003 : 0;
+  $("#cost").textContent=`הערכת עלות: Google כ-${g.toFixed(2)}$ (${pts} חיפושים + ${n} בקשות ביקורות, לפני המכסה החינמית החודשית)`+(ap?` · Apify כ-${ap.toFixed(2)}$`:"")+". הערכה בלבד.";
+}
+$("#rad").oninput=radLbl; $("#maxBiz").oninput=bizLbl; $("#useDeep").onchange=updateCost;
+function showErr(m){ const b=$("#err"); b.innerHTML=m||""; b.classList.toggle("on",!!m); }
+const STEP_IC={run:'<span class="spin"></span>',ok:"✔",bad:"✖",skip:"–",wait:"○"};
+function stepsInit(list){ $("#steps").innerHTML=list.map(([k,t])=>`<li id="st-${k}" class="wait"><span class="ic">○</span><span class="tx">${t}<small></small></span></li>`).join(""); $("#steps").classList.add("on"); }
+function step(k,st,info){ const li=$("#st-"+k); if(!li) return; li.className=st; li.querySelector(".ic").innerHTML=STEP_IC[st]||""; if(info!=null) li.querySelector("small").textContent=info; }
+
+/* ---------- AI ---------- */
+async function errText(r){ try{ const j=await r.json(); return (j.error&&(j.error.message||j.error))||r.status; }catch(e){ return "HTTP "+r.status; } }
+async function callAI(system,user,maxTokens){
+  const c=aiCfg(); if(!c) throw new Error("אין מפתח AI");
+  if(c.provider==="claude"){
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":c.key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:c.model,max_tokens:maxTokens,system,messages:[{role:"user",content:user}]})});
+    if(!r.ok) throw new Error(await errText(r));
+    const j=await r.json(); return (j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("");
+  }
+  const cfg={responseMimeType:"application/json",maxOutputTokens:/2\.5|-[3-9]/.test(c.model)?Math.max(maxTokens,12000)+4096:maxTokens};
+  if(/2\.5-flash/.test(c.model)) cfg.thinkingConfig={thinkingBudget:0};
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(c.model)}:generateContent?key=${encodeURIComponent(c.key)}`,{method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:user}]}],generationConfig:cfg})});
+  if(!r.ok) throw new Error(await errText(r));
+  const j=await r.json(); return (j.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
+}
+function parseJSON(txt){
+  let s=String(txt||"").trim().replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
+  const a=s.indexOf("{"), b=s.lastIndexOf("}"); if(a<0||b<0) throw new Error("לא נמצא JSON");
+  const raw=s.slice(a,b+1);
+  try{ return JSON.parse(raw); }catch(e){ return JSON.parse(raw.replace(/([֐-׿])"(?=[֐-׿])/g,"$1״")); }
+}
+
+/* ---------- google maps ---------- */
+let mapsReady=null, gmap=null, overlays=[], center=LS.get("hub_nm_center",null)||{lat:31.7637,lng:35.1893};
+function loadMaps(){
+  if(window.google && google.maps && google.maps.importLibrary) return Promise.resolve();
+  if(mapsReady) return mapsReady;
+  const key=mapsKey(); if(!key) return Promise.reject(new Error("NOKEY"));
+  mapsReady=new Promise((res,rej)=>{ window.__nmMaps=()=>res(); const s=document.createElement("script");
+    s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(key)+"&v=weekly&libraries=places,geometry&language=iw&region=IL&loading=async&callback=__nmMaps";
+    s.onerror=()=>{ mapsReady=null; rej(new Error("טעינת Google Maps נכשלה")); }; document.head.appendChild(s); });
+  return mapsReady;
+}
+let radCircle=null, pin=null;
+async function initMap(){
+  try{ await loadMaps(); }catch(e){ return; }
+  const {Map}=await google.maps.importLibrary("maps");
+  $("#map").innerHTML=""; $("#map").style.display="block";
+  gmap=new Map($("#map"),{center,zoom:14,mapTypeControl:false,streetViewControl:false,fullscreenControl:true});
+  pin=new google.maps.Marker({map:gmap,position:center,draggable:true,title:"מרכז הסריקה"});
+  radCircle=new google.maps.Circle({map:gmap,center,radius:+$("#rad").value,strokeColor:"#4f5bff",strokeOpacity:.6,strokeWeight:2,fillOpacity:.04,clickable:false});
+  const setC=ll=>{ center={lat:ll.lat(),lng:ll.lng()}; pin.setPosition(center); radCircle.setCenter(center); LS.set("hub_nm_center",center); };
+  pin.addListener("dragend",e=>setC(e.latLng)); gmap.addListener("click",e=>setC(e.latLng));
+  $("#rad").addEventListener("input",()=>radCircle.setRadius(+$("#rad").value));
+}
+$("#btnFind").onclick=async()=>{
+  showErr(""); try{ await loadMaps(); }catch(e){ showErr("צריך מפתח Google. שומרים אותו ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/leads-radar/\">Leads Radar</a> › ⚙️ הגדרות."); return; }
+  const {Geocoder}=await google.maps.importLibrary("geocoding");
+  new Geocoder().geocode({address:$("#addr").value,region:"IL",language:"iw"},(res,st)=>{
+    if(st!=="OK"||!res[0]){ showErr("הכתובת לא נמצאה."); return; }
+    const ll=res[0].geometry.location; center={lat:ll.lat(),lng:ll.lng()}; LS.set("hub_nm_center",center);
+    const city=(res[0].address_components||[]).find(c=>c.types.includes("locality")); if(city) $("#city").value=city.long_name;
+    if(gmap){ gmap.setCenter(center); pin.setPosition(center); radCircle.setCenter(center); }
+  });
+};
+
+/* ---------- data collection ---------- */
+function tiles(c,R){ const L=R<=800?1:R<=2000?2:3, pts=[{...c}]; if(L===1) return {pts,r:R}; const r=R/(2*L-1);
+  for(let k=1;k<L;k++){ const d=2*k*r,n=6*k; for(let i=0;i<n;i++){ const a=2*Math.PI*i/n; pts.push({lat:c.lat+d*Math.cos(a)/111320,lng:c.lng+d*Math.sin(a)/(111320*Math.cos(c.lat*Math.PI/180))}); } }
+  return {pts,r}; }
+function dist(a,b){ const R=6371000,t=Math.PI/180,dl=(b.lat-a.lat)*t,dn=(b.lng-a.lng)*t,x=Math.sin(dl/2)**2+Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dn/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+const FIELDS=["id","displayName","formattedAddress","location","googleMapsURI","nationalPhoneNumber","websiteURI","rating","userRatingCount","businessStatus","regularOpeningHours","primaryTypeDisplayName","types"];
+function eveningOK(p){ try{ const ps=p.regularOpeningHours&&p.regularOpeningHours.periods; if(!ps||!ps.length) return null;
+  if(ps.length===1&&!ps[0].close) return true; return ps.some(x=>x.close && x.open.day>=0 && x.open.day<=4 && (x.close.hour>=19 || x.close.day!==x.open.day)); }catch(e){ return null; } }
+function toBiz(p){ const loc=p.location?{lat:p.location.lat(),lng:p.location.lng()}:null;
+  return {id:p.id,name:p.displayName||"",address:p.formattedAddress||"",phone:p.nationalPhoneNumber||"",website:p.websiteURI||"",rating:p.rating||0,
+    count:p.userRatingCount||0,type:p.primaryTypeDisplayName||"",maps:p.googleMapsURI||"",loc,evening:eveningOK(p),reservable:null,status:p.businessStatus||""}; }
+async function findBusinesses(R,kw,max){
+  const {Place,SearchNearbyRankPreference}=await google.maps.importLibrary("places");
+  const {pts,r}=tiles(center,R), found=new Map();
+  for(let i=0;i<pts.length;i++){
+    try{ let res;
+      if(kw) res=await Place.searchByText({textQuery:kw,fields:FIELDS,locationBias:{center:pts[i],radius:Math.min(r,50000)},maxResultCount:20,language:"iw",region:"IL"});
+      else res=await Place.searchNearby({fields:FIELDS,locationRestriction:{center:pts[i],radius:Math.min(r,50000)},maxResultCount:20,language:"iw",region:"IL",rankPreference:SearchNearbyRankPreference.POPULARITY});
+      (res.places||[]).forEach(p=>{ const b=toBiz(p); if(b.loc && dist(center,b.loc)<=R && b.status!=="CLOSED_PERMANENTLY" && !found.has(b.id)) found.set(b.id,b); });
+    }catch(e){ console.warn("tile",i,e); }
+    step("biz","run",`${i+1}/${pts.length} · ${found.size} עסקים`);
+  }
+  return [...found.values()].sort((a,b)=>b.count-a.count).slice(0,max);
+}
+async function pool(items,n,fn){ let i=0; const w=async()=>{ while(i<items.length){ const k=i++; await fn(items[k],k); } }; await Promise.all(Array.from({length:Math.min(n,items.length)},w)); }
+async function googleReviews(biz){
+  const {Place}=await google.maps.importLibrary("places"); const out=[]; let done=0;
+  await pool(biz,4,async b=>{
+    try{ const p=new Place({id:b.id}); await p.fetchFields({fields:["reviews","isReservable"]});
+      b.reservable=p.isReservable===true?true:(p.isReservable===false?false:null);
+      (p.reviews||[]).forEach(x=>out.push({biz:b.id,rating:x.rating||0,text:String(x.text||"").slice(0,600),time:x.publishTime?new Date(x.publishTime).getTime():0,reply:null,src:"google"}));
+    }catch(e){ console.warn("reviews",b.name,e); }
+    step("rev","run",`${++done}/${biz.length}`);
+  });
+  return out;
+}
+async function apifyReviews(biz){
+  const out=[], ids=biz.map(b=>b.id); let done=0;
+  for(let i=0;i<ids.length;i+=8){
+    const chunk=ids.slice(i,i+8);
+    const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),295000);
+    try{
+      const r=await fetch("https://api.apify.com/v2/acts/compass~google-maps-reviews-scraper/run-sync-get-dataset-items?token="+encodeURIComponent(NM.apify),
+        {method:"POST",headers:{"content-type":"application/json"},signal:ctl.signal,
+         body:JSON.stringify({placeIds:chunk,maxReviews:NM.maxRev,reviewsSort:"newest",language:"iw",personalData:false,reviewsOrigin:"google"})});
+      if(!r.ok) throw new Error("Apify: "+(await errText(r)));
+      const items=await r.json();
+      (items||[]).forEach(x=>{ const pid=x.placeId||""; const b=biz.find(z=>z.id===pid)||biz.find(z=>x.title&&z.name===x.title); if(!b) return;
+        const txt=x.text||x.textTranslated||""; if(!txt && !x.stars) return;
+        out.push({biz:b.id,rating:x.stars||x.rating||0,text:String(txt).slice(0,600),time:x.publishedAtDate?new Date(x.publishedAtDate).getTime():0,
+          reply:x.responseFromOwnerText?String(x.responseFromOwnerText).slice(0,400):"",src:"apify"}); });
+    }catch(e){ clearTimeout(tm); throw e.name==="AbortError"?new Error("Apify לא סיים תוך 5 דקות. נסו פחות עסקים או פחות ביקורות לעסק."):e; }
+    clearTimeout(tm); done+=chunk.length; step("deep","run",`${Math.min(done,ids.length)}/${ids.length} עסקים · ${out.length} ביקורות`);
+  }
+  return out;
+}
+const OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter"];
+async function fetchHoods(c,R){
+  const q=`[out:json][timeout:60];node["place"~"^(neighbourhood|suburb|quarter)$"](around:${Math.round(R+1500)},${c.lat},${c.lng});out body;`;
+  for(const ep of OVERPASS){
+    try{ const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q)});
+      if(!r.ok) continue; const j=await r.json();
+      return (j.elements||[]).map(e=>({name:(e.tags&&(e.tags["name:he"]||e.tags.name))||"",loc:{lat:e.lat,lng:e.lon}})).filter(h=>h.name);
+    }catch(e){}
+  }
+  return null;
+}
+function assignHoods(biz,hoods){
+  biz.forEach(b=>{ let best=null,bd=Infinity; (hoods||[]).forEach(h=>{ const d=dist(b.loc,h.loc); if(d<bd){bd=d;best=h;} });
+    b.hood=(best&&bd<=1800)?best.name:"אזור ללא שם שכונה"; });
+}
+function jsonp(url,ms=7000){ return new Promise((res,rej)=>{ const cb="nmcb_"+Math.random().toString(36).slice(2), s=document.createElement("script");
+  const done=()=>{ try{ delete window[cb]; }catch(e){ window[cb]=undefined; } s.remove(); };
+  const t=setTimeout(()=>{ done(); rej(new Error("timeout")); },ms);
+  window[cb]=d=>{ clearTimeout(t); done(); res(d); }; s.onerror=()=>{ clearTimeout(t); done(); rej(new Error("network")); };
+  s.src=url+(url.includes("?")?"&":"?")+"callback="+cb; document.head.appendChild(s); }); }
+async function localDemand(seeds,city){
+  const jobs=[]; seeds.forEach(sd=>{ jobs.push({seed:sd,q:`${sd} ${city}`,n:null}); jobs.push({seed:sd,q:`${sd} ב${city}`,n:null});
+    DEMAND_MODS.forEach(m=>jobs.push({seed:sd,q:`${sd}${m.m} ${city}`,n:m.n})); });
+  const found=new Map(); let done=0;
+  await pool(jobs,4,async j=>{
+    try{ const d=await jsonp(`https://suggestqueries.google.com/complete/search?client=firefox&hl=he&gl=il&q=${encodeURIComponent(j.q)}`);
+      (d&&d[1]||[]).forEach(s=>{ s=String(s).trim(); if(!s||found.has(s)) return;
+        let need=null; for(const [rx,n] of DEMAND_RX){ if(rx.test(s)){ need=n; break; } }
+        if(!need) return;
+        const local=s.includes(city)||/ליד|קרוב/.test(s);
+        found.set(s,{s,seed:j.seed,need,local}); });
+    }catch(e){}
+    step("demand","run",`${++done}/${jobs.length}`);
+  });
+  return [...found.values()];
+}
+
+/* ---------- classification ---------- */
+function ruleClassify(reviews){
+  reviews.forEach(r=>{ r.m=[]; const t=r.text||""; if(!t) return;
+    const sents=t.split(/[.!?\n]+/).map(s=>s.trim()).filter(s=>s.length>3);
+    CUST_NEEDS.forEach(n=>{ const s=sents.find(x=>n.kw.test(x)); if(!s) return;
+      const neg=/(^|\s)(לא|אין|בלי|אי אפשר)\s/.test(s);
+      if(r.rating<=3) r.m.push({n:n.id,side:"pain",x:r.rating<=1?3:r.rating===2?2:1,q:s.slice(0,90)});
+      else if(neg) r.m.push({n:n.id,side:"pain",x:1,q:s.slice(0,90)});
+      else r.m.push({n:n.id,side:"praise",x:1,q:s.slice(0,90)}); });
+    r.tone=null; if(r.reply) r.tone=/(מצטערים|מתנצל|נשמח|תודה)/.test(r.reply)?"thankful":/(לא נכון|שקר|מעולם|לא היית|לא הגעת)/.test(r.reply)?"defensive":"generic";
+  });
+}
+async function aiClassify(reviews,biz){
+  const sys=`You classify Israeli customer reviews (Hebrew) into a fixed set of needs. Needs: avail (availability: hours, appointments, answering phone), speed (waiting, delays), price (cost, fairness, surprises), quality (professional result, mistakes), attitude (courtesy, trust, communication), access (parking, distance, getting there, delivery), online (website, online booking/payment, WhatsApp, digital).
+For each review return the needs it mentions. side="pain" when the customer complains or lacks it, side="praise" when the customer praises it. x = intensity 1-3 (3 = furious / deal-breaker). q = a short exact quote from the review, max 12 words, Hebrew, no names.
+If an owner reply is given, also return o: "thankful" (apologizes/constructive), "defensive" (argues/denies/attacks), "frustrated" (angry/tired), "generic" (copy-paste), or null.
+Answer ONLY JSON: {"r":[{"i":0,"m":[{"n":"avail","side":"pain","x":2,"q":"..."}],"o":null}]}. Skip reviews with no need (m:[]).`;
+  const batches=[]; for(let i=0;i<reviews.length;i+=35) batches.push(reviews.slice(i,i+35));
+  let done=0, failed=0;
+  await pool(batches,2,async (bt)=>{
+    const user=bt.map((r,k)=>`[${k}] ★${r.rating} ${r.text.replace(/\s+/g," ")}${r.reply?` || OWNER REPLY: ${r.reply.replace(/\s+/g," ")}`:""}`).join("\n");
+    try{ const j=parseJSON(await callAI(sys,user,6000));
+      bt.forEach(r=>{ r.m=[]; r.tone=null; });
+      (j.r||[]).forEach(o=>{ const r=bt[o.i]; if(!r) return;
+        r.m=(o.m||[]).filter(x=>NEED[x.n] && x.n!=="growth").map(x=>({n:x.n,side:x.side==="praise"?"praise":"pain",x:Math.max(1,Math.min(3,+x.x||1)),q:String(x.q||"").slice(0,100)}));
+        r.tone=o.o||null; });
+    }catch(e){ failed++; console.warn("AI batch failed, rules fallback",e); ruleClassify(bt); }
+    step("ai","run",`${++done}/${batches.length} קבוצות`+(failed?` · ${failed} לפי מילות מפתח`:""));
+  });
+  return failed;
+}
+
+/* ---------- analysis ---------- */
+let S=null;
+const W=r=>r<=1?1.5:r===2?1.25:1;
+function analyze(){
+  const biz=S.biz, byId=Object.fromEntries(biz.map(b=>[b.id,b]));
+  biz.forEach(b=>{ b.cn={}; CUST_NEEDS.forEach(n=>b.cn[n.id]={pain:0,praise:0,q:[]}); b.own=[]; b.asp=[]; b.revN=0; b.replied=0; b.negUn=0; b.tones={}; });
+  S.mentions=[];
+  S.reviews.forEach(r=>{ const b=byId[r.biz]; if(!b) return; b.revN++;
+    if(r.src==="apify"){ if(r.reply) b.replied++; else if(r.rating<=3) b.negUn++; }
+    if(r.tone) b.tones[r.tone]=(b.tones[r.tone]||0)+1;
+    (r.m||[]).forEach(m=>{ const c=b.cn[m.n]; if(!c) return;
+      if(m.side==="pain"){ c.pain+=m.x*W(r.rating); if(m.q) c.q.push({q:m.q,r:r.rating}); } else c.praise++;
+      S.mentions.push({biz:b.id,hood:b.hood,n:m.n,side:m.side,x:m.x*W(r.rating),q:m.q,rating:r.rating}); }); });
+  biz.forEach(b=>{
+    const own=(n,t)=>b.own.push({n,t}), asp=t=>b.asp.push(t);
+    if(!b.website) own("online","אין אתר");
+    if(b.reservable===false) own("online","אין הזמנה אונליין בגוגל");
+    if(b.evening===false) own("avail","סוגר לפני 19:00 בימי חול");
+    if(b.rating && b.rating<4) own("quality",`דירוג נמוך (${b.rating})`);
+    if(b.count<20) own("growth",`רק ${b.count} ביקורות בגוגל`);
+    const deepN=S.reviews.filter(r=>r.biz===b.id&&r.src==="apify").length;
+    b.replyRate=deepN?Math.round(100*b.replied/deepN):null;
+    if(b.replyRate!=null && b.replyRate<30) own("attitude",`עונה רק ל-${b.replyRate}% מהביקורות`);
+    if(b.negUn>=2) own("attitude",`${b.negUn} ביקורות שליליות בלי תשובה`);
+    if((b.tones.defensive||0)+(b.tones.frustrated||0)>=1) own("attitude",`תשובות מתגוננות או מתוסכלות ללקוחות (${(b.tones.defensive||0)+(b.tones.frustrated||0)})`);
+    const recent=S.reviews.filter(r=>r.biz===b.id&&r.time&&Date.now()-r.time<90*864e5).length;
+    if(b.count<40 && recent>=1) asp("עסק צעיר או קטן שצובר לקוחות: רוצה לגדול");
+    if(recent>=3) asp(`${recent} ביקורות ב-90 הימים האחרונים: פעיל וצומח`);
+    if(b.website && b.reservable) asp("משקיע בנוכחות אונליין");
+    if(b.replyRate!=null && b.replyRate>=70) asp("עונה לרוב הביקורות: אכפת לו מהלקוחות");
+    b.painTotal=Object.values(b.cn).reduce((s,c)=>s+c.pain,0);
+    b.top=Object.entries(b.cn).sort((x,y)=>y[1].pain-x[1].pain)[0];
+  });
+  S.hoodList=[...new Set(biz.map(b=>b.hood))];
+}
+function needRows(hood,side){
+  const ms=S.mentions.filter(m=>!hood||m.hood===hood), bz=S.biz.filter(b=>!hood||b.hood===hood);
+  return CUST_NEEDS.map(n=>{
+    const pain=ms.filter(m=>m.n===n.id&&m.side==="pain"), praise=ms.filter(m=>m.n===n.id&&m.side==="praise");
+    const painScore=pain.reduce((s,m)=>s+m.x,0), search=(S.demand||[]).filter(d=>d.need===n.id).length;
+    const score=side==="pain"?painScore:side==="search"?search*2:painScore+search*2;
+    return {n, score, painScore, painN:pain.length, praiseN:praise.length, search,
+      suffer:bz.filter(b=>b.cn[n.id].pain>0).length, solve:bz.filter(b=>b.cn[n.id].praise>=1&&b.cn[n.id].pain===0).length,
+      own:bz.filter(b=>b.own.some(o=>o.n===n.id)).length,
+      quotes:pain.slice().sort((a,b)=>b.x-a.x).slice(0,8).map(m=>({q:m.q,r:m.rating,b:S.biz.find(z=>z.id===m.biz)}))};
+  }).sort((a,b)=>b.score-a.score);
+}
+
+/* ---------- render ---------- */
+function stars(r){ return r?`★${r}`:"—"; }
+function renderSummary(){
+  const pains=S.mentions.filter(m=>m.side==="pain").length, top=needRows("", "all")[0];
+  $("#summary").innerHTML=[
+    [S.biz.length,"עסקים נסרקו"],[S.reviews.length,"ביקורות נקראו"],[pains,"תלונות מסווגות"],[(S.demand||[]).length,"חיפושים מקומיים"],
+    [top&&top.score?`${top.n.ic} ${top.n.he}`:"—","הצורך הגדול באזור"]].map(([v,t])=>`<div class="kpi"><b>${E(v)}</b><span>${t}</span></div>`).join("");
+  $("#demoBanner").classList.toggle("on",!!S.demo);
+}
+function renderRank(){
+  const hood=$("#fHood").value, side=$("#fSide").value, rows=needRows(hood,side), max=Math.max(1,...rows.map(r=>r.score));
+  $("#rankTbl").innerHTML=`<tr><th>#</th><th>צורך</th><th>ציון</th><th>תלונות לקוחות</th><th>חיפושים</th><th>עסקים שסובלים</th><th>עסקים שפותרים</th><th>כאבי בעלי עסק</th><th>ציטוט בולט</th></tr>`+
+    rows.map((r,i)=>`<tr class="need-row" data-i="${i}"><td>${i+1}</td><td><b>${r.n.ic} ${r.n.he}</b><span class="q" style="font-size:.78rem">${E(r.n.d)}</span></td>
+      <td><div class="barwrap"><div class="bar" style="width:${Math.round(100*r.score/max)}%"></div></div><small>${Math.round(r.score)}</small></td>
+      <td>${r.painN}</td><td>${r.search}</td><td>${r.suffer}</td><td>${r.solve}</td><td>${r.own}</td><td>${r.quotes[0]?`<span class="q">${E(r.quotes[0].q)}</span>`:"—"}</td></tr>
+      <tr id="qx-${i}" style="display:none"><td colspan="9"><div class="quotes">${r.quotes.length?r.quotes.map(x=>`<div>${stars(x.r)} <span class="q" style="display:inline">${E(x.q)}</span> · <small>${E(x.b?x.b.name:"")}${x.b?" · "+E(x.b.hood):""}</small></div>`).join(""):"אין ציטוטים"}</div></td></tr>`).join("");
+  $$("#rankTbl .need-row").forEach(tr=>tr.onclick=()=>{ const x=$("#qx-"+tr.dataset.i); x.style.display=x.style.display==="none"?"":"none"; });
+}
+function renderHoods(){
+  const rows=S.hoodList.map(h=>({h,v:CUST_NEEDS.map(n=>S.mentions.filter(m=>m.hood===h&&m.n===n.id&&m.side==="pain").reduce((s,m)=>s+m.x,0)),biz:S.biz.filter(b=>b.hood===h).length}))
+    .map(r=>({...r,t:r.v.reduce((a,b)=>a+b,0)})).sort((a,b)=>b.t-a.t);
+  const max=Math.max(1,...rows.flatMap(r=>r.v));
+  $("#heatTbl").innerHTML=`<tr><th>שכונה</th><th>עסקים</th>${CUST_NEEDS.map(n=>`<th>${n.ic} ${n.he}</th>`).join("")}<th>סה״כ</th></tr>`+
+    rows.map(r=>`<tr><td><b>${E(r.h)}</b></td><td>${r.biz}</td>${r.v.map(v=>`<td class="c" style="background:rgba(224,102,58,${(0.08+0.72*v/max).toFixed(2)})">${v?Math.round(v):""}</td>`).join("")}<td><b>${Math.round(r.t)}</b></td></tr>`).join("");
+}
+function waText(b,need){
+  const c=b.cn[need.id], q=c.q[0];
+  return `שלום, כאן ${NM.sign}.\nבדקתי מה לקוחות כותבים בגוגל על עסקים ב${b.hood}. אצלכם עלו ${c.q.length||"כמה"} אזכורים שקשורים ל${need.he}${q?`, למשל: "${q.q}"`:""}.\nיש לי רעיון פשוט איך לפתור את זה: ${need.svc}.\nמתאים לכם שיחה קצרה של 10 דקות?`;
+}
+function waLink(b,text){ const ph=String(b.phone||"").replace(/\D/g,"").replace(/^0/,"972"); return ph?`https://wa.me/${ph}?text=${encodeURIComponent(text)}`:""; }
+function adLib(b){ return `https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=IL&q=${encodeURIComponent(b.name)}&search_type=keyword_unordered`; }
+function lrLink(b){ return `https://shaharprod.github.io/leads-niche-hub/leads-radar/?kw=${encodeURIComponent(b.name)}`; }
+function renderOpps(){
+  const opps=[];
+  S.hoodList.forEach(h=>CUST_NEEDS.forEach(n=>{
+    const sufferers=S.biz.filter(b=>b.hood===h&&b.cn[n.id].pain>0).sort((a,b)=>b.cn[n.id].pain-a.cn[n.id].pain);
+    const score=sufferers.reduce((s,b)=>s+b.cn[n.id].pain,0)+(S.demand||[]).filter(d=>d.need===n.id).length*0.5;
+    if(score<2) return;
+    let solvers=S.biz.filter(b=>b.hood===h&&b.cn[n.id].praise>=1&&b.cn[n.id].pain===0);
+    if(!solvers.length) solvers=S.biz.filter(b=>b.cn[n.id].praise>=1&&b.cn[n.id].pain===0);
+    solvers.sort((a,b)=>b.cn[n.id].praise-a.cn[n.id].praise||b.rating-a.rating);
+    const ownPain=S.biz.filter(b=>b.hood===h&&b.own.some(o=>o.n===n.id));
+    opps.push({h,n,score,sufferers,solvers:solvers.slice(0,3),ownPain});
+  }));
+  opps.sort((a,b)=>b.score-a.score);
+  $("#oppCards").innerHTML=opps.length?opps.slice(0,18).map(o=>{
+    const s1=o.sufferers[0];
+    return `<div class="card opp"><h3>${o.n.ic} ${o.n.he} · ${E(o.h)}</h3><div class="meta">ציון ${Math.round(o.score)} · ${o.sufferers.length} עסקים שהלקוחות שלהם מתלוננים</div>
+    <div class="conn c1"><b>1 · לקוחות ← עסק שכבר פותר</b>${o.solvers.length?o.solvers.map(b=>`<a href="${E(b.maps)}" target="_blank" rel="noopener">${E(b.name)}</a> <small>${stars(b.rating)} · ${b.cn[o.n.id].praise} שבחים${b.hood!==o.h?" · "+E(b.hood):""}</small>`).join("<br>"):"<small>לא נמצא עסק שהלקוחות משבחים בנושא: פער פתוח באזור</small>"}</div>
+    <div class="conn c2"><b>2 · תובנה ← העסקים שסובלים</b>${o.sufferers.slice(0,3).map(b=>`${E(b.name)} <small>(${b.cn[o.n.id].q.length} תלונות)</small>${b.cn[o.n.id].q[0]?`<span class="q">${E(b.cn[o.n.id].q[0].q)}</span>`:""}`).join("")}
+      ${s1?`<div class="btns" style="margin-top:6px">${waLink(s1,"")?`<a class="btn sm" href="${E(waLink(s1,waText(s1,o.n)))}" target="_blank" rel="noopener">💬 הודעת תובנה בוואטסאפ ל${E(s1.name)}</a>`:""}<button class="btn ghost sm" type="button" data-copy="${E(waText(s1,o.n))}">📋 העתק הודעה</button></div>`:""}</div>
+    <div class="conn c3"><b>3 · כאב העסק ← הפתרון שלך</b>${E(o.n.svc)}${o.ownPain.length?`<br><small>גם בעלי העסקים מראים סימנים: ${o.ownPain.slice(0,3).map(b=>E(b.name)).join(", ")}</small>`:""}</div></div>`; }).join("")
+    :`<div class="empty">לא נמצאו מספיק תלונות כדי ליצור הזדמנות. נסו רדיוס גדול יותר או סריקה עמוקה.</div>`;
+  $$("#oppCards [data-copy]").forEach(bt=>bt.onclick=()=>{ navigator.clipboard.writeText(bt.dataset.copy).then(()=>{ bt.textContent="✔ הועתק"; setTimeout(()=>bt.textContent="📋 העתק הודעה",1500); }); });
+}
+function renderBiz(){
+  const mode=$("#fBizSort").value, list=S.biz.slice();
+  list.sort(mode==="owner"?(a,b)=>b.own.length-a.own.length:mode==="rating"?(a,b)=>(a.rating||9)-(b.rating||9):(a,b)=>b.painTotal-a.painTotal);
+  $("#bizCards").innerHTML=list.map(b=>{
+    const pains=CUST_NEEDS.filter(n=>b.cn[n.id].pain>0).sort((x,y)=>b.cn[y.id].pain-b.cn[x.id].pain);
+    const praises=CUST_NEEDS.filter(n=>b.cn[n.id].praise>0);
+    const topN=pains[0];
+    const wl=topN?waLink(b,waText(b,topN)):"";
+    return `<div class="card"><h3><a href="${E(b.maps)}" target="_blank" rel="noopener">${E(b.name)}</a></h3>
+      <div class="meta">${E(b.type)} · ${E(b.hood)} · ${stars(b.rating)} (${b.count}) · ${b.revN} ביקורות נקראו${b.replyRate!=null?` · עונה ל-${b.replyRate}%`:""}</div>
+      <div class="sec"><h4>😤 הלקוחות שלו מתלוננים על</h4>${pains.length?pains.map(n=>`<span class="pill p-pain">${n.ic} ${n.he} ${Math.round(b.cn[n.id].pain)}</span>`).join(""):"<small class='meta'>אין תלונות מסווגות</small>"}
+        ${praises.length?`<div>${praises.map(n=>`<span class="pill p-good">👍 ${n.he}</span>`).join("")}</div>`:""}</div>
+      <div class="sec"><h4>🏪 כאבים של בעל העסק</h4>${b.own.length?b.own.map(o=>`<span class="pill p-biz">${NEED[o.n].ic} ${E(o.t)}</span>`).join(""):"<small class='meta'>לא זוהו</small>"}</div>
+      <div class="sec"><h4>🚀 סימני שאיפה</h4>${b.asp.length?b.asp.map(t=>`<span class="pill p-acc">${E(t)}</span>`).join(""):"<small class='meta'>לא זוהו אוטומטית</small>"}
+        <div><a href="${E(adLib(b))}" target="_blank" rel="noopener"><small>בדיקה אם מפרסם ב-Meta ↗</small></a></div></div>
+      <div class="btns"><a class="btn ghost sm" href="${E(lrLink(b))}">📍 דוח מלא ב-Leads Radar</a>${wl?`<a class="btn sm" href="${E(wl)}" target="_blank" rel="noopener">💬 הודעת תובנה</a>`:""}${b.website?`<a class="btn ghost sm" href="${E(b.website)}" target="_blank" rel="noopener">🌐 אתר</a>`:""}</div></div>`; }).join("");
+}
+function renderDemand(){
+  const d=S.demand||[];
+  if(!d.length){ $("#demandBox").innerHTML=`<div class="empty">${S.demandSkipped?"החיפושים המקומיים לא הופעלו בסריקה הזו.":"לא נמצאו השלמות חיפוש שמתאימות לצרכים."}</div>`; return; }
+  $("#demandBox").innerHTML=`<p class="note" style="margin-top:0">השלמות אוטומטיות של גוגל למה שאנשים מקלידים. זה סימן לביקוש בעיר, לא מספר חיפושים מדויק. למספרים מדויקים: <a href="https://ads.google.com/aw/keywordplanner/home" target="_blank" rel="noopener">Google Keyword Planner</a>.</p>`+
+    CUST_NEEDS.map(n=>{ const xs=d.filter(x=>x.need===n.id); if(!xs.length) return "";
+      return `<div class="sec"><h4>${n.ic} ${n.he} (${xs.length})</h4>${xs.map(x=>`<span class="pill ${x.local?"p-acc":"p-warn"}">${E(x.s)}</span>`).join("")}</div>`; }).join("")+
+    `<p class="note">כחול = כולל את שם העיר או "ליד". צהוב = ביטוי כללי.</p>`;
+}
+function renderMap(){
+  if(!gmap || S.demo) return;
+  overlays.forEach(o=>o.setMap(null)); overlays=[];
+  const info=new google.maps.InfoWindow();
+  const hoodPts={}; S.biz.forEach(b=>{ (hoodPts[b.hood]=hoodPts[b.hood]||[]).push(b.loc); });
+  const tot={}; S.mentions.filter(m=>m.side==="pain").forEach(m=>tot[m.hood]=(tot[m.hood]||0)+m.x);
+  const mx=Math.max(1,...Object.values(tot));
+  Object.entries(hoodPts).forEach(([h,pts])=>{ const c={lat:pts.reduce((s,p)=>s+p.lat,0)/pts.length,lng:pts.reduce((s,p)=>s+p.lng,0)/pts.length}, v=tot[h]||0;
+    const ci=new google.maps.Circle({map:gmap,center:c,radius:150+450*Math.sqrt(v/mx),strokeColor:"#e0663a",strokeWeight:1,fillColor:"#e0663a",fillOpacity:.12+.4*v/mx});
+    const top=needRows(h,"pain").slice(0,3).filter(r=>r.score>0);
+    ci.addListener("click",()=>{ info.setContent(`<div dir="rtl" style="font-family:Heebo,sans-serif"><b>${E(h)}</b><br>${top.map(r=>`${r.n.ic} ${r.n.he}: ${Math.round(r.score)}`).join("<br>")||"אין תלונות"}</div>`); info.setPosition(c); info.open(gmap); });
+    overlays.push(ci); });
+  S.biz.forEach(b=>{ const p=b.top&&b.top[1].pain>0;
+    const m=new google.maps.Circle({map:gmap,center:b.loc,radius:22,strokeWeight:0,fillColor:p?"#7a4fd6":"#8a84a6",fillOpacity:.9});
+    m.addListener("click",()=>{ info.setContent(`<div dir="rtl" style="font-family:Heebo,sans-serif"><b>${E(b.name)}</b><br>${stars(b.rating)} (${b.count})<br>${p?`כאב מוביל: ${NEED[b.top[0]].he}`:"אין תלונות מסווגות"}</div>`); info.setPosition(b.loc); info.open(gmap); });
+    overlays.push(m); });
+}
+function renderAll(){
+  $("#out").style.display="block";
+  $("#fHood").innerHTML=`<option value="">כל האזור</option>`+S.hoodList.map(h=>`<option>${E(h)}</option>`).join("");
+  renderSummary(); renderRank(); renderOpps(); renderHoods(); renderBiz(); renderDemand(); renderMap();
+}
+$("#fHood").onchange=renderRank; $("#fSide").onchange=renderRank; $("#fBizSort").onchange=renderBiz;
+$$(".tab").forEach(t=>t.onclick=()=>{ $$(".tab").forEach(x=>x.classList.toggle("on",x===t)); $$(".pane").forEach(p=>p.classList.toggle("on",p.id==="p-"+t.dataset.p)); });
+
+/* ---------- export ---------- */
+function download(name,text,type){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
+const csvCell=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+$("#btnCsv").onclick=()=>{
+  const rows=[["סוג","שכונה","צורך","ציון","תלונות","חיפושים","עסקים שסובלים","עסקים שפותרים","ציטוט"]];
+  ["",...S.hoodList].forEach(h=>needRows(h,"all").forEach(r=>rows.push(["צורך",h||"כל האזור",r.n.he,Math.round(r.score),r.painN,r.search,r.suffer,r.solve,r.quotes[0]?r.quotes[0].q:""])));
+  rows.push([]); rows.push(["סוג","שם","שכונה","טלפון","דירוג","ביקורות","כאבי לקוחות","כאבי בעל העסק","שאיפות","אחוז מענה לביקורות"]);
+  S.biz.forEach(b=>rows.push(["עסק",b.name,b.hood,b.phone,b.rating,b.count,CUST_NEEDS.filter(n=>b.cn[n.id].pain>0).map(n=>n.he+" "+Math.round(b.cn[n.id].pain)).join(" | "),b.own.map(o=>o.t).join(" | "),b.asp.join(" | "),b.replyRate==null?"":b.replyRate+"%"]));
+  download("needs-map-"+new Date().toISOString().slice(0,10)+".csv","﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\n"),"text/csv;charset=utf-8");
+};
+$("#btnJson").onclick=()=>download("needs-map-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify({v:1,at:Date.now(),center:S.center,R:S.R,kw:S.kw,city:S.city,biz:S.biz.map(b=>({id:b.id,name:b.name,address:b.address,phone:b.phone,website:b.website,rating:b.rating,count:b.count,type:b.type,maps:b.maps,loc:b.loc,evening:b.evening,reservable:b.reservable,hood:b.hood})),reviews:S.reviews,demand:S.demand},null,1),"application/json");
+
+/* ---------- pipeline ---------- */
+function lockUI(on){ ["#btnRun","#btnImport","#btnDemo"].forEach(s=>$(s).disabled=on); }
+async function finish(){
+  analyze(); LS.set("hub_nm_last",{at:Date.now(),center:S.center,R:S.R,kw:S.kw,city:S.city,bizN:S.biz.length}); renderAll();
+  $("#out").scrollIntoView({behavior:"smooth"});
+}
+async function classifyAndDemand(){
+  const useAI=$("#useAI").checked && !!aiCfg();
+  step("ai","run");
+  if(!S.reviews.length) step("ai","skip","אין ביקורות");
+  else if(useAI){ const f=await aiClassify(S.reviews,S.biz); step("ai","ok",f?`${f} קבוצות סווגו לפי מילות מפתח`:"AI"); }
+  else { ruleClassify(S.reviews); step("ai","ok","לפי מילות מפתח"); }
+  if($("#useDemand").checked){
+    step("demand","run");
+    const types={}; S.biz.forEach(b=>{ if(b.type) types[b.type]=(types[b.type]||0)+1; });
+    const seeds=S.kw?[S.kw]:Object.entries(types).sort((a,b)=>b[1]-a[1]).slice(0,4).map(x=>x[0]);
+    S.demand=seeds.length?await localDemand(seeds,S.city):[]; step("demand","ok",`${S.demand.length} ביטויים`);
+  } else { S.demand=[]; S.demandSkipped=true; step("demand","skip","כבוי"); }
+}
+$("#btnRun").onclick=async()=>{
+  showErr("");
+  try{ await loadMaps(); }catch(e){ showErr("צריך מפתח Google. שומרים אותו ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/leads-radar/\">Leads Radar</a> › ⚙️ הגדרות, ואז חוזרים לכאן."); return; }
+  if(!gmap) await initMap();
+  const deep=$("#useDeep").checked && !!NM.apify;
+  S={demo:false,center:{...center},R:+$("#rad").value,kw:$("#kw").value.trim(),city:$("#city").value.trim()||"ירושלים",biz:[],reviews:[],demand:[]};
+  stepsInit([["biz","מאתר עסקים באזור"],["rev","קורא ביקורות מגוגל"],["deep","סריקה עמוקה + תשובות בעלים"],["hood","משייך לשכונות"],["ai","מסווג לצרכים"],["demand","חיפושים מקומיים בגוגל"]]);
+  lockUI(true);
+  try{
+    step("biz","run"); S.biz=await findBusinesses(S.R,S.kw,+$("#maxBiz").value); step("biz","ok",`${S.biz.length} עסקים`);
+    if(!S.biz.length) throw new Error("לא נמצאו עסקים באזור. נסו רדיוס גדול יותר או סוג עסק אחר.");
+    step("rev","run"); S.reviews=await googleReviews(S.biz); step("rev","ok",`${S.reviews.length} ביקורות`);
+    if(deep){ step("deep","run");
+      try{ const dr=await apifyReviews(S.biz); if(dr.length){ const has=new Set(dr.map(r=>r.biz)); S.reviews=S.reviews.filter(r=>!has.has(r.biz)).concat(dr); }
+        step("deep","ok",`${dr.length} ביקורות`); }catch(e){ step("deep","bad",e.message); showErr("הסריקה העמוקה נכשלה, ממשיכים עם ביקורות גוגל בלבד: "+E(e.message)); } }
+    else step("deep","skip","כבוי");
+    step("hood","run"); const hoods=await fetchHoods(S.center,S.R); assignHoods(S.biz,hoods); step("hood",hoods?"ok":"bad",hoods?`${new Set(S.biz.map(b=>b.hood)).size} שכונות`:"OpenStreetMap לא ענה");
+    await classifyAndDemand();
+    await finish();
+  }catch(e){ showErr("המיפוי נכשל: "+E(e.message)); }
+  lockUI(false);
+};
+$("#btnImport").onclick=async()=>{
+  showErr("");
+  const res=LS.get("hub_lr_results",[]), last=LS.get("hub_lr_last",null);
+  const bz=(res||[]).filter(b=>b&&b.loc&&b.id);
+  if(!bz.length){ showErr("לא נמצאה סריקה ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/leads-radar/\">Leads Radar</a> של ה-Hub בדפדפן הזה. סורקים שם אזור, ואז חוזרים לכאן."); return; }
+  const withRev=bz.filter(b=>b.rev&&b.rev.list&&b.rev.list.length).length;
+  S={demo:false,imported:true,center:last&&last.center||bz[0].loc,R:last&&last.R||1500,kw:last&&last.kw||"",city:$("#city").value.trim()||"ירושלים",demand:[],
+    biz:bz.map(b=>({id:b.id,name:b.name,address:b.address,phone:b.phone,website:b.website,rating:b.rating,count:b.reviews||0,type:b.type,maps:b.maps,loc:b.loc,
+      evening:null,reservable:(b.gextra&&b.gextra.attrs||[]).includes("מקבל הזמנות")?true:null,status:b.status})),reviews:[]};
+  bz.forEach(b=>((b.rev&&b.rev.list)||[]).forEach(x=>S.reviews.push({biz:b.id,rating:x.rating||0,text:String(x.text||"").slice(0,600),time:x.time||0,reply:null,src:"google"})));
+  stepsInit([["biz","עסקים מ-Leads Radar"],["hood","משייך לשכונות"],["ai","מסווג לצרכים"],["demand","חיפושים מקומיים בגוגל"]]);
+  lockUI(true);
+  try{
+    step("biz","ok",`${S.biz.length} עסקים · ${withRev} עם ביקורות`);
+    if(!withRev) showErr("ב-Leads Radar לא הורצה עדיין בדיקת ביקורות לעסקים האלה, ולכן יש רק נתוני בעלי העסקים. לתמונה מלאה לוחצים כאן «🔍 מפה את הצרכים».");
+    step("hood","run"); const hoods=await fetchHoods(S.center,S.R); assignHoods(S.biz,hoods); step("hood",hoods?"ok":"bad",hoods?"":"OpenStreetMap לא ענה");
+    await classifyAndDemand(); await finish();
+  }catch(e){ showErr("הייבוא נכשל: "+E(e.message)); }
+  lockUI(false);
+};
+
+/* ---------- demo data (clearly labeled) ---------- */
+$("#btnDemo").onclick=async()=>{
+  showErr("");
+  const hoods=[{name:"קריית היובל",loc:{lat:31.7645,lng:35.1810}},{name:"קריית מנחם",loc:{lat:31.7560,lng:35.1700}},{name:"עיר גנים",loc:{lat:31.7560,lng:35.1810}}];
+  const B=(i,name,type,h,rating,count,web,ev,phone)=>({id:"demo"+i,name,type,rating,count,website:web?"https://example.com":"",evening:ev,reservable:web?true:false,phone,maps:"https://maps.google.com",
+    loc:{lat:hoods[h].loc.lat+(i%3-1)*0.0015,lng:hoods[h].loc.lng+((i*7)%3-1)*0.0015},address:"כתובת לדוגמה",hood:hoods[h].name});
+  const biz=[B(1,"מרפאת שיניים לדוגמה א","מרפאת שיניים",0,3.6,48,false,false,"050-0000001"),B(2,"מספרה לדוגמה ב","מספרה",0,4.7,120,true,true,"050-0000002"),
+    B(3,"מוסך לדוגמה ג","מוסך",1,3.2,35,false,false,"050-0000003"),B(4,"קליניקה לדוגמה ד","קליניקה",0,4.8,15,true,true,"050-0000004"),
+    B(5,"מאפייה לדוגמה ה","מאפייה",2,4.1,210,false,false,"050-0000005"),B(6,"מכון כושר לדוגמה ו","מכון כושר",1,4.4,95,true,true,"050-0000006")];
+  const now=Date.now(), R=(b,rating,text,reply)=>({biz:"demo"+b,rating,text,time:now-Math.random()*200*864e5,reply:reply||"",src:reply!=null?"apify":"google"});
+  const rev=[R(1,1,"אי אפשר להשיג אותם בטלפון, לא עונים אף פעם",""),R(1,2,"אין תורים בערב, אני עובד עד שש ואין מתי להגיע",""),R(1,2,"יקר מאוד, הפתעה בחשבון בסוף",""),
+    R(1,1,"חיכיתי שעה וחצי בתור למרות שקבעתי","לא נכון, הגעת באיחור"),R(1,3,"אין חניה בכלל ליד המרפאה",null),R(2,5,"יחס חם, פתוחים עד מאוחר בערב וזה מעולה",null),
+    R(2,5,"קובעים תור בוואטסאפ בקלות, מהיר ונוח",null),R(3,1,"לא חזרו אליי שלושה ימים, לא עונים לטלפון",""),R(3,2,"גבו ממני מחיר כפול ממה שסוכם",""),
+    R(3,1,"יחס מזלזל, צעק עליי","מצטערים, נשמח לדבר"),R(3,2,"לקח שבוע לתקן תקלה פשוטה",""),R(4,5,"מקצועית ואדיבה, יש זימון תורים באתר",null),
+    R(5,2,"אין משלוחים ואין אפשרות להזמין אונליין",null),R(5,3,"תור ארוך בבוקר, מחכים הרבה",null),R(5,5,"מחיר הוגן ולחם טרי",null),
+    R(6,2,"אין מענה בוואטסאפ ובטלפון, רק בפייסבוק",null),R(6,4,"מקום טוב אבל אין חניה נוחה",null),R(6,5,"מאמנים מקצועיים ויחס חם",null)];
+  S={demo:true,center:{lat:31.7600,lng:35.1780},R:1500,kw:"",city:"ירושלים",biz,reviews:rev,
+    demand:[{s:"רופא שיניים בערב ירושלים",need:"avail",local:true},{s:"מוסך פתוח בשישי ירושלים",need:"avail",local:true},{s:"רופא שיניים זול בירושלים",need:"price",local:true},
+      {s:"מאפייה משלוחים ירושלים",need:"access",local:true},{s:"מוסך מומלץ בירושלים",need:"quality",local:true},{s:"קביעת תור אונליין רופא שיניים",need:"online",local:false}]};
+  stepsInit([["demo","טוען נתוני דוגמה"],["ai","מסווג לצרכים"]]);
+  step("demo","ok",`${biz.length} עסקים · ${rev.length} ביקורות`); ruleClassify(S.reviews); step("ai","ok","לפי מילות מפתח");
+  await finish();
+};
+
+/* ---------- settings dialog ---------- */
+$("#btnSettings").onclick=()=>{
+  const ai=aiCfg(), mk=mapsKey();
+  $("#keyStatus").innerHTML=`<div>${mk?"<span class='ok'>✔ מפתח Google נמצא</span>":"<span class='no'>✖ אין מפתח Google</span>"} (מ-<a href="https://shaharprod.github.io/leads-niche-hub/leads-radar/">Leads Radar</a>)</div>
+    <div>${ai?`<span class='ok'>✔ AI: ${ai.provider==="gemini"?"Gemini":"Claude"} · ${E(ai.model)}</span>`:"<span class='no'>✖ אין מפתח AI</span>"} (מ-<a href="https://shaharprod.github.io/leads-niche-hub/niche-hunter/">צייד הנישות</a> או Leads Radar)</div>`;
+  $("#apify").value=NM.apify; $("#maxRev").value=NM.maxRev; $("#maxRevLbl").textContent=NM.maxRev; $("#signName").value=NM.sign;
+  $("#dlg").showModal();
+};
+$("#maxRev").oninput=()=>$("#maxRevLbl").textContent=$("#maxRev").value;
+$("#dlgClose").onclick=()=>$("#dlg").close();
+$("#dlgSave").onclick=()=>{ NM.apify=$("#apify").value.trim(); NM.maxRev=+$("#maxRev").value; NM.sign=$("#signName").value.trim()||NM.sign; saveNM(); updateModeNote(); updateCost(); $("#dlg").close(); };
+
+/* ---------- init ---------- */
+(function init(){
+  const q=new URLSearchParams(location.search);
+  if(q.get("lat")&&q.get("lng")) center={lat:+q.get("lat"),lng:+q.get("lng")};
+  if(q.get("r")) $("#rad").value=Math.max(300,Math.min(5000,+q.get("r")||1500));
+  if(q.get("kw")) $("#kw").value=q.get("kw");
+  if(q.get("addr")) $("#addr").value=q.get("addr");
+  radLbl(); bizLbl(); updateModeNote(); updateCost();
+  if(mapsKey()) initMap(); else $("#map").innerHTML="המפה תופיע כאן אחרי שמירת מפתח Google ב-<a href=\"https://shaharprod.github.io/leads-niche-hub/leads-radar/\">&nbsp;Leads Radar&nbsp;</a>. אפשר לנסות עכשיו את «🧪 הדגמה».";
+  if(q.get("demo")==="1") $("#btnDemo").click();
+})();
+</script>
+</body>
+</html>

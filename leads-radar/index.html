@@ -238,6 +238,7 @@ table.cmp tr.me{background:rgba(79,124,255,.12)}table.cmp th{color:var(--mut);fo
         <option value="best">🏆 מיון: ההזדמנויות הטובות ביותר</option><option value="opp">מיון: ציון הזדמנות בלבד</option><option value="vital">💓 מיון: חיוניות העסק</option><option value="rating">מיון: דירוג</option>
         <option value="reviews">מיון: מספר ביקורות</option><option value="dist">מיון: מרחק</option><option value="name">מיון: שם</option></select>
       <button id="btnNiche" title="פותח את צייד הנישות על מילת החיפוש הנוכחית">💡 רעיון למוצר לנישה הזו</button>
+      <button id="btnNeeds" title="פותח את מפת הצרכים על אותו אזור: מה הלקוחות כותבים ומחפשים, ומה בעלי העסקים צריכים">🧭 מפת צרכים לאזור הזה</button>
       <button id="btnCsv">⬇️ CSV לאקסל</button>
       <button id="btnJson">⬇️ JSON</button>
       <button id="btnQueue">📲 תור וואטסאפ</button>
@@ -2000,6 +2001,7 @@ function hubNicheSeed(){
   const c=$('cat'); if(c.value) return c.options[c.selectedIndex].text;
   const last=store.get(LS.last,null); return last&&(last.kw||'')||'';
 }
+$('btnNeeds').onclick=()=>{ const q=new URLSearchParams({lat:center.lat,lng:center.lng,r:Math.min(5000,+$('rad').value||1500)}); const kw=$('kw').value.trim(); if(kw) q.set('kw',kw); location.href='https://shaharprod.github.io/leads-niche-hub/needs-map/?'+q; };
 $('btnNiche').onclick=()=>{
   const seed=hubNicheSeed();
   if(!seed){ alertBox('כתבו קודם מילת חיפוש (למשל «מספרה») או בחרו קטגוריה, ואז לחצו שוב.'); return; }
