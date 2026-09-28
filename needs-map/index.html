@@ -88,6 +88,10 @@ tr.need-row:hover td{background:var(--surface-2)}
 .bar{height:8px;border-radius:5px;background:var(--cust);min-width:3px}
 .barwrap{background:var(--surface-2);border-radius:5px;width:120px}
 .q{display:block;color:var(--ink-2);font-size:.88rem}
+.bl{display:inline-flex;flex-wrap:wrap;gap:4px;vertical-align:middle}
+.bl a{font-size:.76rem;text-decoration:none;background:var(--acc-soft);color:var(--acc);border-radius:6px;padding:0 6px;white-space:nowrap;line-height:1.7}
+.bl a:hover{background:var(--acc);color:#fff}
+a.bn{font-weight:700}
 .q::before{content:"“"}.q::after{content:"”"}
 .quotes{background:var(--surface-2);border-radius:10px;padding:10px 12px}
 .quotes>div{padding:6px 0;border-bottom:1px dashed var(--line)}
@@ -661,6 +665,11 @@ function needRows(hood,side,type){
 }
 
 /* ---------- render ---------- */
+function mapsUrl(b){ return b.maps||("https://www.google.com/maps/search/?api=1&query="+encodeURIComponent((b.name||"")+" "+(b.address||""))+(b.id&&!/^demo/.test(b.id)?"&query_place_id="+encodeURIComponent(b.id):"")); }
+function telUrl(b){ const d=String(b.phone||"").replace(/[^\d+]/g,""); return d?"tel:"+d:""; }
+function bizName(b){ return b?`<a class="bn" href="${E(mapsUrl(b))}" target="_blank" rel="noopener" title="פתיחת העסק בגוגל מפות">${E(b.name)}</a>`:""; }
+function bizLinks(b){ if(!b) return ""; const wa=waLink(b,"");
+  return `<span class="bl"><a href="${E(mapsUrl(b))}" target="_blank" rel="noopener" title="גוגל מפות">📍 מפות</a>${b.website?`<a href="${E(b.website)}" target="_blank" rel="noopener" title="אתר העסק">🌐 אתר</a>`:""}${telUrl(b)?`<a href="${E(telUrl(b))}" title="התקשרות">📞 ${E(b.phone)}</a>`:""}${wa?`<a href="${E(wa)}" target="_blank" rel="noopener" title="וואטסאפ">💬 וואטסאפ</a>`:""}<a href="${E(lrLink(b))}" title="דוח מלא ב-Leads Radar">📊 דוח</a></span>`; }
 function stars(r){ return r?`★${r}`:"—"; }
 function renderSummary(){
   const pains=S.mentions.filter(m=>m.side==="pain").length, top=needRows("", "all")[0];
@@ -673,7 +682,7 @@ function renderRank(){
   const hood=$("#fHood").value, side=$("#fSide").value, type=$("#fType").value, rows=needRows(hood,side,type), max=Math.max(1,...rows.map(r=>r.score));
   const opts=cur=>`<option value="">— להעביר לצורך אחר —</option>`+CUST_NEEDS.filter(n=>n.id!==cur).map(n=>`<option value="${n.id}">${n.ic} ${n.he}</option>`).join("")+`<option value="none">✖ לא שייך / לא תלונה</option>`;
   const qline=x=>`<div class="qrow">${stars(x.r)} <span class="q" style="display:inline">${E(x.q)}</span>${x.fixed?' <span class="pill p-good">תוקן ידנית</span>':""}
-      <small> · ${E(x.b?x.b.name:"")}${x.b&&x.b.type?" ("+E(x.b.type)+")":""}${x.b?" · "+E(x.b.hood):""}</small>
+      <small> · ${bizName(x.b)}${x.b&&x.b.type?" ("+E(x.b.type)+")":""}${x.b?" · "+E(x.b.hood):""}</small> ${bizLinks(x.b)}
       <div class="qtools"><button class="btn ghost sm" type="button" data-ctx>📄 הביקורת המלאה</button>
       <select class="fixsel" data-k="${E(x.k)}" data-o="${E(x.orig||x.n)}" data-side="${x.side}">${opts(x.n)}</select></div>
       <div class="ctx" style="display:none">${E(x.full||"")}</div></div>`;
@@ -721,10 +730,10 @@ function renderOpps(){
   $("#oppCards").innerHTML=opps.length?opps.slice(0,18).map(o=>{
     const s1=o.sufferers[0];
     return `<div class="card opp"><h3>${o.n.ic} ${o.n.he} · ${E(o.h)}</h3><div class="meta">ציון ${Math.round(o.score)} · ${o.sufferers.length} עסקים שהלקוחות שלהם מתלוננים</div>
-    <div class="conn c1"><b>1 · לקוחות ← עסק שכבר פותר</b>${o.solvers.length?o.solvers.map(b=>`<a href="${E(b.maps)}" target="_blank" rel="noopener">${E(b.name)}</a> <small>${stars(b.rating)} · ${b.cn[o.n.id].praise} שבחים${b.hood!==o.h?" · "+E(b.hood):""}</small>`).join("<br>"):"<small>לא נמצא עסק שהלקוחות משבחים בנושא: פער פתוח באזור</small>"}</div>
-    <div class="conn c2"><b>2 · תובנה ← העסקים שסובלים</b>${o.sufferers.slice(0,3).map(b=>`${E(b.name)} <small>(${b.cn[o.n.id].q.length} תלונות)</small>${b.cn[o.n.id].q[0]?`<span class="q">${E(b.cn[o.n.id].q[0].q)}</span>`:""}`).join("")}
+    <div class="conn c1"><b>1 · לקוחות ← עסק שכבר פותר</b>${o.solvers.length?o.solvers.map(b=>`${bizName(b)} <small>${stars(b.rating)} · ${b.cn[o.n.id].praise} שבחים${b.hood!==o.h?" · "+E(b.hood):""}</small> ${bizLinks(b)}`).join("<br>"):"<small>לא נמצא עסק שהלקוחות משבחים בנושא: פער פתוח באזור</small>"}</div>
+    <div class="conn c2"><b>2 · תובנה ← העסקים שסובלים</b>${o.sufferers.slice(0,3).map(b=>`<div>${bizName(b)} <small>(${b.cn[o.n.id].q.length} תלונות)</small> ${bizLinks(b)}${b.cn[o.n.id].q[0]?`<span class="q">${E(b.cn[o.n.id].q[0].q)}</span>`:""}</div>`).join("")}
       ${s1?`<div class="btns" style="margin-top:6px">${waLink(s1,"")?`<a class="btn sm" href="${E(waLink(s1,waText(s1,o.n)))}" target="_blank" rel="noopener">💬 הודעת תובנה בוואטסאפ ל${E(s1.name)}</a>`:""}<button class="btn ghost sm" type="button" data-copy="${E(waText(s1,o.n))}">📋 העתק הודעה</button></div>`:""}</div>
-    <div class="conn c3"><b>3 · כאב העסק ← הפתרון שלך</b>${E(o.n.svc)}${o.ownPain.length?`<br><small>גם בעלי העסקים מראים סימנים: ${o.ownPain.slice(0,3).map(b=>E(b.name)).join(", ")}</small>`:""}</div></div>`; }).join("")
+    <div class="conn c3"><b>3 · כאב העסק ← הפתרון שלך</b>${E(o.n.svc)}${o.ownPain.length?`<br><small>גם בעלי העסקים מראים סימנים: ${o.ownPain.slice(0,3).map(b=>bizName(b)).join(", ")}</small>`:""}</div></div>`; }).join("")
     :`<div class="empty">לא נמצאו מספיק תלונות כדי ליצור הזדמנות. נסו רדיוס גדול יותר או סריקה עמוקה.</div>`;
   $$("#oppCards [data-copy]").forEach(bt=>bt.onclick=()=>{ navigator.clipboard.writeText(bt.dataset.copy).then(()=>{ bt.textContent="✔ הועתק"; setTimeout(()=>bt.textContent="📋 העתק הודעה",1500); }); });
 }
@@ -736,7 +745,7 @@ function renderBiz(){
     const praises=CUST_NEEDS.filter(n=>b.cn[n.id].praise>0);
     const topN=pains[0];
     const wl=topN?waLink(b,waText(b,topN)):"";
-    return `<div class="card"><h3><a href="${E(b.maps)}" target="_blank" rel="noopener">${E(b.name)}</a></h3>
+    return `<div class="card"><h3>${bizName(b)}</h3><div>${bizLinks(b)}</div>
       <div class="meta">${E(b.type)} · ${E(b.hood)} · ${stars(b.rating)} (${b.count}) · ${b.revN} ביקורות נקראו${b.replyRate!=null?` · עונה ל-${b.replyRate}%`:""}</div>
       <div class="sec"><h4>😤 הלקוחות שלו מתלוננים על</h4>${pains.length?pains.map(n=>`<span class="pill p-pain">${n.ic} ${n.he} ${Math.round(b.cn[n.id].pain)}</span>`).join(""):"<small class='meta'>אין תלונות מסווגות</small>"}
         ${praises.length?`<div>${praises.map(n=>`<span class="pill p-good">👍 ${n.he}</span>`).join("")}</div>`:""}</div>
@@ -767,7 +776,7 @@ function renderMap(){
     overlays.push(ci); });
   S.biz.forEach(b=>{ const p=b.top&&b.top[1].pain>0;
     const m=new google.maps.Circle({map:gmap,center:b.loc,radius:22,strokeWeight:0,fillColor:p?"#7a4fd6":"#8a84a6",fillOpacity:.9});
-    m.addListener("click",()=>{ info.setContent(`<div dir="rtl" style="font-family:Heebo,sans-serif"><b>${E(b.name)}</b><br>${stars(b.rating)} (${b.count})<br>${p?`כאב מוביל: ${NEED[b.top[0]].he}`:"אין תלונות מסווגות"}</div>`); info.setPosition(b.loc); info.open(gmap); });
+    m.addListener("click",()=>{ info.setContent(`<div dir="rtl" style="font-family:Heebo,sans-serif"><b><a href="${E(mapsUrl(b))}" target="_blank" rel="noopener">${E(b.name)}</a></b><br>${stars(b.rating)} (${b.count})${b.website?` · <a href="${E(b.website)}" target="_blank" rel="noopener">אתר</a>`:""}${telUrl(b)?` · <a href="${E(telUrl(b))}">${E(b.phone)}</a>`:""}<br>${p?`כאב מוביל: ${NEED[b.top[0]].he}`:"אין תלונות מסווגות"}</div>`); info.setPosition(b.loc); info.open(gmap); });
     overlays.push(m); });
 }
 function renderAll(){
@@ -786,8 +795,8 @@ const csvCell=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
 $("#btnCsv").onclick=()=>{
   const rows=[["סוג","שכונה","צורך","ציון","תלונות","חיפושים","עסקים שסובלים","עסקים שפותרים","ציטוט"]];
   ["",...S.hoodList].forEach(h=>needRows(h,"all").forEach(r=>rows.push(["צורך",h||"כל האזור",r.n.he,Math.round(r.score),r.painN,r.search,r.suffer,r.solve,r.quotes[0]?r.quotes[0].q:""])));
-  rows.push([]); rows.push(["סוג","שם","שכונה","טלפון","דירוג","ביקורות","כאבי לקוחות","כאבי בעל העסק","שאיפות","אחוז מענה לביקורות"]);
-  S.biz.forEach(b=>rows.push(["עסק",b.name,b.hood,b.phone,b.rating,b.count,CUST_NEEDS.filter(n=>b.cn[n.id].pain>0).map(n=>n.he+" "+Math.round(b.cn[n.id].pain)).join(" | "),b.own.map(o=>o.t).join(" | "),b.asp.join(" | "),b.replyRate==null?"":b.replyRate+"%"]));
+  rows.push([]); rows.push(["סוג","שם","שכונה","טלפון","קישור גוגל מפות","אתר","דירוג","ביקורות","כאבי לקוחות","כאבי בעל העסק","שאיפות","אחוז מענה לביקורות"]);
+  S.biz.forEach(b=>rows.push(["עסק",b.name,b.hood,b.phone,mapsUrl(b),b.website||"",b.rating,b.count,CUST_NEEDS.filter(n=>b.cn[n.id].pain>0).map(n=>n.he+" "+Math.round(b.cn[n.id].pain)).join(" | "),b.own.map(o=>o.t).join(" | "),b.asp.join(" | "),b.replyRate==null?"":b.replyRate+"%"]));
   download("needs-map-"+new Date().toISOString().slice(0,10)+".csv","﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\n"),"text/csv;charset=utf-8");
 };
 $("#btnJson").onclick=()=>download("needs-map-"+new Date().toISOString().slice(0,10)+".json",JSON.stringify({v:1,at:Date.now(),center:S.center,R:S.R,kw:S.kw,city:S.city,biz:S.biz.map(b=>({id:b.id,name:b.name,address:b.address,phone:b.phone,website:b.website,rating:b.rating,count:b.count,type:b.type,maps:b.maps,loc:b.loc,evening:b.evening,reservable:b.reservable,hood:b.hood})),reviews:S.reviews,demand:S.demand},null,1),"application/json");
