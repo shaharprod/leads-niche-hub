@@ -1600,8 +1600,21 @@ async function pmNeedAI(reviews, byId){
   return {failed,lastErr};
 }
 async function pmNeedHoods(center,R){
-  const q=`[out:json][timeout:60];node["place"~"^(neighbourhood|suburb|quarter)$"](around:${Math.round(R+1500)},${center.lat},${center.lng});out body;`;
-  try{ const j=await pmOverpass(q); return (j.elements||[]).map(e=>({name:(e.tags&&(e.tags["name:he"]||e.tags.name))||"",loc:{lat:e.lat,lng:e.lon}})).filter(h=>h.name); }catch(e){ return []; }
+  const q=`[out:json][timeout:25];node["place"~"^(neighbourhood|suburb|quarter)$"](around:${Math.round(R+1500)},${center.lat},${center.lng});out body;`;
+  const one=ep=>new Promise((res,rej)=>{ const ctl=new AbortController(), tm=setTimeout(()=>{ ctl.abort(); rej(new Error("timeout")); },20000);
+    fetch(ep,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q),signal:ctl.signal})
+      .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); }).then(j=>{ clearTimeout(tm); res(j); }).catch(e=>{ clearTimeout(tm); rej(e); }); });
+  try{ const j=await Promise.any(PM_OVERPASS.map(one));
+    return (j.elements||[]).map(e=>({name:(e.tags&&(e.tags["name:he"]||e.tags.name))||"",loc:{lat:e.lat,lng:e.lon}})).filter(h=>h.name); }
+  catch(e){ return []; }
+}
+/* fallback when OpenStreetMap is slow: Google tells the neighbourhood of each business */
+async function pmNeedHoodsFromGoogle(provs){
+  const geo=new google.maps.Geocoder(), acc=new Map();
+  await pool(provs.filter(p=>p.loc).slice(0,40),4,async p=>{ try{ const {results}=await geo.geocode({location:p.loc,language:"iw"});
+    const comp=(results||[]).flatMap(r=>r.address_components||[]).find(c=>c.types.includes("neighborhood")||c.types.includes("sublocality")||c.types.includes("sublocality_level_1"));
+    if(comp){ const n=comp.long_name; const a=acc.get(n)||{name:n,pts:[]}; a.pts.push(p.loc); acc.set(n,a); } }catch(e){} });
+  return [...acc.values()].map(a=>({name:a.name,loc:{lat:a.pts.reduce((s,x)=>s+x.lat,0)/a.pts.length,lng:a.pts.reduce((s,x)=>s+x.lng,0)/a.pts.length}}));
 }
 async function pmNeedSearches(L, hoods, city, onTick){
   const mods=[" בערב"," פתוח עכשיו"," בשבת"," זול"," מחיר"," דחוף"," מומלץ"," ליד"," עם חניה"," משלוח"," אונליין"," תור"];
@@ -1653,7 +1666,9 @@ async function pmNeedRun(){
     const sup=await pmGoogleProviders(center,R,0,svc,kw,(a,b)=>pmStep("supply","run",`${a}/${b}`));
     const provs=sup.list; pmStep("supply","ok",`${provs.length} עסקים`);
     if(!provs.length) throw new Error(`לא נמצאו עסקים מסוג «${esc(L)}» באזור. נסו מילה אחרת או רדיוס גדול יותר.`);
-    pmStep("hoods","run"); const hoods=await pmNeedHoods(center,R); pmStep("hoods",hoods.length?"ok":"err",hoods.length?`${hoods.length} שכונות`:"לא נמצאו שמות שכונות");
+    pmStep("hoods","run"); let hoods=await pmNeedHoods(center,R), hsrc="OpenStreetMap";
+    if(!hoods.length){ pmStep("hoods","run","OpenStreetMap איטי, לוקח שכונות מגוגל"); hoods=await pmNeedHoodsFromGoogle(provs); hsrc="Google"; }
+    pmStep("hoods",hoods.length?"ok":"err",hoods.length?`${hoods.length} שכונות (${hsrc})`:"לא נמצאו שמות שכונות");
     provs.forEach(p=>{ let best=null,bd=Infinity; hoods.forEach(h=>{ const d=pmNeedDist(p.loc,h.loc); if(d<bd){bd=d;best=h;} }); p.hood=(best&&bd<=2000)?best.name:"אזור ללא שם שכונה"; });
     pmStep("rev","run");
     const {Place}=await google.maps.importLibrary("places"); const sel=[...provs].sort((a,b)=>(b.reviews||0)-(a.reviews||0)).slice(0,revMax); const reviews=[]; let dn=0;
