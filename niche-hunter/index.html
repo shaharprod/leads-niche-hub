@@ -1411,7 +1411,7 @@ async function pmRun(){
     if(token && Date.now()<tokenExp-60000) return token;
     await gis();
     return new Promise((res,rej)=>{
-      const tc=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID, scope:SCOPE, callback:r=>{ if(r.error) return rej(new Error(r.error_description||r.error)); token=r.access_token; tokenExp=Date.now()+(r.expires_in||3600)*1000; res(token); }, error_callback:e=>rej(new Error(e&&e.type==="popup_closed"?"חלון ההתחברות נסגר":(e&&e.message)||"ההתחברות בוטלה"))});
+      const tc=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID, scope:SCOPE, callback:r=>{ if(r.error) return rej(new Error(r.error_description||r.error)); token=r.access_token; tokenExp=Date.now()+(r.expires_in||3600)*1000; res(token); }, error_callback:e=>rej(new Error(e&&e.type==="popup_closed"?"חלון ההתחברות נסגר":e&&e.type==="popup_failed_to_open"?"הדפדפן חסם את חלון ההתחברות של גוגל. אפשרו חלונות קופצים לאתר ונסו שוב":(e&&e.message)||"ההתחברות בוטלה"))});
       tc.requestAccessToken({prompt: token?"":"consent"});
     });
   }
@@ -1503,7 +1503,7 @@ async function pmRun(){
         say("✓ שוחזר מהקובץ. טוען מחדש…","hd-ok"); setTimeout(()=>location.reload(),900); }catch(err){ say("טעינה נכשלה: "+E(err.message),"hd-err"); } e.target.value=""; };
     d._showLast=showLast; return d;
   }
-  window.hubDriveOpen=()=>{ const d=ui(); d._showLast(); d.querySelector("[data-st]").innerHTML=""; d.querySelector("[data-list]").innerHTML=""; d.showModal(); };
+  window.hubDriveOpen=()=>{ gis().catch(()=>{}); const d=ui(); d._showLast(); d.querySelector("[data-st]").innerHTML=""; d.querySelector("[data-list]").innerHTML=""; d.showModal(); };
 })();
 </script>
 </body>
