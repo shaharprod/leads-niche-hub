@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מחולל דוח חינם בעמוד אחד · מפת הצרכים</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1b1f2a;--muted:#5b6475;--line:#e3e6ee;--accent:#2f5bea;--accent-soft:#e8eeff;
+  --biz:#7a4fd6;--biz-soft:#f1ebff;--cust:#e0663a;--cust-soft:#fdeee7;--ok:#1e9e75;--ok-soft:#e3f6ef;--warn-bg:#fff6e5;--warn-line:#f0b64a}
+@media (prefers-color-scheme:dark){:root{--bg:#11141b;--card:#1a1f29;--ink:#e9ecf3;--muted:#a2abbd;--line:#2b3240;--accent:#7b9bff;--accent-soft:#232d48;
+  --biz:#b196ff;--biz-soft:#2a2340;--cust:#ff8a5c;--cust-soft:#35231b;--ok:#3cc99b;--ok-soft:#173228;--warn-bg:#2d2615;--warn-line:#b8862b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;line-height:1.65;font-size:16px}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 14px 60px}
+h1{font-size:1.8rem;font-weight:800;margin:0 0 4px;line-height:1.25}
+.sub{color:var(--muted);margin:0 0 14px}
+a{color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+.btn{font:inherit;font-weight:700;border:0;border-radius:10px;padding:9px 16px;background:var(--accent);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.ghost{background:var(--accent-soft);color:var(--accent)}
+.btn.sm{padding:5px 11px;font-size:.9rem}
+.btn:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.note{color:var(--muted);font-size:.9rem}
+.err{display:none;background:var(--cust-soft);color:var(--cust);border-radius:10px;padding:8px 12px;margin-top:10px;font-weight:700}
+.demo{display:none;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-weight:700}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.94rem}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}
+th{color:var(--muted);font-weight:500;font-size:.85rem;white-space:nowrap}
+.score{font-weight:800;font-size:1.05rem}
+.bar{height:7px;border-radius:4px;background:var(--line);margin-top:3px;min-width:60px}
+.bar i{display:block;height:100%;border-radius:4px;background:var(--ok)}
+.tag{display:inline-block;border-radius:7px;padding:0 8px;font-size:.84rem;font-weight:700;background:var(--accent-soft);color:var(--accent);margin:1px}
+.tag.low{background:var(--warn-bg);color:#b07a12}
+select{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+#picker{display:none}
+.hidden{display:none!important}
+
+/* ---------- the one-page report (always light, A4) ---------- */
+#reportWrap{margin-top:14px}
+.sheet{background:#fff;color:#1b1f2a;width:100%;max-width:794px;margin:0 auto;padding:34px 38px;border-radius:6px;box-shadow:0 2px 16px rgba(20,30,60,.12);font-size:14.5px;line-height:1.55}
+.sheet h2{font-size:1.55rem;font-weight:800;margin:0;line-height:1.25}
+.sheet h3{font-size:1.02rem;font-weight:800;margin:0 0 6px;color:#2f5bea}
+.sheet .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:3px solid #2f5bea;padding-bottom:10px;margin-bottom:14px}
+.sheet .kicker{color:#5b6475;font-size:.9rem}
+.sheet .date{color:#5b6475;font-size:.85rem;white-space:nowrap}
+.headline{background:#fdeee7;border-right:5px solid #e0663a;border-radius:6px;padding:12px 14px;font-size:1.2rem;font-weight:800;margin-bottom:14px}
+.headline small{display:block;font-weight:400;font-size:.9rem;color:#5b6475;margin-top:2px}
+.cols{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}
+.box{border:1px solid #e3e6ee;border-radius:8px;padding:11px 13px;margin-bottom:12px;break-inside:avoid}
+.q{margin:0 0 7px;padding:6px 10px;background:#f6f7fb;border-radius:6px;font-size:.93rem}
+.q b{color:#e0663a;font-weight:700;margin-inline-start:6px;white-space:nowrap}
+.nb{display:grid;grid-template-columns:78px 1fr 24px;gap:6px;align-items:center;font-size:.9rem;margin-bottom:4px}
+.nb .t{height:10px;background:#eef0f5;border-radius:5px;overflow:hidden}
+.nb .t i{display:block;height:100%;background:#e0663a;border-radius:5px}
+.nb .v{text-align:left;font-weight:700}
+.cmp{font-size:.93rem}
+.cmp li{margin-bottom:3px}
+.fix{background:#e3f6ef;border:1px solid #1e9e75;border-radius:8px;padding:11px 13px;margin-bottom:12px}
+.fix h3{color:#1e9e75}
+.sheet ul{margin:0;padding-inline-start:18px}
+.foot{border-top:1px solid #e3e6ee;margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;gap:12px;font-size:.82rem;color:#5b6475}
+.foot .sig{color:#1b1f2a;font-weight:700;font-size:.9rem}
+@media (max-width:700px){.sheet{padding:20px 16px}.cols{grid-template-columns:1fr}.sheet .top{flex-direction:column}}
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff}
+  .noprint{display:none!important}
+  .wrap{padding:0;max-width:none}
+  #reportWrap{margin:0}
+  .sheet{box-shadow:none;border-radius:0;max-width:none;padding:0;font-size:13px}
+  .cols{grid-template-columns:1.15fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="noprint">
+  <h1>📄 מחולל דוח חינם בעמוד אחד</h1>
+  <p class="sub">הופך סריקה של <a href="https://shaharprod.github.io/leads-niche-hub/needs-map/" target="_blank" rel="noopener">מפת הצרכים</a> לדוח "מה הלקוחות שלך כותבים" לכל עסק, ומדרג את העסקים לפי הסיכוי לסגור עסקה.</p>
+
+  <div class="card">
+    <b>איך טוענים נתונים</b>
+    <ol style="margin:6px 0 10px;padding-inline-start:20px">
+      <li>ב<a href="https://shaharprod.github.io/leads-niche-hub/needs-map/" target="_blank" rel="noopener">מפת הצרכים</a> מריצים סריקה, ובתוצאות לוחצים <b>«💾 שמירת הסריקה (JSON)»</b>. נשמר קובץ שמתחיל ב-needs-map וסיומתו json, בתיקיית ההורדות.</li>
+      <li>כאן לוחצים <b>«📂 טעינת קובץ סריקה»</b> ובוחרים את הקובץ.</li>
+    </ol>
+    <div class="btns">
+      <button class="btn" id="btnLoad" type="button">📂 טעינת קובץ סריקה</button>
+      <button class="btn ghost" id="btnDemo" type="button">🧪 הדגמה עם נתוני דוגמה</button>
+      <input type="file" id="picker" accept=".json,application/json">
+    </div>
+    <div class="err" id="err" role="alert"></div>
+    <p class="note" style="margin-bottom:0">התיקונים הידניים שעשית ב«📊 דירוג הצרכים» נטענים אוטומטית כשהעמוד פתוח מאותו אתר. הקובץ לא נשלח לשום מקום, הכול רץ בדפדפן.</p>
+  </div>
+
+  <div id="demoBanner" class="demo">🧪 אלה נתוני דוגמה להדגמה בלבד, לא עסקים ולא ביקורות אמיתיים.</div>
+
+  <div class="card hidden" id="listCard">
+    <div class="btns" style="justify-content:space-between;margin-bottom:8px">
+      <b id="listTitle">דירוג העסקים לפי ציון עסקה</b>
+      <label class="note">סוג עסק: <select id="fType"></select></label>
+    </div>
+    <p class="note" style="margin-top:0">ציון עסקה = כמה הלקוחות מתלוננים × סימני כסף אצל העסק × עד כמה הצורך מתאים לפתרון שאתה מוכר. 100 = העסק המוביל בסריקה הזו.</p>
+    <div class="table-scroll"><table>
+      <thead><tr><th>#</th><th>עסק</th><th>הצורך המוביל</th><th>תלונות</th><th>סימני כסף</th><th>ציון עסקה</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<div id="reportWrap" class="hidden">
+  <div class="btns noprint" style="margin-bottom:10px">
+    <button class="btn" id="btnPrint" type="button">🖨️ הדפסה / שמירה כ-PDF</button>
+    <button class="btn ghost" id="btnCopy" type="button">📋 העתק הודעת וואטסאפ</button>
+    <a class="btn ghost" id="btnWa" href="#" target="_blank" rel="noopener">💬 פתיחה בוואטסאפ</a>
+    <a class="btn ghost" id="btnMaps" href="#" target="_blank" rel="noopener">📍 העסק בגוגל מפות</a>
+    <button class="btn ghost" id="btnBack" type="button">↩ חזרה לרשימה</button>
+  </div>
+  <div class="sheet" id="sheet"></div>
+</div>
+
+</div>
+<script>
+/* ---------- shared needs language (same ids and wording as needs-map) ---------- */
+const NEEDS=[
+  {id:"avail",he:"זמינות",ic:"⏰",fit:1,svc:"מענה אוטומטי עם AI בטלפון ובוואטסאפ, וזימון תורים 24/7",gain:"פחות שיחות שלא נענות ופחות לקוחות שהולכים למתחרה"},
+  {id:"speed",he:"מהירות",ic:"⚡",fit:1,svc:"אוטומציה של תהליכים, תזכורות ועדכוני סטטוס אוטומטיים ללקוח",gain:"הלקוח יודע מה קורה, ופחות מתלונן על המתנה"},
+  {id:"price",he:"מחיר",ic:"💰",fit:.8,svc:"הצעות מחיר אוטומטיות ומחירון שקוף באתר ובוואטסאפ",gain:"בלי הפתעות בחשבון, ופחות ויכוחים על המחיר"},
+  {id:"quality",he:"איכות",ic:"🎯",fit:.4,svc:"הדרכת הצוות בכלי AI, בקרת איכות ותיעוד אוטומטי",gain:"פחות טעויות חוזרות"},
+  {id:"attitude",he:"יחס",ic:"🤝",fit:1,svc:"מערכת מענה לביקורות, סקרי שביעות רצון ומעקב אחרי לקוחות",gain:"כל ביקורת מקבלת תשובה, ולקוח כועס מקבל טיפול לפני שהוא כותב"},
+  {id:"access",he:"נגישות",ic:"🚗",fit:.7,svc:"מידע הגעה וחניה אוטומטי בוואטסאפ, משלוחים והזמנה מרחוק",gain:"הלקוח מגיע מוכן, או לא צריך להגיע בכלל"},
+  {id:"online",he:"אונליין",ic:"🌐",fit:1,svc:"אתר או דף נחיתה עם הזמנה ותשלום אונליין",gain:"הזמנות גם כשהעסק סגור"}
+];
+const NEED=Object.fromEntries(NEEDS.map(n=>[n.id,n]));
+const $=s=>document.querySelector(s);
+const E=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}};
+const SET=Object.assign({sign:"שמוליק שחר, יועץ ומטמיע בינה מלאכותית לעסקים ולבעלי מקצוע"},LS.get("hub_nm_settings",{}));
+const FIX=LS.get("hub_nm_fix",{});
+const W=r=>r<=1?1.5:r===2?1.25:1;
+function rkey(r){let h=0;const t=r.biz+"|"+(r.text||"").slice(0,120);for(let i=0;i<t.length;i++){h=(h*31+t.charCodeAt(i))|0;}return "r"+(h>>>0).toString(36);}
+function applyFixes(r){const k=rkey(r);return (r.m||[]).map(m=>{const f=FIX[k+"|"+m.n+"|"+m.side];if(!f)return m;if(f==="none")return null;return {...m,n:f};}).filter(Boolean);}
+function showErr(t){const e=$("#err");e.textContent=t||"";e.style.display=t?"block":"none";}
+
+let D=null, LIST=[], CUR=null;
+
+/* ---------- analysis ---------- */
+function analyze(data){
+  const biz=(data.biz||[]).map(b=>({...b})), byId=Object.fromEntries(biz.map(b=>[b.id,b]));
+  biz.forEach(b=>{b.cn={};NEEDS.forEach(n=>b.cn[n.id]={pain:0,painN:0,praise:0,q:[]});b.revN=0;b.deep=0;b.replied=0;b.negUn=0;b.recent=0;b.def=0;});
+  (data.reviews||[]).forEach(r=>{const b=byId[r.biz];if(!b)return;b.revN++;
+    if(r.src==="apify"){b.deep++;if(r.reply)b.replied++;else if(r.rating<=3)b.negUn++;}
+    if(r.tone==="defensive"||r.tone==="frustrated")b.def++;
+    if(r.time&&Date.now()-r.time<90*864e5)b.recent++;
+    applyFixes(r).forEach(m=>{const c=b.cn[m.n];if(!c)return;
+      if(m.side==="pain"){c.pain+=(m.x||1)*W(r.rating);c.painN++;if(m.q)c.q.push({q:m.q,r:r.rating,x:(m.x||1)*W(r.rating)});}
+      else c.praise++;});});
+  biz.forEach(b=>{
+    b.own=[];b.money=[];
+    if(!b.website)b.own.push("אין אתר");
+    if(b.reservable===false)b.own.push("אין הזמנה אונליין בגוגל");
+    if(b.evening===false)b.own.push("סוגר לפני 19:00 בימי חול");
+    if(b.rating&&b.rating<4)b.own.push(`דירוג ${b.rating} בגוגל`);
+    b.replyRate=b.deep?Math.round(100*b.replied/b.deep):null;
+    if(b.replyRate!=null&&b.replyRate<30)b.own.push(`עונה רק ל-${b.replyRate}% מהביקורות`);
+    if(b.negUn>=2)b.own.push(`${b.negUn} ביקורות שליליות בלי תשובה`);
+    if(b.recent>=3)b.money.push("פעיל: ביקורות חדשות ב-90 יום");
+    if(b.count>=40)b.money.push(`${b.count} ביקורות: עסק מבוסס`);
+    if(b.website)b.money.push("משקיע באתר");
+    if(b.replyRate!=null&&b.replyRate>=70)b.money.push("אכפת לו מהביקורות");
+    b.needs=NEEDS.filter(n=>b.cn[n.id].pain>0).sort((x,y)=>b.cn[y.id].pain-b.cn[x.id].pain);
+    b.topNeed=b.needs[0]||null;
+    b.painTotal=NEEDS.reduce((s,n)=>s+b.cn[n.id].pain,0);
+    const moneyF=1+0.25*b.money.length, fitF=b.topNeed?b.topNeed.fit:0;
+    b.raw=b.painTotal*moneyF*(0.5+0.5*fitF);
+  });
+  const mx=Math.max(0.0001,...biz.map(b=>b.raw));
+  biz.forEach(b=>b.deal=Math.round(100*b.raw/mx));
+  return biz;
+}
+
+/* ---------- list ---------- */
+function renderList(){
+  const t=$("#fType").value;
+  const rows=LIST.filter(b=>b.painTotal>0&&(!t||b.type===t)).sort((a,b)=>b.deal-a.deal);
+  $("#rows").innerHTML=rows.length?rows.map((b,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><b>${E(b.name)}</b><div class="note">${E(b.type||"")}${b.hood?" · "+E(b.hood):""} · ★${b.rating||"—"} (${b.count||0})</div></td>
+    <td>${b.topNeed?`<span class="tag${b.topNeed.fit<.6?" low":""}">${b.topNeed.ic} ${b.topNeed.he}</span>`:"—"}</td>
+    <td>${b.topNeed?b.cn[b.topNeed.id].painN:0}</td>
+    <td class="note">${b.money.length?E(b.money.join(" · ")):"—"}</td>
+    <td><span class="score">${b.deal}</span><div class="bar"><i style="width:${b.deal}%"></i></div></td>
+    <td><button class="btn sm" type="button" data-id="${E(b.id)}">📄 דוח</button></td></tr>`).join("")
+    :`<tr><td colspan="7" class="note">אין עסקים עם תלונות מסווגות בסינון הזה.</td></tr>`;
+  document.querySelectorAll("#rows [data-id]").forEach(bt=>bt.onclick=()=>openReport(bt.dataset.id));
+}
+function load(data,demo){
+  if(!data||!Array.isArray(data.biz)||!Array.isArray(data.reviews)){showErr("הקובץ לא נראה כמו שמירה ממפת הצרכים (חסרים biz או reviews). שומרים אותו שוב מ«💾 שמירת הסריקה (JSON)».");return;}
+  const classified=data.reviews.some(r=>Array.isArray(r.m));
+  if(!classified){showErr("בקובץ אין ביקורות מסווגות לצרכים. מריצים את הסריקה במפת הצרכים עד הסוף ושומרים שוב.");return;}
+  showErr("");D=data;LIST=analyze(data);
+  $("#demoBanner").style.display=demo?"block":"none";
+  const types={};LIST.forEach(b=>{if(b.type)types[b.type]=(types[b.type]||0)+1;});
+  $("#fType").innerHTML=`<option value="">כל הסוגים</option>`+Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<option value="${E(t)}">${E(t)} (${n})</option>`).join("");
+  $("#listTitle").textContent=`דירוג ${LIST.filter(b=>b.painTotal>0).length} עסקים לפי ציון עסקה${data.city?" · "+data.city:""}`;
+  $("#listCard").classList.remove("hidden");$("#reportWrap").classList.add("hidden");
+  renderList();$("#listCard").scrollIntoView({behavior:"smooth"});
+}
+
+/* ---------- the report ---------- */
+function mapsUrl(b){return b.maps&&!/^https:\/\/maps\.google\.com\/?$/.test(b.maps)?b.maps:"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent((b.name||"")+" "+(b.address||""));}
+function peersOf(b){let p=LIST.filter(x=>x.id!==b.id&&x.type&&x.type===b.type);let scope="עסקים מאותו סוג בסריקה";if(p.length<2){p=LIST.filter(x=>x.id!==b.id);scope="עסקים בסריקה";}return {p,scope};}
+function waText(b){const n=b.topNeed,c=b.cn[n.id],q=c.q.slice().sort((a,z)=>z.x-a.x)[0];
+  return `שלום, כאן ${SET.sign}.\nהכנתי לכם דוח חינם של עמוד אחד: מה הלקוחות כותבים עליכם בגוגל.\nהנושא שחוזר הכי הרבה: ${n.he} (${c.painN} אזכורים)${q?`, למשל: "${q.q}"`:""}.\nיש לי רעיון פשוט איך לפתור את זה. לשלוח לכם את הדוח?`;}
+function waLink(b,t){const ph=String(b.phone||"").replace(/\D/g,"").replace(/^0/,"972");return ph?`https://wa.me/${ph}?text=${encodeURIComponent(t)}`:"";}
+function openReport(id){
+  const b=LIST.find(x=>x.id===id);if(!b||!b.topNeed)return;CUR=b;
+  const n=b.topNeed,c=b.cn[n.id];
+  const quotes=[...c.q.sort((a,z)=>z.x-a.x).slice(0,2),...b.needs.slice(1).map(x=>b.cn[x.id].q.sort((a,z)=>z.x-a.x)[0]).filter(Boolean)].slice(0,3);
+  const maxN=Math.max(1,...b.needs.map(x=>b.cn[x.id].painN));
+  const {p,scope}=peersOf(b);
+  const rate=x=>x.revN?x.cn[n.id].painN/x.revN:0;
+  const peerRate=p.length?p.reduce((s,x)=>s+rate(x),0)/p.length:null;
+  const solvers=p.filter(x=>x.cn[n.id].praise>=1&&x.cn[n.id].pain===0);
+  const praised=NEEDS.filter(x=>b.cn[x.id].praise>0);
+  const dem=(D.demand||[]).filter(d=>d.need===n.id).slice(0,3);
+  const today=new Date().toLocaleDateString("he-IL");
+  const cmpLines=[];
+  if(peerRate!=null&&b.revN){const mine=Math.round(100*rate(b)),theirs=Math.round(100*peerRate);
+    cmpLines.push(`אצלכם ${mine}% מהביקורות שנקראו מזכירות ${n.he}. הממוצע ב-${p.length} ${scope}: ${theirs}%.`);}
+  if(solvers.length)cmpLines.push(`${solvers.length} ${scope} מקבלים שבחים על ${n.he} בלי תלונות עליה.`);
+  if(dem.length)cmpLines.push(`אנשים באזור מחפשים בגוגל: ${dem.map(d=>`"${E(d.s)}"`).join(", ")}.`);
+  $("#sheet").innerHTML=`
+  <div class="top"><div><div class="kicker">דוח חינם · מה הלקוחות כותבים עליכם בגוגל</div><h2>${E(b.name)}</h2>
+    <div class="kicker">${E(b.type||"")}${b.hood?" · "+E(b.hood):""}${b.address?" · "+E(b.address):""}</div></div>
+    <div class="date">${today}<br>★${b.rating||"—"} · ${b.count||0} ביקורות בגוגל</div></div>
+  <div class="headline">הלקוחות שלכם כתבו ${c.painN===1?"פעם אחת":c.painN+" פעמים"} על ${n.he} ${n.ic}
+    <small>זה הנושא שחוזר הכי הרבה בתלונות, מתוך ${b.revN} ביקורות ציבוריות שנקראו.</small></div>
+  <div class="cols"><div>
+    <div class="box"><h3>מה בדיוק כתבו</h3>${quotes.map(q=>`<p class="q">"${E(q.q)}"<b>${"★".repeat(q.r||0)}</b></p>`).join("")||`<p class="note">אין ציטוטים.</p>`}</div>
+    <div class="box"><h3>על מה הלקוחות מתלוננים</h3>${b.needs.slice(0,5).map(x=>`<div class="nb"><span>${x.ic} ${x.he}</span><span class="t"><i style="width:${Math.round(100*b.cn[x.id].painN/maxN)}%"></i></span><span class="v">${b.cn[x.id].painN}</span></div>`).join("")}</div>
+    ${praised.length?`<div class="box"><h3>מה הלקוחות אוהבים אצלכם</h3>${praised.map(x=>`${x.ic} ${x.he}`).join(" · ")}</div>`:""}
+  </div><div>
+    ${cmpLines.length?`<div class="box cmp"><h3>איך זה ביחס לאחרים</h3><ul>${cmpLines.map(l=>`<li>${l}</li>`).join("")}</ul></div>`:""}
+    ${b.own.length?`<div class="box cmp"><h3>עוד דברים שבולטים מבחוץ</h3><ul>${b.own.slice(0,4).map(t=>`<li>${E(t)}</li>`).join("")}</ul></div>`:""}
+    <div class="fix"><h3>מה אפשר לעשות עם זה</h3><p style="margin:0 0 4px"><b>${E(n.svc)}.</b></p><p style="margin:0">התוצאה: ${E(n.gain)}.</p></div>
+    <div class="box"><h3>הצעד הבא</h3><p style="margin:0">שיחה של 15 דקות: אני מראה לכם את כל הביקורות לפי נושא, ואיך הפתרון עובד אצל עסק כמו שלכם. בלי התחייבות.</p></div>
+  </div></div>
+  <div class="foot"><div><span class="sig">${E(SET.sign)}</span></div>
+    <div>מבוסס על ${b.revN} ביקורות ציבוריות בגוגל, סווגו לפי נושא. לא נשמרים שמות הכותבים.</div></div>`;
+  const t=waText(b),wl=waLink(b,t);
+  $("#btnWa").href=wl||"#";$("#btnWa").classList.toggle("hidden",!wl);
+  $("#btnMaps").href=mapsUrl(b);
+  $("#listCard").classList.add("hidden");$("#reportWrap").classList.remove("hidden");window.scrollTo({top:$("#reportWrap").offsetTop-10});
+}
+
+/* ---------- controls ---------- */
+$("#btnLoad").onclick=()=>$("#picker").click();
+$("#picker").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{try{load(JSON.parse(rd.result),false);}catch(err){showErr("לא הצלחתי לקרוא את הקובץ כ-JSON: "+err.message);}};rd.readAsText(f,"utf-8");e.target.value="";};
+$("#fType").onchange=renderList;
+$("#btnPrint").onclick=()=>window.print();
+$("#btnBack").onclick=()=>{$("#reportWrap").classList.add("hidden");$("#listCard").classList.remove("hidden");};
+$("#btnCopy").onclick=()=>{if(!CUR)return;navigator.clipboard.writeText(waText(CUR)).then(()=>{$("#btnCopy").textContent="✔ הועתק";setTimeout(()=>$("#btnCopy").textContent="📋 העתק הודעת וואטסאפ",1500);},()=>showErr("הדפדפן חסם העתקה. מסמנים את הטקסט ידנית."));};
+
+/* ---------- demo data (clearly labeled, pre-classified like needs-map) ---------- */
+$("#btnDemo").onclick=()=>{
+  const now=Date.now();
+  const B=(i,name,type,hood,rating,count,web,ev,phone)=>({id:"demo"+i,name,type,hood,rating,count,website:web?"https://example.com":"",evening:ev,reservable:!!web,phone,address:"כתובת לדוגמה",maps:""});
+  const P=(n,x,q)=>({n,side:"pain",x,q}),G=(n)=>({n,side:"praise",x:1,q:""});
+  const R=(b,rating,text,m,reply,tone)=>({biz:"demo"+b,rating,text,time:now-Math.round(((b*37+rating*11+text.length)%200))*864e5,reply:reply||"",src:reply!=null?"apify":"google",tone:tone||null,m});
+  const biz=[B(1,"מרפאת שיניים לדוגמה א","מרפאת שיניים","קריית היובל",3.6,48,false,false,"050-0000001"),B(2,"מספרה לדוגמה ב","מספרה","קריית היובל",4.7,120,true,true,"050-0000002"),
+    B(3,"מוסך לדוגמה ג","מוסך","קריית מנחם",3.2,35,false,false,"050-0000003"),B(4,"קליניקה לדוגמה ד","מרפאת שיניים","קריית היובל",4.8,15,true,true,"050-0000004"),
+    B(5,"מאפייה לדוגמה ה","מאפייה","עיר גנים",4.1,210,false,false,"050-0000005"),B(6,"מכון כושר לדוגמה ו","מכון כושר","קריית מנחם",4.4,95,true,true,"050-0000006")];
+  const reviews=[
+    R(1,1,"אי אפשר להשיג אותם בטלפון, לא עונים אף פעם",[P("avail",3,"אי אפשר להשיג אותם בטלפון")],""),
+    R(1,2,"אין תורים בערב, אני עובד עד שש ואין מתי להגיע",[P("avail",2,"אין תורים בערב")],""),
+    R(1,2,"יקר מאוד, הפתעה בחשבון בסוף",[P("price",2,"יקר מאוד")],""),
+    R(1,1,"חיכיתי שעה וחצי בתור למרות שקבעתי",[P("speed",3,"חיכיתי שעה וחצי בתור למרות שקבעתי")],"לא נכון, הגעת באיחור","defensive"),
+    R(1,2,"לא עונים לוואטסאפ ולא חוזרים",[P("avail",2,"לא עונים לוואטסאפ ולא חוזרים")],""),
+    R(1,3,"אין חניה בכלל ליד המרפאה",[P("access",1,"אין חניה בכלל ליד המרפאה")],null),
+    R(2,5,"יחס חם, פתוחים עד מאוחר בערב וזה מעולה",[G("attitude"),G("avail")],null),
+    R(2,5,"קובעים תור בוואטסאפ בקלות, מהיר ונוח",[G("online"),G("speed")],null),
+    R(3,1,"לא חזרו אליי שלושה ימים, לא עונים לטלפון",[P("avail",3,"לא חזרו אליי שלושה ימים")],""),
+    R(3,2,"גבו ממני מחיר כפול ממה שסוכם",[P("price",2,"גבו ממני מחיר כפול ממה שסוכם")],""),
+    R(3,1,"יחס מזלזל, צעק עליי",[P("attitude",3,"יחס מזלזל, צעק עליי")],"מצטערים, נשמח לדבר","thankful"),
+    R(3,2,"לקח שבוע לתקן תקלה פשוטה",[P("speed",2,"לקח שבוע לתקן תקלה פשוטה")],""),
+    R(4,5,"מקצועית ואדיבה, יש זימון תורים באתר",[G("quality"),G("attitude"),G("online"),G("avail")],null),
+    R(5,2,"אין משלוחים ואין אפשרות להזמין אונליין",[P("access",2,"אין משלוחים"),P("online",2,"אין אפשרות להזמין אונליין")],null),
+    R(5,3,"תור ארוך בבוקר, מחכים הרבה",[P("speed",1,"תור ארוך בבוקר, מחכים הרבה")],null),
+    R(5,5,"מחיר הוגן ולחם טרי",[G("price"),G("quality")],null),
+    R(6,2,"אין מענה בוואטסאפ ובטלפון, רק בפייסבוק",[P("online",2,"אין מענה בוואטסאפ ובטלפון")],null),
+    R(6,4,"מקום טוב אבל אין חניה נוחה",[P("access",1,"אין חניה נוחה")],null),
+    R(6,5,"מאמנים מקצועיים ויחס חם",[G("quality"),G("attitude")],null)];
+  load({v:1,city:"ירושלים (דוגמה)",biz,reviews,demand:[{s:"רופא שיניים בערב ירושלים",need:"avail",local:true},{s:"מוסך פתוח בשישי ירושלים",need:"avail",local:true},{s:"רופא שיניים זול בירושלים",need:"price",local:true},{s:"מאפייה משלוחים ירושלים",need:"access",local:true}]},true);
+};
+if(new URLSearchParams(location.search).get("demo")==="1")$("#btnDemo").click();
+</script>
+</body>
+</html>
