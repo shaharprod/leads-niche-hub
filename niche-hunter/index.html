@@ -195,6 +195,8 @@ details.prompt pre{white-space:pre-wrap;word-break:break-word;font-family:inheri
 .pm-q{display:block;color:var(--ink-2);font-size:13px}
 .pm-chip{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:7px;padding:0 7px;margin:2px 0 2px 4px;font-size:12.5px}
 .pm-rank{margin:6px 0;padding-inline-start:20px}.pm-rank li{margin-bottom:8px}
+.pm-gap{background:var(--hot-soft);border:1px solid var(--hot);color:var(--ink);border-radius:10px;padding:8px 10px;margin:6px 0;font-size:14px}
+.pm-gap.big{font-size:15px;padding:12px 14px}
 .pm-bizl{list-style:none;padding:0;margin:4px 0}.pm-bizl li{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px}
 .pm-thumb{width:56px;height:56px;object-fit:cover;border-radius:10px;flex:0 0 56px;display:block}
 .pm-gal{display:flex;gap:4px;margin-top:4px}.pm-gal img{width:40px;height:40px;object-fit:cover;border-radius:7px}
@@ -1666,7 +1668,8 @@ function pmNeedCard(h,i){
     <div class="pm-h"><b>${dot} ${i+1}. ${esc(h.name)}</b><span class="opp" title="ציון 0–100 ביחס לשכונה עם הצורך הגדול ביותר בסריקה">צורך ${h.score}</span></div>
     <div class="note">מתוך ${h.revN} ביקורות על ${h.bizN} עסקים מסוג «${esc(L)}» בשכונה${h.searches.length?` ו-${h.searches.length} חיפושים בגוגל`:""}${top?` · הצורך המוביל: ${NM_NEEDS[top[0]].ic} ${NM_NEEDS[top[0]].he}`:""}</div>
     <div class="pm-bar"><i style="width:${h.score}%"></i></div>
-    <div class="pm-insight"><b>מה אנשים צריכים כאן:</b>${needHtml}${srch}${bizHtml}
+    ${h.bizN? "" : `<div class="pm-gap">🚫 <b>אין אף עסק מסוג «${esc(L)}» בשכונה</b>, ואנשים מחפשים את זה. ביקוש בלי היצע.<div class="pm-btns" style="margin-top:6px"><button class="btn btn-primary btn-sm" type="button" data-need-sol="${esc(L+" עד הבית")}">💡 צור פתרון לשכונה בלי «${esc(L)}»</button></div></div>`}
+    <div class="pm-insight"><b>מה אנשים צריכים כאן:</b>${h.bizN?needHtml:'<div class="note">אין ביקורות, כי אין עסקים בשכונה.</div>'}${srch}${bizHtml}
       <div class="pm-btns" style="margin-top:8px">${solBtns}</div></div>
     <div class="pm-btns"><button class="btn btn-ghost btn-sm" data-pm="zoom">🔍 הצג במפה</button><button class="btn btn-ghost btn-sm" data-pm="demand">🔎 האם מחפשים את זה?</button></div>
     <div class="pm-sugg"></div></div>`;
@@ -1687,7 +1690,7 @@ async function pmNeedRun(){
     pmStep("supply","run");
     const sup=await pmGoogleProviders(center,R,0,svc,kw,(a,b)=>pmStep("supply","run",`${a}/${b}`));
     const provs=sup.list; pmStep("supply","ok",`${provs.length} עסקים`);
-    if(!provs.length) throw new Error(`לא נמצאו עסקים מסוג «${esc(L)}» באזור. נסו מילה אחרת או רדיוס גדול יותר.`);
+    if(!provs.length) pmStep("supply","ok",`0 עסקים: אין אף «${esc(L)}» באזור. בודקים אם יש ביקוש (פער פתוח)`);
     pmStep("hoods","run"); let hoods=await pmNeedHoods(center,R), hsrc="OpenStreetMap";
     if(!hoods.length){ pmStep("hoods","run","OpenStreetMap איטי, לוקח שכונות מגוגל"); hoods=await pmNeedHoodsFromGoogle(provs); hsrc="Google"; }
     if(hoods.length<3 && provs.length>=6){ hoods=pmNeedClusters(provs,R,center); hsrc="אזורים לפי רחוב"; }
@@ -1704,14 +1707,15 @@ async function pmNeedRun(){
     else nmRuleClassify(reviews);
     pmStep("ai","ok",aiNote);
     pmStep("srch","run"); const cityGuess=($("#pmAddr").value||"").split(",").pop().trim()||"ירושלים";
-    const hoodsWith=hoods.filter(h=>provs.some(p=>p.hood===h.name));
+    /* neighbourhoods WITH businesses, plus the nearest ones WITHOUT any business: demand there = an open gap */
+    const hoodsWith=[...hoods.filter(h=>provs.some(p=>p.hood===h.name)), ...hoods.filter(h=>!provs.some(p=>p.hood===h.name)).sort((a,b)=>pmNeedDist(center,a.loc)-pmNeedDist(center,b.loc))].slice(0,16);
     const searches=await pmNeedSearches(L,hoodsWith,cityGuess,(a,b)=>pmStep("srch","run",`${a}/${b}`)); pmStep("srch","ok",`${searches.length} ביטויים`);
     // aggregate per neighbourhood
     const H=new Map(); const hoodOf=name=>{ if(!H.has(name)){ const hh=hoods.find(x=>x.name===name); H.set(name,{name,loc:hh?hh.loc:null,needs:Object.fromEntries(Object.keys(NM_NEEDS).map(k=>[k,{pain:0,praise:0,q:[]}])),bizList:[],revN:0,bizN:0,searches:[],pain:0}); } return H.get(name); };
-    provs.forEach(p=>{ const h=hoodOf(p.hood); h.bizN++; p.pain=0; p.pc=0; h.bizList.push(p); });
+    provs.forEach(p=>{ const h=hoodOf(p.hood); h.bizN++; p.pain=0; p.pc=0; p.good={}; p.pn={}; h.bizList.push(p); });
     reviews.forEach(r=>{ const p=byId[r.biz]; if(!p) return; const h=hoodOf(p.hood); h.revN++;
-      (r.m||[]).forEach(m=>{ const v=h.needs[m.n]; if(!v) return; if(m.side==="pain"){ const x=m.x*NM_W(r.rating); v.pain+=x; h.pain+=x; p.pain+=x; p.pc++; v.q.push({q:m.q,r:r.rating,biz:p.name,x}); } else v.praise++; }); });
-    searches.forEach(s=>{ if(s.hood && H.has(s.hood)) H.get(s.hood).searches.push(s); });
+      (r.m||[]).forEach(m=>{ const v=h.needs[m.n]; if(!v) return; if(m.side==="pain"){ const x=m.x*NM_W(r.rating); v.pain+=x; h.pain+=x; p.pain+=x; p.pc++; v.q.push({q:m.q,r:r.rating,biz:p.name,x}); p.pn[m.n]=(p.pn[m.n]||0)+1; } else { v.praise++; p.good[m.n]=(p.good[m.n]||0)+1; } }); });
+    searches.forEach(s=>{ if(s.hood) hoodOf(s.hood).searches.push(s); });
     const list=[...H.values()].map(h=>{ h.needs&&Object.values(h.needs).forEach(v=>v.q.sort((a,b)=>b.x-a.x)); h.raw=h.pain+2*h.searches.length;
       if(!h.loc){ const ps=h.bizList.filter(p=>p.loc); if(ps.length) h.loc={lat:ps.reduce((s,p)=>s+p.loc.lat,0)/ps.length,lng:ps.reduce((s,p)=>s+p.loc.lng,0)/ps.length}; } return h; })
       .filter(h=>h.raw>0).sort((a,b)=>b.raw-a.raw);
@@ -1724,8 +1728,17 @@ async function pmNeedRun(){
     const ranked=Object.entries(tot).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
     $("#pmSum").innerHTML = ranked.length
       ? `<b>מה אנשים צריכים מ«${esc(L)}» באזור</b> (מ-${reviews.length} ביקורות ו-${searches.length} חיפושים בגוגל), מהצורך הגדול לקטן:<ol class="pm-rank">${ranked.map(([n,v])=>{ const ex=citySrch.filter(s=>s.need===n).slice(0,3).map(s=>`<span class="pm-chip">${esc(s.s)}</span>`).join(" ");
-          return `<li><b>${NM_NEEDS[n].ic} ${NM_NEEDS[n].he}</b> <span class="note">(${esc(NM_NEEDS[n].d)})</span> · ציון ${Math.round(v)} ${ex?`<div>${ex}</div>`:""}<button class="btn btn-ghost btn-sm" type="button" data-need-sol="${esc(L+" "+NM_NEEDS[n].seed)}">💡 פתרון לצורך הזה</button></li>`; }).join("")}</ol>`
+          const solv=provs.filter(p=>(p.good[n]||0)>0 && !(p.pn[n]||0)).sort((a,b)=>(b.good[n]||0)-(a.good[n]||0)).slice(0,3);
+          const who = solv.length ? `<div class="note">✅ עסקים שהלקוחות משבחים בנושא: ${solv.map(p=>p.maps?`<a href="${esc(p.maps)}" target="_blank" rel="noopener">${esc(p.name)}</a>`:esc(p.name)).join(", ")}</div>`
+            : `<div class="pm-gap">🚫 <b>אף עסק באזור לא פותר את זה.</b> יש ביקוש ואין היצע: זה המקום לפתרון חדש.</div>`;
+          return `<li><b>${NM_NEEDS[n].ic} ${NM_NEEDS[n].he}</b> <span class="note">(${esc(NM_NEEDS[n].d)})</span> · ציון ${Math.round(v)} ${ex?`<div>${ex}</div>`:""}${who}<button class="btn ${solv.length?"btn-ghost":"btn-primary"} btn-sm" type="button" data-need-sol="${esc(L+" "+NM_NEEDS[n].seed)}">💡 ${solv.length?"פתרון לצורך הזה":"צור פתרון לפער הזה: מוצר, מדריך או אפליקציה"}</button></li>`; }).join("")}</ol>`
       : `לא נמצאו תלונות או חיפושים על «${esc(L)}» באזור הזה. נסו רדיוס גדול יותר או מילה אחרת.`;
+    const gapHoods=list.filter(h=>!h.bizN && h.searches.length);
+    const banner = !provs.length
+      ? `<div class="pm-gap big">🚫 <b>לא נמצא אף עסק מסוג «${esc(L)}» ברדיוס ${pmFmtD(R)}.</b> ${searches.length?`ובכל זאת יש ${searches.length} חיפושים בגוגל על זה באזור.`:""} זה פער פתוח: ביקוש בלי היצע.
+          <div class="pm-btns" style="margin-top:8px"><button class="btn btn-primary btn-sm" type="button" data-need-sol="${esc(L)}">💡 צור פתרון: מוצר, מדריך או אפליקציה ל«${esc(L)}»</button><button class="btn btn-ghost btn-sm" type="button" data-need-sol="${esc(L+" עד הבית")}">💡 פתרון «${esc(L)} עד הבית»</button></div></div>`
+      : gapHoods.length ? `<div class="pm-gap">🚫 <b>שכונות עם ביקוש ובלי אף עסק מסוג «${esc(L)}»:</b> ${gapHoods.map(h=>esc(h.name)).join(", ")}. פרטים בכרטיסים למטה.</div>` : "";
+    $("#pmSum").insertAdjacentHTML("afterbegin", banner);
     $("#pmList").innerHTML = list.slice(0,20).map(pmNeedCard).join("") || '<div class="note">לא נמצאה שכונה עם צורך מובהק.</div>';
     // providers panel
     $("#pmProvN").textContent=provs.length;
