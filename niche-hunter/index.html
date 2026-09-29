@@ -53,6 +53,7 @@ button{font:inherit;cursor:pointer}
 .nav button[aria-current="true"]{background:var(--accent-soft);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 25%,transparent)}
 .nav button:hover{color:var(--ink)}
 .nav a.hublink{border:1px solid var(--line);color:var(--ink-2);padding:7px 12px;border-radius:10px;font-weight:500;display:flex;align-items:center;gap:6px;text-decoration:none}
+@media (max-width:640px){.nav{flex-wrap:wrap;justify-content:flex-end;gap:4px;max-width:100%}.nav button,.nav a.hublink{padding:6px 8px}} /* HUB: phone width, nav wraps instead of overflowing */
 .nav a.hublink:hover{color:var(--accent);border-color:var(--accent)}
 .leadchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .leadchips a{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:99px;padding:4px 11px;font-size:13px;text-decoration:none}
@@ -1962,5 +1963,6 @@ async function pmRun(){
   window.hubDriveOpen=()=>{ gis().catch(()=>{}); const d=ui(); d._showLast(); d.querySelector("[data-st]").innerHTML=""; d.querySelector("[data-list]").innerHTML=""; d.showModal(); };
 })();
 </script>
+<script src="https://shaharprod.github.io/leads-niche-hub/guide.js" data-feature="niche" defer></script>
 </body>
 </html>

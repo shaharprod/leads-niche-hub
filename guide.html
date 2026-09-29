@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מדריך המערכת</title>
+<meta name="description" content="איך משלבים את צייד הנישות, מפת הצרכים ו-Leads Radar: בעלי עסקים, הלקוחות שלהם, והמשרד שלך.">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1b1f2a;--mut:#5b6475;--line:#e3e6ee;--acc:#4f5bff;--acs:#eceeff;
+  --b:#7a4fd6;--bs:#f2ecff;--c:#e0663a;--cs:#fdefe8;--o:#12a26b;--os:#e1f6ec;--shadow:0 2px 10px rgba(20,30,60,.06)}
+@media (prefers-color-scheme:dark){:root{--bg:#11141b;--card:#1a1f29;--ink:#e9ecf3;--mut:#a2abbd;--line:#2b3240;--acc:#8b93ff;--acs:#252a50;
+  --b:#b196ff;--bs:#2a2340;--c:#ff8a5c;--cs:#35231b;--o:#34d399;--os:#15352a;--shadow:none}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Heebo,system-ui,sans-serif;line-height:1.7;font-size:17px}
+.wrap{max-width:960px;margin:0 auto;padding:28px 16px 64px}
+h1{font-size:clamp(26px,5vw,36px);margin:0 0 6px;line-height:1.25}
+h2{font-size:1.45rem;margin:40px 0 12px}
+h3{margin:0 0 6px;font-size:1.12rem}
+.sub{color:var(--mut);margin:0}
+a{color:var(--acc)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:var(--acs);color:var(--acc);border-radius:999px;padding:4px 12px;font-weight:600;font-size:.9rem;text-decoration:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:14px}
+.card p:first-child{margin-top:0}.card p:last-child{margin-bottom:0}
+.p3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.p{border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.6}
+.p h3{font-size:1rem}
+.pb{background:var(--bs)}.pb h3{color:var(--b)}.pc{background:var(--cs)}.pc h3{color:var(--c)}.po{background:var(--os)}.po h3{color:var(--o)}
+svg{width:100%;height:auto;display:block}
+ol{padding-inline-start:22px;margin:6px 0}li{margin-bottom:6px}
+.tool{border-top:5px solid var(--acc)}
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;counter-reset:s}
+.step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;position:relative}
+.step b.n{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--acc);color:#fff;margin-bottom:6px}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+th{color:var(--mut);font-weight:600;font-size:.85rem}
+.note{color:var(--mut);font-size:.9rem}
+.box{background:var(--acs);border-radius:10px;padding:10px 12px}
+footer{margin-top:40px;color:var(--mut);font-size:.9rem;border-top:1px solid var(--line);padding-top:14px}
+@media (max-width:760px){.p3,.flow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>📗 מדריך המערכת: איך משלבים את הכלים</h1>
+  <p class="sub">שלושה צדדים, שלושה כלים, זרימת עבודה אחת: מהכאב של הלקוח, דרך בעל העסק, ועד הפתרון שאתה מוכר.</p>
+  <div class="chips">
+    <a class="chip" href="https://shaharprod.github.io/leads-niche-hub/" target="_blank" rel="noopener">🏠 ה-Hub</a>
+    <a class="chip" href="https://shaharprod.github.io/leads-niche-hub/needs-map/" target="_blank" rel="noopener">🧭 מפת הצרכים</a>
+    <a class="chip" href="https://shaharprod.github.io/leads-niche-hub/niche-hunter/" target="_blank" rel="noopener">💡 צייד הנישות</a>
+    <a class="chip" href="https://shaharprod.github.io/leads-niche-hub/leads-radar/" target="_blank" rel="noopener">📍 Leads Radar</a>
+  </div>
+</header>
+
+<h2>1. שלושת הצדדים של המערכת</h2>
+<div class="card">
+  <svg viewBox="0 0 820 250" role="img" aria-label="בעלי עסקים, הלקוחות שלהם והמשרד שלך במרכז">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--mut)"/></marker></defs>
+    <g font-family="Heebo,sans-serif" text-anchor="middle">
+      <rect x="570" y="20" width="235" height="120" rx="16" fill="var(--bs)" stroke="var(--b)" stroke-width="2"/>
+      <text x="687" y="55" fill="var(--b)" font-weight="800" font-size="20">🏪 בעלי עסקים</text>
+      <text x="687" y="85" fill="var(--ink)" font-size="14">כאבים: אין מענה, אין אתר, ביקורות</text>
+      <text x="687" y="108" fill="var(--ink)" font-size="14">שאיפות: עוד לקוחות, לצמוח</text>
+      <rect x="15" y="20" width="235" height="120" rx="16" fill="var(--cs)" stroke="var(--c)" stroke-width="2"/>
+      <text x="132" y="55" fill="var(--c)" font-weight="800" font-size="20">👥 הלקוחות שלהם</text>
+      <text x="132" y="85" fill="var(--ink)" font-size="14">מתלוננים בביקורות</text>
+      <text x="132" y="108" fill="var(--ink)" font-size="14">מחפשים פתרון בגוגל</text>
+      <rect x="290" y="150" width="240" height="90" rx="16" fill="var(--os)" stroke="var(--o)" stroke-width="2"/>
+      <text x="410" y="185" fill="var(--o)" font-weight="800" font-size="19">🧭 המשרד שלך</text>
+      <text x="410" y="212" fill="var(--ink)" font-size="14">פתרונות · הטמעה · אפליקציות · הדרכות</text>
+      <path d="M565,80 L255,80" stroke="var(--mut)" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ar)" marker-start="url(#ar)"/>
+      <text x="410" y="70" fill="var(--mut)" font-size="13">הכאב של הלקוח = ההזדמנות של העסק</text>
+      <path d="M640,145 L530,180" stroke="var(--o)" stroke-width="2.5" marker-end="url(#ar)"/>
+      <path d="M180,145 L290,180" stroke="var(--o)" stroke-width="2.5" marker-end="url(#ar)"/>
+    </g>
+  </svg>
+  <div class="p3" style="margin-top:12px">
+    <div class="p pb"><h3>🏪 בעלי עסקים</h3>מי שמשלם לך. הם צריכים יותר לקוחות ופחות כאב ראש, אבל לרוב לא יודעים מה בדיוק חסר להם.</div>
+    <div class="p pc"><h3>👥 הלקוחות שלהם</h3>ההוכחה. מה שהם כותבים ומחפשים מראה לבעל העסק, במילים של הלקוחות שלו, מה צריך לתקן.</div>
+    <div class="p po"><h3>🧭 המשרד שלך</h3>המחבר. אתה הופך את הכאב לפתרון: בוט, מערכת זימון, אפליקציה, אתר או הדרכה, ומטמיע אותו.</div>
+  </div>
+  <p class="box" style="margin-top:12px"><b>הכלל:</b> בכל כלי ובכל מסך שואלים שלוש שאלות: מה הלקוחות צריכים? מה בעל העסק צריך? ואיזה פתרון שלי מחבר ביניהם? בכל כלי יש עכשיו פס עליון עם שלושת הצדדים וכפתור <b>«📘 מדריך קל»</b> שמסביר את זה על הכלי הספציפי.</p>
+</div>
+
+<h2>2. זרימת העבודה המומלצת</h2>
+<div class="flow">
+  <div class="step"><b class="n">1</b><br><b>מוצאים את הכאב</b><br><a href="https://shaharprod.github.io/leads-niche-hub/needs-map/" target="_blank" rel="noopener">🧭 מפת הצרכים</a>: מה הלקוחות צריכים באזור, לפי שכונה.</div>
+  <div class="step"><b class="n">2</b><br><b>בונים את הפתרון</b><br><a href="https://shaharprod.github.io/leads-niche-hub/niche-hunter/" target="_blank" rel="noopener">💡 צייד הנישות</a>: «💡 צור פתרון» בונה מוצר, מדריך או אפליקציה.</div>
+  <div class="step"><b class="n">3</b><br><b>מוצאים למי למכור</b><br><a href="https://shaharprod.github.io/leads-niche-hub/leads-radar/" target="_blank" rel="noopener">📍 Leads Radar</a>: העסקים הרלוונטיים, עם דוח מלא.</div>
+  <div class="step"><b class="n">4</b><br><b>פונים ומוכרים</b><br>«💬 הודעת תובנה» עם ציטוטים של הלקוחות שלהם, ושיחת ייעוץ איתך.</div>
+</div>
+<p class="note">אפשר להתחיל מכל כלי. הכפתורים בין הכלים מעבירים את האזור ואת מילת החיפוש, כך שלא צריך להקליד שוב.</p>
+
+<h2>3. כל כלי, שלושת הצדדים, ואיך משתמשים</h2>
+
+<div class="card tool">
+  <h3>🧭 מפת הצרכים · <a href="https://shaharprod.github.io/leads-niche-hub/needs-map/" target="_blank" rel="noopener">פתיחה</a></h3>
+  <div class="p3">
+    <div class="p pc"><h3>👥 הלקוחות</h3>ביקורות מסווגות ל-7 צרכים (זמינות, מהירות, מחיר, איכות, יחס, נגישות, אונליין) וחיפושים מקומיים, לפי שכונה.</div>
+    <div class="p pb"><h3>🏪 בעלי העסקים</h3>על מה הלקוחות של כל עסק מתלוננים, הכאבים שלו (אין אתר, סוגר מוקדם, לא עונה לביקורות) וסימני צמיחה. עם תמונות וקישורים.</div>
+    <div class="p po"><h3>🧭 אתה</h3>3 חיבורים: להפנות לקוחות לעסק שפותר · לשלוח דוח תובנות לעסק שסובל · להציע לו את הפתרון שלך. 🚫 פער פתוח ← «💡 צור פתרון».</div>
+  </div>
+  <ol>
+    <li>כותבים אזור בשדה «אזור», בוחרים רדיוס ו«סוג עסקים» (ריק = כל העסקים).</li>
+    <li>לוחצים «🔍 מפה את הצרכים», או «📥 מהסריקה האחרונה ב-Leads Radar» (בלי עלות Google נוספת).</li>
+    <li>«📊 דירוג הצרכים»: לחיצה על שורה מציגה ציטוטים. תלונה לא במקום? מעבירים אותה לצורך הנכון בתפריט שליד הציטוט.</li>
+    <li>«🤝 הזדמנויות חיבור» ← «💬 הודעת תובנה בוואטסאפ» או «📋 העתק הודעה».</li>
+    <li>לסריקה עמוקה עם תשובות בעלי העסקים: «⚙️ הגדרות» ← טוקן <a href="https://console.apify.com/settings/integrations" target="_blank" rel="noopener">Apify</a>.</li>
+  </ol>
+</div>
+
+<div class="card tool">
+  <h3>💡 צייד הנישות · <a href="https://shaharprod.github.io/leads-niche-hub/niche-hunter/" target="_blank" rel="noopener">פתיחה</a></h3>
+  <div class="p3">
+    <div class="p pc"><h3>👥 הלקוחות</h3>חיפוש טרנדים: מה אנשים מקלידים בגוגל וביוטיוב. מפת הכאבים (🔥 צורך): על מה מתלוננים ומה מחפשים בכל שכונה.</div>
+    <div class="p pb"><h3>🏪 בעלי העסקים</h3>בכל כרטיס «🎯 עסקים שיקנו או ימליצו». במפת הכאבים: אילו עסקים הלקוחות שלהם מתלוננים, עם תמונות מבעל העסק.</div>
+    <div class="p po"><h3>🧭 אתה</h3>כל כרטיס הוא מוצר מוכן לבנייה: פרומפט למוצר, לדף מכירה ולמודעות. 🚫 אין עסק שפותר = ההזדמנות הכי טובה שלך.</div>
+  </div>
+  <ol>
+    <li><b>חיפוש:</b> כותבים נישה ולוחצים «גלה טרנדים». בכרטיס: «▣ מוצר לבנות» ← «העתק פרומפט» ← מדביקים ב-<a href="https://claude.ai/new" target="_blank" rel="noopener">Claude</a>, Lovable או Base44.</li>
+    <li><b>מפת כאבים:</b> «מה מודדים» ← «🔥 צורך», כותבים אזור, בוחרים שירות, «🔍 סרוק עכשיו».</li>
+    <li>בכרטיס שכונה: «💡 פתרון ל…» מריץ את החיפוש ובונה מוצר לצורך הזה.</li>
+    <li>🚫 אדום = אין אף עסק שנותן את זה. לוחצים «💡 צור פתרון לפער הזה».</li>
+  </ol>
+</div>
+
+<div class="card tool">
+  <h3>📍 Leads Radar · <a href="https://shaharprod.github.io/leads-niche-hub/leads-radar/" target="_blank" rel="noopener">פתיחה</a></h3>
+  <div class="p3">
+    <div class="p pb"><h3>🏪 בעלי העסקים</h3>פרטי קשר, דירוג, אתר ומהירות, רשתות, מודעות, מתחרים וציון הזדמנות.</div>
+    <div class="p pc"><h3>👥 הלקוחות</h3>«מה הלקוחות אומרים»: הביקורות של העסק. «🧭 מפת צרכים לאזור הזה» הופך אותן לרשימת כאבים.</div>
+    <div class="p po"><h3>🧭 אתה</h3>הדוח הוא כלי המכירה שלך: מראה מה חסר, עם הצעת מחיר ומתנה, ופותח שיחה על הפתרון.</div>
+  </div>
+  <ol>
+    <li>בפעם הראשונה: «⚙️ הגדרות» ← מדביקים מפתח Google Maps (ומפתח Gemini לניתוח).</li>
+    <li>גוררים את הסיכה, כותבים סוג עסק ולוחצים «🔍 התחל סריקה».</li>
+    <li>ממיינים לפי «🏆 ההזדמנויות הטובות ביותר», מריצים בדיקה מעמיקה ושולחים דוח או וואטסאפ.</li>
+    <li>ממשיכים ל«🧭 מפת צרכים לאזור הזה» או ל«💡 רעיון למוצר לנישה הזו».</li>
+  </ol>
+</div>
+
+<h2>4. איזה כלי מתי</h2>
+<div class="card">
+  <div class="table-scroll"><table>
+    <tr><th>השאלה שלך</th><th>הכלי</th><th>הכפתור</th></tr>
+    <tr><td>מה אנשים באזור צריכים?</td><td><a href="https://shaharprod.github.io/leads-niche-hub/needs-map/" target="_blank" rel="noopener">מפת הצרכים</a></td><td>«🔍 מפה את הצרכים»</td></tr>
+    <tr><td>איזה צורך הכי גדול בשכונה מסוימת?</td><td><a href="https://shaharprod.github.io/leads-niche-hub/niche-hunter/" target="_blank" rel="noopener">צייד הנישות › מפת כאבים</a></td><td>«🔥 צורך» ← «🔍 סרוק עכשיו»</td></tr>
+    <tr><td>איזה מוצר לבנות לצורך הזה?</td><td>צייד הנישות</td><td>«💡 פתרון ל…» / «💡 צור פתרון לפער הזה»</td></tr>
+    <tr><td>למי למכור את הפתרון?</td><td><a href="https://shaharprod.github.io/leads-niche-hub/leads-radar/" target="_blank" rel="noopener">Leads Radar</a></td><td>«🔍 התחל סריקה» ← דוח</td></tr>
+    <tr><td>מה לכתוב לבעל העסק?</td><td>מפת הצרכים</td><td>«💬 הודעת תובנה»</td></tr>
+    <tr><td>אין אף עסק שפותר את הבעיה?</td><td>מפת הצרכים / צייד הנישות</td><td>«💡 צור פתרון לפער הזה»</td></tr>
+  </table></div>
+</div>
+
+<h2>5. איך המשרד שלך מרוויח בכל חיבור</h2>
+<div class="card">
+  <ol>
+    <li><b>דוח תובנות לעסק שסובל</b>: פתיחת שיחה בחינם, שמובילה להצעת מחיר.</li>
+    <li><b>הטמעת הפתרון</b>: בוט מענה, זימון תורים, אתר עם הזמנה, מענה לביקורות. פרויקט בתשלום.</li>
+    <li><b>מוצר משלך</b> לפער פתוח: מדריך, אפליקציה או קורס שנמכר לכל העסקים מאותו סוג, לא רק לאחד.</li>
+    <li><b>הדרכה</b> לצוות העסק על הכלים שהוטמעו.</li>
+    <li><b>הפניה</b> של לקוחות לעסק שפותר (עמלה), כשהעסק כבר טוב בנושא.</li>
+  </ol>
+  <p class="note">הלידים שנוצרים מהפנייה מגיעים ל<a href="https://shaharprod.github.io/RAVMESER/lead.html" target="_blank" rel="noopener">דף הלידים שלך</a>. לפני פנייה בהיקף, כדאי לבדוק מול עורך דין את חוק הספאם ואת תיקון 13 לחוק הגנת הפרטיות.</p>
+</div>
+
+<h2>6. טוב לדעת</h2>
+<div class="card">
+  <ul>
+    <li><b>מפתחות:</b> מפתח Google Maps נשמר ב-<a href="https://shaharprod.github.io/leads-niche-hub/leads-radar/" target="_blank" rel="noopener">Leads Radar</a> ומשמש את כל הכלים. מפתח ה-AI נשמר ב-<a href="https://shaharprod.github.io/leads-niche-hub/niche-hunter/" target="_blank" rel="noopener">צייד הנישות</a> או ב-Leads Radar. את המפתחות מדביקים רק אתה.</li>
+    <li><b>AI:</b> כשמכסת מודל Gemini נגמרת, המערכת עוברת לבד למודל Flash אחר שפתוח למפתח שלך. אם אף מודל לא עונה, הסיווג נעשה לפי מילות מפתח, והמערכת אומרת את זה על המסך.</li>
+    <li><b>עלות:</b> לפני כל סריקה מוצגת הערכת עלות Google. הבדיקות היום עלו פחות מדולר לסריקה של אזור קטן.</li>
+    <li><b>פרטיות:</b> שמות כותבי הביקורות לא נשמרים. מוצגים ציטוטים קצרים ונתונים מצטברים.</li>
+    <li><b>תמונות:</b> מוצגות רק תמונות שבעל העסק העלה בעצמו לגוגל.</li>
+  </ul>
+</div>
+
+<footer>
+  שמוליק שחר · יועץ ומטמיע בינה מלאכותית לעסקים ולבעלי מקצוע · SHAHAR AI PRODUCTIONS<br>
+  עודכן ב-29.9.2026 · <a href="https://shaharprod.github.io/leads-niche-hub/" target="_blank" rel="noopener">חזרה ל-Hub</a>
+</footer>
+</div>
+</body>
+</html>
